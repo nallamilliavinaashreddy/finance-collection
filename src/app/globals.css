@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --background: 0 0% 2.7%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 6.7%;
+    --card-foreground: 0 0% 100%;
+    --primary: 28.7 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --border: 0 0% 15%;
+  }
+
+  .dark {
+    --background: 0 0% 2.7%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 6.7%;
+    --card-foreground: 0 0% 100%;
+    --primary: 28.7 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --border: 0 0% 15%;
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #070707;
+  color: #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070707;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF7A00;
+}
+
+/* Loading Screen Animation */
+@keyframes loadingBar {
+  0% {
+    left: -33%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: -33%;
+  }
+}
+
+.animate-loading-bar {
+  animation: loadingBar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Subtle Breathing Animation for Hanuman Splash Image */
+@keyframes subtleBreath {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+.animate-subtle-breath {
+  animation: subtleBreath 4s ease-in-out infinite;
+}
+
+/* Staggered Delays for Sequential Dashboard Entrance */
+.delay-0 { animation-delay: 0ms; }
+.delay-75 { animation-delay: 75ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-225 { animation-delay: 225ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* Subtle Value Flash Animations for Increasing/Decreasing Financial Values */
+@keyframes flashGreen {
+  0% { color: #10B981; text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+  100% { color: inherit; text-shadow: none; }
+}
+
+@keyframes flashRed {
+  0% { color: #EF4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+  100% { color: inherit; text-shadow: none; }
+}
+
+.animate-flash-green {
+  animation: flashGreen 1.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.animate-flash-red {
+  animation: flashRed 1.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Subtle Orange Pulse Glow */
+@keyframes orangePulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 122, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 122, 0, 0.35);
+  }
+}
+
+.animate-orange-glow {
+  animation: orangePulseGlow 3s ease-in-out infinite;
+}
+
+/* Accessibility: Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
