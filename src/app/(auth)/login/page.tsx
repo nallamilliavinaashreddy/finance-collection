@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginFormData } from '@/lib/validations/auth';
 import { loginAdmin } from '@/lib/auth/admin-auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useToast } from '@/components/providers/toast-provider';
 import { Button } from '@/components/ui/button';
@@ -23,12 +23,15 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser } = useAuth();
   const { showToast } = useToast();
+
+  const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
   const {
     register,
@@ -52,7 +55,7 @@ export default function LoginPage() {
       if (result.success && result.user) {
         setUser(result.user);
         showToast('Single Admin Authenticated Successfully!', 'success', 'Welcome Back');
-        router.push('/dashboard');
+        router.push(redirectUrl);
       } else {
         showToast(result.error || 'Authentication failed. Please check credentials.', 'error', 'Login Failed');
       }
@@ -186,5 +189,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

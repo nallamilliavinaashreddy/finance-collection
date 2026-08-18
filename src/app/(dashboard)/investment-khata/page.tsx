@@ -77,11 +77,11 @@ export default function InvestmentKhataPage() {
         setMetrics(metRes.data);
       }
     } catch (err: any) {
-      showToast('Error fetching Investment Khata data from Supabase', 'error');
+      console.error('Error fetching Investment Khata data:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, typeFilter, showToast]);
+  }, [searchQuery, typeFilter]);
 
   useEffect(() => {
     fetchInvestmentData();
@@ -250,7 +250,7 @@ export default function InvestmentKhataPage() {
             onClick={() => setIsSettingsOpen(true)}
             leftIcon={<Settings className="w-3.5 h-3.5 text-amber-600" />}
           >
-            Owner Rate: {metrics.monthlyInterestRate}%/mo
+            Monthly Rate: {metrics.monthlyInterestRate}%/mo
           </Button>
 
           <Button
@@ -260,7 +260,7 @@ export default function InvestmentKhataPage() {
             isLoading={isAccruingInterest}
             leftIcon={<TrendingUp className="w-3.5 h-3.5 text-emerald-600" />}
           >
-            Add Daily Interest
+            Check Monthly Interest
           </Button>
 
           <Button
@@ -269,7 +269,7 @@ export default function InvestmentKhataPage() {
             onClick={() => setIsWithdrawalOpen(true)}
             leftIcon={<ArrowUpRight className="w-4 h-4 text-rose-600" />}
           >
-            Owner Draw
+            Take Capital
           </Button>
 
           <Button
@@ -277,106 +277,93 @@ export default function InvestmentKhataPage() {
             onClick={() => setIsAddCapitalOpen(true)}
             leftIcon={<Plus className="w-4 h-4" />}
           >
-            Add Owner Capital
+            Add Direct Investment
           </Button>
         </div>
       </div>
 
       {/* Executive Dashboard Summary Cards Grid (6 Clean Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-        {/* Card 1: Owner Capital */}
+        {/* Card 1: Current Capital */}
         <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
-              Owner Capital
+              Current Capital
             </span>
             <Wallet className="w-3.5 h-3.5 text-[#FF7A00]" />
           </div>
           <div className="text-2xl font-bold text-[#FF7A00] dark:text-[#FF7A00] mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.ownerCapital || metrics.currentBalance)}
+            {isLoading ? '...' : formatCurrency(metrics.currentCapital ?? metrics.ownerCapital)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Owner capital balance</p>
+          <p className="text-[11px] text-slate-400 mt-1">Direct + Chit + Deposit - Drawn</p>
         </Card>
 
-        {/* Card 2: Investment Interest */}
-        <Card className="p-4 flex flex-col justify-between border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              Investment Interest
-            </span>
-            <Coins className="w-3.5 h-3.5 text-amber-500" />
-          </div>
-          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.investmentInterest)}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">Accrued daily interest</p>
-        </Card>
-
-        {/* Card 3: Loan Interest */}
+        {/* Card 2: Capital Added */}
         <Card className="p-4 flex flex-col justify-between border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/30 dark:bg-emerald-950/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">
-              Loan Interest
+              Capital Added
             </span>
             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
           </div>
           <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.loanInterest)}
+            {isLoading ? '...' : formatCurrency(metrics.totalCapitalAdded ?? 0)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Collected loan interest</p>
+          <p className="text-[11px] text-slate-400 mt-1">Total invested capital</p>
         </Card>
 
-        {/* Card 4: Expenses */}
+        {/* Card 3: Capital Withdrawn */}
         <Card className="p-4 flex flex-col justify-between border-rose-200 dark:border-rose-900/60 bg-rose-50/30 dark:bg-rose-950/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
-              Expenses
+              Capital Withdrawn
             </span>
-            <Receipt className="w-3.5 h-3.5 text-rose-500" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-rose-500" />
           </div>
           <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.expenses)}
+            {isLoading ? '...' : formatCurrency(metrics.totalCapitalWithdrawn ?? metrics.businessWithdrawals)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Operational expenses</p>
+          <p className="text-[11px] text-slate-400 mt-1">Total taken capital</p>
         </Card>
 
-        {/* Card 5: Net Profit / Loss */}
-        <Card
-          className={`p-4 flex flex-col justify-between border ${
-            metrics.netProfit >= 0
-              ? 'border-emerald-500/30 bg-emerald-500/10'
-              : 'border-rose-500/30 bg-rose-500/10'
-          }`}
-        >
-          <span
-            className={`text-xs font-semibold uppercase tracking-wider ${
-              metrics.netProfit >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
-            }`}
-          >
-            Net Profit / Loss
-          </span>
-          <div
-            className={`text-2xl font-black mt-2 truncate ${
-              metrics.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-            }`}
-          >
-            {isLoading ? '...' : formatCurrency(metrics.netProfit)}
+        {/* Card 4: Accrued Monthly Interest */}
+        <Card className="p-4 flex flex-col justify-between border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+              Monthly Interest
+            </span>
+            <Coins className="w-3.5 h-3.5 text-amber-500" />
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            {metrics.netProfit >= 0 ? 'Net Profit' : 'Net Loss'}
-          </p>
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2 truncate">
+            {isLoading ? '...' : formatCurrency(metrics.accruedInterest ?? metrics.investmentInterest)}
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Accrued monthly interest (6%)</p>
+        </Card>
+
+        {/* Card 5: Total Investment Value */}
+        <Card className="p-4 flex flex-col justify-between border-emerald-500/30 bg-emerald-500/10">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+              Total Value
+            </span>
+            <Receipt className="w-3.5 h-3.5 text-emerald-500" />
+          </div>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2 truncate">
+            {isLoading ? '...' : formatCurrency(metrics.totalInvestmentValue ?? (metrics.ownerCapital + metrics.investmentInterest))}
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Capital + Accrued Interest</p>
         </Card>
 
         {/* Card 6: Total Working Capital */}
         <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Working Capital
+              Working Balance
             </span>
             <Building2 className="w-3.5 h-3.5 text-slate-400" />
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.totalWorkingCapital || metrics.currentBalance)}
+            {isLoading ? '...' : formatCurrency(metrics.currentBalance)}
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Current cash balance</p>
         </Card>
@@ -447,6 +434,7 @@ export default function InvestmentKhataPage() {
         isOpen={isWithdrawalOpen}
         onClose={() => setIsWithdrawalOpen(false)}
         onSuccess={fetchInvestmentData}
+        availableCapital={metrics.ownerCapital || metrics.currentBalance}
       />
 
       <WithdrawalReturnModal

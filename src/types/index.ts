@@ -225,6 +225,7 @@ export type InvestmentTransactionType =
   | 'Chit Payment'
   | 'Chit Installment'
   | 'Chit Prize Received'
+  | 'Deposit Received'
   | 'Business Withdrawal'
   | 'Withdrawal Return'
   | 'Daily Interest'
@@ -270,6 +271,11 @@ export interface InvestmentMetrics {
   businessWithdrawals: number;
   netProfit: number;
   monthlyInterestRate: number;
+  totalCapitalAdded?: number;
+  totalCapitalWithdrawn?: number;
+  currentCapital?: number;
+  accruedInterest?: number;
+  totalInvestmentValue?: number;
 }
 
 export type DepositorStatus = 'active' | 'closed';

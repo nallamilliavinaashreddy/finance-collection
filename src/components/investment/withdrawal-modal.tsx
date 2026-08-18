@@ -11,13 +11,16 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/providers/toast-provider';
 import { ArrowUpRight, Calendar, IndianRupee, FileText } from 'lucide-react';
 
+import { formatCurrency } from '@/lib/utils';
+
 interface WithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  availableCapital?: number;
 }
 
-export function WithdrawalModal({ isOpen, onClose, onSuccess }: WithdrawalModalProps) {
+export function WithdrawalModal({ isOpen, onClose, onSuccess, availableCapital = 0 }: WithdrawalModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
 
@@ -27,6 +30,7 @@ export function WithdrawalModal({ isOpen, onClose, onSuccess }: WithdrawalModalP
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<BusinessWithdrawalFormData>({
     resolver: zodResolver(businessWithdrawalSchema),
@@ -37,12 +41,19 @@ export function WithdrawalModal({ isOpen, onClose, onSuccess }: WithdrawalModalP
     },
   });
 
+  const watchAmount = watch('amount');
+
   const onSubmit = async (formData: BusinessWithdrawalFormData) => {
+    if (availableCapital > 0 && formData.amount > availableCapital) {
+      showToast(`Withdrawal amount (${formatCurrency(formData.amount)}) exceeds available capital (${formatCurrency(availableCapital)}).`, 'error');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await recordBusinessWithdrawal(formData);
       if (res.success) {
-        showToast('Business withdrawal recorded successfully!', 'success');
+        showToast('Capital withdrawal recorded successfully!', 'success');
         reset();
         onSuccess();
         onClose();
@@ -60,10 +71,20 @@ export function WithdrawalModal({ isOpen, onClose, onSuccess }: WithdrawalModalP
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Record Business Withdrawal"
-      description="Withdraw funds from investment balance. Reduces current balance immediately."
+      title="Take Capital / Business Withdrawal"
+      description="Withdraw funds from available investment capital. Reduces capital and working balance immediately."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+        {/* Available Capital Info Badge */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60">
+          <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+            Available Investment Capital:
+          </span>
+          <span className="font-extrabold text-sm text-rose-600 dark:text-rose-400">
+            {formatCurrency(availableCapital)}
+          </span>
+        </div>
+
         {/* Amount */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -75,13 +96,18 @@ export function WithdrawalModal({ isOpen, onClose, onSuccess }: WithdrawalModalP
               type="number"
               min={1}
               step={1}
-              placeholder="e.g. 25000"
+              placeholder="e.g. 4000"
               className="pl-9"
               {...register('amount', { valueAsNumber: true })}
             />
           </div>
           {errors.amount && (
             <p className="text-xs text-rose-500 font-medium mt-1">{errors.amount.message}</p>
+          )}
+          {watchAmount > availableCapital && availableCapital > 0 && !errors.amount && (
+            <p className="text-xs text-rose-500 font-medium mt-1">
+              Amount exceeds available capital ({formatCurrency(availableCapital)})
+            </p>
           )}
         </div>
 

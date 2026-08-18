@@ -6,7 +6,7 @@ function checkUrl(url) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        resolve({ statusCode: res.statusCode, headers: res.headers, bodyLength: data.length });
+        resolve({ statusCode: res.statusCode, location: res.headers.location, bodyLength: data.length });
       });
     }).on('error', (err) => {
       resolve({ error: err.message });
@@ -15,11 +15,11 @@ function checkUrl(url) {
 }
 
 async function run() {
-  console.log('Checking http://localhost:3000/dashboard:');
-  console.log(await checkUrl('http://localhost:3000/dashboard'));
+  console.log('Checking http://localhost:3000/:');
+  console.log(await checkUrl('http://localhost:3000/'));
   
-  console.log('\nChecking http://localhost:3001/dashboard:');
-  console.log(await checkUrl('http://localhost:3001/dashboard'));
+  console.log('\nChecking http://localhost:3000/login:');
+  console.log(await checkUrl('http://localhost:3000/login'));
 }
 
 run();

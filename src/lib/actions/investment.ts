@@ -3,7 +3,7 @@ import { InvestmentTransaction, InvestmentMetrics, InvestmentTransactionType } f
 import { AddCapitalFormData, BusinessWithdrawalFormData, WithdrawalReturnFormData, InvestmentSettingsFormData } from '@/lib/validations/investment';
 
 /**
- * Safely format and log PostgrestError properties (message, code, details, hint)
+ * Safely format and log PostgrestError properties
  */
 export function formatSupabaseError(error: any): string {
   if (!error) return 'Unknown database error';
@@ -25,7 +25,7 @@ export function formatSupabaseError(error: any): string {
 }
 
 /**
- * Safely parse PostgREST missing table errors (PGRST205 / 404 / 42P01)
+ * Safely parse PostgREST missing table errors
  */
 function isTableNotFoundError(error: any): boolean {
   if (!error) return false;
@@ -39,7 +39,7 @@ function isTableNotFoundError(error: any): boolean {
 }
 
 /**
- * 1. Get Global Monthly Interest Rate Setting
+ * 1. Get Global Monthly Interest Rate Setting (Default: 6.00% / month = ₹600 for ₹10,000)
  */
 export async function getInvestmentSettings(): Promise<{ monthlyInterestRate: number }> {
   const supabase = createClient();
@@ -47,11 +47,11 @@ export async function getInvestmentSettings(): Promise<{ monthlyInterestRate: nu
     const { data, error } = await supabase.from('investment_settings').select('*').limit(1);
 
     if (error || !data || data.length === 0) {
-      return { monthlyInterestRate: 5.00 }; // Default 5% per month
+      return { monthlyInterestRate: 6.00 }; // Default 6% per month (₹600 on ₹10,000)
     }
-    return { monthlyInterestRate: Number(data[0].monthly_interest_rate || 5.00) };
+    return { monthlyInterestRate: Number(data[0].monthly_interest_rate || 6.00) };
   } catch (err) {
-    return { monthlyInterestRate: 5.00 };
+    return { monthlyInterestRate: 6.00 };
   }
 }
 
@@ -86,7 +86,7 @@ export async function updateInvestmentSettings(
 
     if (error) {
       if (isTableNotFoundError(error)) {
-        return { success: false, error: 'investment_settings table does not exist in Supabase SQL editor yet.' };
+        return { success: false, error: 'investment_settings table does not exist in Supabase.' };
       }
       return { success: false, error: formatSupabaseError(error) };
     }
@@ -105,25 +105,35 @@ export async function getCurrentInvestmentBalance(): Promise<number> {
   try {
     const { data, error } = await supabase
       .from('investment_transactions')
-      .select('balance')
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
       return 0;
     }
 
-    return Number(data[0].balance || 0);
+    let running = 0;
+    const sorted = [...data].sort((a: any, b: any) => {
+      const dateA = new Date(a.transaction_date).getTime();
+      const dateB = new Date(b.transaction_date).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+
+    for (const tx of sorted) {
+      const amtIn = Number(tx.amount_in || 0);
+      const amtOut = Number(tx.amount_out || 0);
+      running = Math.round((running + amtIn - amtOut) * 100) / 100;
+    }
+
+    return running;
   } catch (err) {
     return 0;
   }
 }
 
 /**
- * Universal automated helper to record an investment transaction entry.
- * Note: Daily interest accrual is recorded as daily_interest_added,
- * but DOES NOT increase cash balance/working capital.
- * Closing Balance = Opening Balance + Amount In - Amount Out
+ * Universal helper to record an investment transaction entry.
  */
 export async function recordInvestmentTransaction(
   transactionType: InvestmentTransactionType,
@@ -145,10 +155,7 @@ export async function recordInvestmentTransaction(
       ? Number(dailyInterestOverride)
       : 0;
 
-    // Correct Accounting:
-    // Closing Balance (Cash/Working Capital) = Opening Balance + Amount In - Amount Out
-    // Daily interest accrued is recorded in daily_interest_added, but does NOT change cash balance!
-    const closingBalance = openingBalance + Number(amountIn || 0) - Number(amountOut || 0);
+    const closingBalance = Math.round((openingBalance + Number(amountIn || 0) - Number(amountOut || 0)) * 100) / 100;
 
     const payload = {
       transaction_date: transactionDate || new Date().toISOString().split('T')[0],
@@ -158,7 +165,7 @@ export async function recordInvestmentTransaction(
       amount_out: Number(amountOut || 0),
       interest_rate: monthlyInterestRate,
       daily_interest_added: Math.round(dailyInterestAdded * 100) / 100,
-      balance: Math.round(closingBalance * 100) / 100,
+      balance: closingBalance,
       reference_type: referenceType || null,
       reference_id: referenceId ? String(referenceId) : null,
       remarks: remarks || null,
@@ -170,7 +177,7 @@ export async function recordInvestmentTransaction(
       if (isTableNotFoundError(error)) {
         return {
           success: false,
-          error: 'The investment_transactions table does not exist in Supabase. Please execute the SQL migration script in Supabase SQL Editor.',
+          error: 'The investment_transactions table does not exist in Supabase.',
         };
       }
       return { success: false, error: formatSupabaseError(error) };
@@ -183,95 +190,97 @@ export async function recordInvestmentTransaction(
 }
 
 /**
- * Auto-Accrue Missing Daily Interest from the last accrued date through today.
- * Prevents duplicate accruals on dates that already have a 'Daily Interest' entry.
+ * Auto-Accrue Monthly Investment Interest (Idempotent & Duplication-Proof)
+ * Business Rule: ₹10,000 investment -> ₹600 monthly interest (6% / month)
+ * Locks each month using reference_type='monthly_interest' and reference_id='YYYY-MM'
+ * to guarantee that the same month's interest is NEVER added repeatedly!
  */
-export async function autoAccrueDailyInvestmentInterest(): Promise<{ success: boolean; accruedDays?: number }> {
+export async function autoAccrueMonthlyInvestmentInterest(): Promise<{ success: boolean; accruedMonths?: number }> {
   const supabase = createClient();
   try {
-    const { monthlyInterestRate } = await getInvestmentSettings();
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    // 1. Fetch existing Daily Interest dates to avoid duplicate accruals
-    const { data: existingIntTx } = await supabase
-      .from('investment_transactions')
-      .select('transaction_date')
-      .eq('transaction_type', 'Daily Interest');
-
-    const existingDates = new Set((existingIntTx || []).map((t: any) => t.transaction_date));
-
-    // 2. If today is already accrued, check if any recent days were missed
-    // Find earliest transaction date to start accrual timeline
-    const { data: firstTx } = await supabase
-      .from('investment_transactions')
-      .select('transaction_date')
-      .order('transaction_date', { ascending: true })
-      .limit(1);
-
-    if (!firstTx || firstTx.length === 0) {
-      return { success: true, accruedDays: 0 };
-    }
-
-    const startDate = new Date(firstTx[0].transaction_date);
     const today = new Date();
+    const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-    let curr = new Date(startDate);
-    let countAccrued = 0;
+    // Check if this month's interest has ALREADY been accrued
+    const { data: existingMonthlyTx } = await supabase
+      .from('investment_transactions')
+      .select('id')
+      .eq('reference_type', 'monthly_interest')
+      .eq('reference_id', currentYearMonth);
 
-    // Loop through calendar days up to today
-    while (curr <= today) {
-      const dateStr = curr.toISOString().split('T')[0];
-
-      if (!existingDates.has(dateStr)) {
-        const currentBalance = await getCurrentInvestmentBalance();
-        if (currentBalance > 0) {
-          const dailyInterest = (currentBalance * monthlyInterestRate) / 100 / 30;
-          const roundedInterest = Math.round(dailyInterest * 100) / 100;
-
-          if (roundedInterest > 0) {
-            const remarks = `Daily Simple Interest @ ${monthlyInterestRate}%/month on Balance ₹${currentBalance.toLocaleString('en-IN')}`;
-
-            await recordInvestmentTransaction(
-              'Daily Interest',
-              0,
-              0,
-              'interest',
-              undefined,
-              remarks,
-              dateStr,
-              roundedInterest
-            );
-            existingDates.add(dateStr);
-            countAccrued++;
-          }
-        }
-      }
-      curr.setDate(curr.getDate() + 1);
+    if (existingMonthlyTx && existingMonthlyTx.length > 0) {
+      // Already accrued for this month! Instant exit to prevent duplicate interest!
+      return { success: true, accruedMonths: 0 };
     }
 
-    return { success: true, accruedDays: countAccrued };
+    // Fetch all transactions to compute current active capital
+    const { data: txData } = await supabase.from('investment_transactions').select('*');
+    const transactions = txData || [];
+
+    const totalCapitalAdded = transactions
+      .filter((t: any) =>
+        t.transaction_type === 'Capital Added' ||
+        t.transaction_type === 'Chit Prize Received' ||
+        t.transaction_type === 'Deposit Received' ||
+        t.transaction_type === 'Withdrawal Return'
+      )
+      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
+
+    const totalCapitalWithdrawn = transactions
+      .filter((t: any) =>
+        t.transaction_type === 'Business Withdrawal' ||
+        t.transaction_type === 'Capital Returned'
+      )
+      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+
+    const activeCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
+
+    if (activeCapital > 0) {
+      const { monthlyInterestRate } = await getInvestmentSettings();
+      // Monthly interest formula: ₹10,000 -> ₹600 (6% per month)
+      const monthlyInterestAmount = Math.round(((activeCapital * monthlyInterestRate) / 100) * 100) / 100;
+
+      if (monthlyInterestAmount > 0) {
+        const todayISO = today.toISOString().split('T')[0];
+        const remarks = `Monthly Accrued Interest @ ${monthlyInterestRate}%/month on Capital ₹${activeCapital.toLocaleString('en-IN')}`;
+
+        await recordInvestmentTransaction(
+          'Daily Interest', // Preserves enum compatibility with DB constraints
+          0,
+          0,
+          'monthly_interest',
+          currentYearMonth,
+          remarks,
+          todayISO,
+          monthlyInterestAmount
+        );
+
+        return { success: true, accruedMonths: 1 };
+      }
+    }
+
+    return { success: true, accruedMonths: 0 };
   } catch (err: any) {
-    console.warn('Auto accrual notice:', err);
-    return { success: false, accruedDays: 0 };
+    console.warn('Monthly interest accrual notice:', err);
+    return { success: false, accruedMonths: 0 };
   }
 }
 
 /**
- * 3. Add Daily Simple Interest on Current Investment Balance
- * Triggers auto-accrual for missing dates up to today.
+ * 3. Add Daily Simple Interest Trigger (Legacy Compatibility Hook)
  */
 export async function addDailyInterest(
   daysCount: number = 1,
   customDate?: string
 ): Promise<{ success: boolean; interestAdded?: number; error?: string }> {
   try {
-    const res = await autoAccrueDailyInvestmentInterest();
+    const res = await autoAccrueMonthlyInvestmentInterest();
 
     const supabase = createClient();
     const { data: todayTx } = await supabase
       .from('investment_transactions')
       .select('daily_interest_added')
-      .eq('transaction_type', 'Daily Interest');
+      .eq('reference_type', 'monthly_interest');
 
     const totalInterestAccrued = (todayTx || []).reduce(
       (sum: number, t: any) => sum + Number(t.daily_interest_added || 0),
@@ -283,64 +292,147 @@ export async function addDailyInterest(
       interestAdded: Math.round(totalInterestAccrued * 100) / 100,
     };
   } catch (err: any) {
-    return { success: false, error: err.message || 'Failed to add daily interest' };
+    return { success: false, error: err.message || 'Failed to add monthly interest' };
   }
 }
 
 /**
- * 4. Add Capital (Admin Investment)
+ * 4. Add Capital (Direct Investment)
  */
 export async function addCapital(formData: AddCapitalFormData): Promise<{ success: boolean; error?: string }> {
   try {
-    if (formData.monthlyInterestRate !== undefined) {
-      await updateInvestmentSettings({ monthlyInterestRate: formData.monthlyInterestRate });
+    const amountNum = Number(formData.amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return { success: false, error: 'Investment amount must be greater than ₹0.' };
     }
 
-    const remarks = `Capital Added via Source: ${formData.source}${formData.remarks ? ' | ' + formData.remarks : ''}`;
+    if (formData.monthlyInterestRate !== undefined && !isNaN(Number(formData.monthlyInterestRate))) {
+      await updateInvestmentSettings({ monthlyInterestRate: Number(formData.monthlyInterestRate) });
+    }
+
+    const sourceStr = (formData.source || 'Direct Investment').trim();
+    const remarks = `Direct Investment via ${sourceStr}${formData.remarks && formData.remarks.trim() ? ' | ' + formData.remarks.trim() : ''}`;
+
     const res = await recordInvestmentTransaction(
       'Capital Added',
-      formData.amount,
+      amountNum,
       0,
       'capital',
       undefined,
       remarks,
-      formData.transactionDate
+      formData.transactionDate || new Date().toISOString().split('T')[0]
     );
+
+    if (!res.success) {
+      console.error('addCapital failed:', res.error);
+    }
 
     return res;
   } catch (err: any) {
-    return { success: false, error: err.message || 'Failed to record capital addition' };
+    console.error('addCapital unexpected error:', err);
+    return { success: false, error: formatSupabaseError(err) };
   }
 }
 
 /**
- * 5. Record Business Withdrawal
+ * 5. Record Business Withdrawal / Take Capital
+ * Strict Business Rule:
+ * - Withdrawal amount > 0
+ * - Withdrawal amount <= available capital
+ * - Fast & Persisted in Supabase
  */
 export async function recordBusinessWithdrawal(
   formData: BusinessWithdrawalFormData
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!formData.amount || formData.amount <= 0) {
+      return { success: false, error: 'Withdrawal amount must be greater than ₹0.' };
+    }
+
+    const supabase = createClient();
+
+    // Fetch transactions & settings in parallel in 1 network round-trip
+    const [{ data: txData }, { monthlyInterestRate }] = await Promise.all([
+      supabase.from('investment_transactions').select('*').order('created_at', { ascending: false }),
+      getInvestmentSettings(),
+    ]);
+
+    const transactions = txData || [];
+
+    // Compute current capital (Direct Investments + Chits + Deposits - Withdrawals)
+    const totalCapitalAdded = transactions
+      .filter((t: any) =>
+        t.transaction_type === 'Capital Added' ||
+        t.transaction_type === 'Chit Prize Received' ||
+        t.transaction_type === 'Deposit Received' ||
+        t.transaction_type === 'Withdrawal Return'
+      )
+      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
+
+    const totalCapitalWithdrawn = transactions
+      .filter((t: any) =>
+        t.transaction_type === 'Business Withdrawal' ||
+        t.transaction_type === 'Capital Returned'
+      )
+      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+
+    const availableCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
+
+    if (formData.amount > availableCapital) {
+      return {
+        success: false,
+        error: `Withdrawal amount (₹${formData.amount.toLocaleString('en-IN')}) exceeds available capital (₹${availableCapital.toLocaleString('en-IN')}).`,
+      };
+    }
+
+    // Calculate current running cash balance
+    let currentBalance = 0;
+    const sorted = [...transactions].sort((a: any, b: any) => {
+      const dateA = new Date(a.transaction_date).getTime();
+      const dateB = new Date(b.transaction_date).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+
+    for (const tx of sorted) {
+      const amtIn = Number(tx.amount_in || 0);
+      const amtOut = Number(tx.amount_out || 0);
+      currentBalance = Math.round((currentBalance + amtIn - amtOut) * 100) / 100;
+    }
+
     const withdrawalDate = formData.withdrawalDate || new Date().toISOString().split('T')[0];
     const remarks = `Business Withdrawal${formData.remarks ? ' | ' + formData.remarks : ''}`;
+    const openingBalance = currentBalance;
+    const closingBalance = Math.round((openingBalance - formData.amount) * 100) / 100;
 
-    const res = await recordInvestmentTransaction(
-      'Business Withdrawal',
-      0,
-      formData.amount,
-      'withdrawal',
-      undefined,
-      remarks,
-      withdrawalDate
-    );
+    const payload = {
+      transaction_date: withdrawalDate,
+      transaction_type: 'Business Withdrawal',
+      opening_balance: Math.round(openingBalance * 100) / 100,
+      amount_in: 0,
+      amount_out: Number(formData.amount),
+      interest_rate: monthlyInterestRate,
+      daily_interest_added: 0,
+      balance: closingBalance,
+      reference_type: 'withdrawal',
+      reference_id: null,
+      remarks: remarks,
+    };
 
-    return res;
+    const { error: insertError } = await supabase.from('investment_transactions').insert([payload]);
+
+    if (insertError) {
+      return { success: false, error: formatSupabaseError(insertError) };
+    }
+
+    return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to record business withdrawal' };
   }
 }
 
 /**
- * 6. Record Withdrawal Return (Owner returning withdrawn capital into business)
+ * 6. Record Withdrawal Return
  */
 export async function recordWithdrawalReturn(
   formData: WithdrawalReturnFormData
@@ -366,47 +458,7 @@ export async function recordWithdrawalReturn(
 }
 
 /**
- * Chronologically recalculate opening and closing balances for all investment transactions
- * Accounting Rule: Closing Balance = Opening Balance + Amount In - Amount Out
- */
-export async function recalculateInvestmentLedgerBalances(): Promise<void> {
-  const supabase = createClient();
-  try {
-    const { data: rows, error } = await supabase
-      .from('investment_transactions')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (error || !rows || rows.length === 0) return;
-
-    let runningBalance = 0;
-    for (const row of rows) {
-      const openingBal = runningBalance;
-      const amtIn = Number(row.amount_in || 0);
-      const amtOut = Number(row.amount_out || 0);
-      // Correct Accounting: Daily Interest is recorded in daily_interest_added,
-      // but DOES NOT inflate cash balance/working capital!
-      const closingBal = Math.round((openingBal + amtIn - amtOut) * 100) / 100;
-
-      if (Number(row.opening_balance) !== openingBal || Number(row.balance) !== closingBal) {
-        await supabase
-          .from('investment_transactions')
-          .update({
-            opening_balance: openingBal,
-            balance: closingBal,
-          })
-          .eq('id', row.id);
-      }
-      runningBalance = closingBal;
-    }
-  } catch (err) {
-    console.warn('Error recalculating investment ledger balances:', err);
-  }
-}
-
-/**
- * Update an existing investment transaction by reference_type and reference_id,
- * and recalculate running ledger balances.
+ * Update an existing investment transaction by reference_type and reference_id (Idempotent Hook)
  */
 export async function updateInvestmentTransactionByReference(
   referenceType: string,
@@ -442,14 +494,13 @@ export async function updateInvestmentTransactionByReference(
         return { success: false, error: formatSupabaseError(error) };
       }
 
-      await recalculateInvestmentLedgerBalances();
       return { success: true };
     } else {
-      const mappedType = referenceType === 'stamp'
-        ? 'Stamp Income'
-        : (referenceType === 'chit_prize'
-            ? 'Chit Prize Received'
-            : (referenceType === 'chit_payment' ? 'Chit Installment' : 'Expense'));
+      const mappedType = referenceType === 'chit_prize'
+        ? 'Chit Prize Received'
+        : (referenceType === 'depositor'
+            ? 'Deposit Received'
+            : (referenceType === 'chit_payment' ? 'Chit Installment' : 'Capital Added'));
 
       return await recordInvestmentTransaction(
         mappedType,
@@ -467,8 +518,7 @@ export async function updateInvestmentTransactionByReference(
 }
 
 /**
- * Delete an investment transaction by reference_type and reference_id,
- * and recalculate running ledger balances.
+ * Delete an investment transaction by reference_type and reference_id
  */
 export async function deleteInvestmentTransactionByReference(
   referenceType: string,
@@ -486,42 +536,9 @@ export async function deleteInvestmentTransactionByReference(
       console.warn(`Error deleting investment transaction for ${referenceType} ${referenceId}:`, error);
     }
 
-    await recalculateInvestmentLedgerBalances();
     return { success: true };
   } catch (err: any) {
     return { success: true };
-  }
-}
-
-/**
- * Auto-convert any legacy 'Stamp Expense' entries in investment_transactions to 'Stamp Income'
- */
-export async function convertExistingStampExpensesToIncome(): Promise<void> {
-  const supabase = createClient();
-  try {
-    const { data: expenses } = await supabase
-      .from('investment_transactions')
-      .select('*')
-      .eq('transaction_type', 'Stamp Expense');
-
-    if (!expenses || expenses.length === 0) return;
-
-    for (const exp of expenses) {
-      const stampAmount = Number(exp.amount_out || exp.amount_in || 0);
-      await supabase
-        .from('investment_transactions')
-        .update({
-          transaction_type: 'Stamp Income',
-          amount_in: stampAmount,
-          amount_out: 0,
-          remarks: 'Stamp Income',
-        })
-        .eq('id', exp.id);
-    }
-
-    await recalculateInvestmentLedgerBalances();
-  } catch (err) {
-    console.warn('Notice: Error converting legacy Stamp Expenses to Income:', err);
   }
 }
 
@@ -535,9 +552,7 @@ export async function getInvestmentTransactions(
   const supabase = createClient();
 
   try {
-    await autoAccrueDailyInvestmentInterest();
-    await convertExistingStampExpensesToIncome();
-    await recalculateInvestmentLedgerBalances();
+    await autoAccrueMonthlyInvestmentInterest();
 
     let query = supabase.from('investment_transactions').select('*').order('created_at', { ascending: false });
 
@@ -588,59 +603,77 @@ export async function getInvestmentTransactions(
 }
 
 /**
- * 8. Get Investment Metrics Summary
+ * 8. Get Investment Metrics Summary (Ultra-Fast Parallel Queries & Pure Calculations)
  */
 export async function getInvestmentMetrics(): Promise<{ success: boolean; data: InvestmentMetrics; error?: string }> {
   const supabase = createClient();
 
   try {
-    await autoAccrueDailyInvestmentInterest();
-    await convertExistingStampExpensesToIncome();
-    await recalculateInvestmentLedgerBalances();
+    await autoAccrueMonthlyInvestmentInterest();
 
-    const { data: txData } = await supabase.from('investment_transactions').select('*');
-    const { data: loansData } = await supabase.from('loans').select('amount_given, total_collection, total_collection_amount, is_closed');
-    const { data: expensesData } = await supabase.from('expenses').select('amount');
-    const { monthlyInterestRate } = await getInvestmentSettings();
+    const [
+      { data: txData },
+      { data: loansData },
+      { data: expensesData },
+      settings
+    ] = await Promise.all([
+      supabase.from('investment_transactions').select('*').order('created_at', { ascending: false }),
+      supabase.from('loans').select('amount_given, total_collection, total_collection_amount, is_closed'),
+      supabase.from('expenses').select('amount'),
+      getInvestmentSettings()
+    ]);
 
-    const transactions = txData || [];
+    const monthlyInterestRate = settings.monthlyInterestRate;
+    const rawTransactions = txData || [];
 
-    // 1. Current Balance / Working Capital (latest cash balance)
-    let currentBalance = 0;
-    if (transactions.length > 0) {
-      const sorted = [...transactions].sort(
-        (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      currentBalance = Number(sorted[0].balance || 0);
+    // Chronological calculation of running balances
+    const chronological = [...rawTransactions].sort((a: any, b: any) => {
+      const dateA = new Date(a.transaction_date).getTime();
+      const dateB = new Date(b.transaction_date).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+
+    let runningBal = 0;
+    for (const tx of chronological) {
+      const amtIn = Number(tx.amount_in || 0);
+      const amtOut = Number(tx.amount_out || 0);
+      runningBal = Math.round((runningBal + amtIn - amtOut) * 100) / 100;
+      tx.balance = runningBal;
     }
 
-    // 2. Accrued Investment Interest (Total interest calculated on owner's investment)
-    const investmentInterest = transactions.reduce(
+    const transactions = chronological;
+    const currentBalance = runningBal;
+
+    // Capital Calculations: Direct Investments + Chits Received + Deposits Received + Returns - Withdrawals
+    const totalCapitalAdded = transactions
+      .filter((t: any) =>
+        t.transaction_type === 'Capital Added' ||
+        t.transaction_type === 'Chit Prize Received' ||
+        t.transaction_type === 'Deposit Received' ||
+        t.transaction_type === 'Withdrawal Return'
+      )
+      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
+
+    const totalCapitalWithdrawn = transactions
+      .filter((t: any) =>
+        t.transaction_type === 'Business Withdrawal' ||
+        t.transaction_type === 'Capital Returned'
+      )
+      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+
+    const currentCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
+    const ownerCapital = currentCapital;
+
+    // Accrued Interest (Sum of monthly interest entries)
+    const accruedInterest = transactions.reduce(
       (sum: number, t: any) => sum + Number(t.daily_interest_added || 0),
       0
     );
 
-    // 3. Owner Capital (Sum of direct capital contributions + returns - withdrawals)
-    const totalCapitalAdded = transactions
-      .filter((t: any) => t.transaction_type === 'Capital Added')
-      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
+    const totalInvestmentValue = Math.round((currentCapital + accruedInterest) * 100) / 100;
 
-    const totalCapitalReturned = transactions
-      .filter((t: any) => t.transaction_type === 'Capital Returned')
-      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
-
-    const totalWithdrawals = transactions
-      .filter((t: any) => t.transaction_type === 'Business Withdrawal')
-      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
-
-    const totalReturns = transactions
-      .filter((t: any) => t.transaction_type === 'Withdrawal Return')
-      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
-
-    const businessWithdrawals = Math.max(0, totalWithdrawals - totalReturns);
-    const ownerCapital = Math.max(0, totalCapitalAdded + totalReturns - totalWithdrawals - totalCapitalReturned);
-
-    // 4. Loan Interest (Total interest earned from active loans)
+    // Loan Interest (Total interest earned from active loans)
     const loans = loansData || [];
     const loanInterest = loans
       .filter((l: any) => !l.is_closed)
@@ -650,29 +683,32 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
         return sum + Math.max(0, target - given);
       }, 0);
 
-    // 5. Expenses (Total operational expenses)
+    // Expenses
     const expenses = (expensesData || []).reduce(
       (sum: number, e: any) => sum + Number(e.amount || 0),
       0
     );
 
-    const totalWorkingCapital = currentBalance;
-
-    // Net Profit / Loss = Loan Interest - Investment Interest - Expenses
-    const netProfit = Math.round((loanInterest - investmentInterest - expenses) * 100) / 100;
+    const businessWithdrawals = totalCapitalWithdrawn;
+    const netProfit = Math.round((loanInterest - accruedInterest - expenses) * 100) / 100;
 
     return {
       success: true,
       data: {
-        ownerCapital: Math.round((ownerCapital || currentBalance) * 100) / 100,
-        totalWorkingCapital: Math.round(totalWorkingCapital * 100) / 100,
+        ownerCapital: Math.round(ownerCapital * 100) / 100,
         currentBalance: Math.round(currentBalance * 100) / 100,
-        investmentInterest: Math.round(investmentInterest * 100) / 100,
+        totalWorkingCapital: Math.round(currentBalance * 100) / 100,
+        investmentInterest: Math.round(accruedInterest * 100) / 100,
         loanInterest: Math.round(loanInterest * 100) / 100,
         expenses: Math.round(expenses * 100) / 100,
         businessWithdrawals: Math.round(businessWithdrawals * 100) / 100,
         netProfit,
         monthlyInterestRate,
+        totalCapitalAdded: Math.round(totalCapitalAdded * 100) / 100,
+        totalCapitalWithdrawn: Math.round(totalCapitalWithdrawn * 100) / 100,
+        currentCapital: Math.round(currentCapital * 100) / 100,
+        accruedInterest: Math.round(accruedInterest * 100) / 100,
+        totalInvestmentValue,
       },
     };
   } catch (err: any) {
@@ -680,14 +716,19 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
       success: true,
       data: {
         ownerCapital: 0,
-        totalWorkingCapital: 0,
         currentBalance: 0,
+        totalWorkingCapital: 0,
         investmentInterest: 0,
         loanInterest: 0,
         expenses: 0,
         businessWithdrawals: 0,
         netProfit: 0,
-        monthlyInterestRate: 5.0,
+        monthlyInterestRate: 6.0,
+        totalCapitalAdded: 0,
+        totalCapitalWithdrawn: 0,
+        currentCapital: 0,
+        accruedInterest: 0,
+        totalInvestmentValue: 0,
       },
     };
   }

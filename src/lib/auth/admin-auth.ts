@@ -30,7 +30,9 @@ export async function loginAdmin(email: string, password: string): Promise<{ suc
           createdAt: new Date().toISOString(),
         };
 
-        document.cookie = `fincollect_admin_session=active; path=/; max-age=${60 * 60 * 24 * 7}`;
+        if (typeof document !== 'undefined') {
+          document.cookie = `fincollect_admin_session=active; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        }
         return { success: true, user: adminProfile };
       }
 
@@ -47,7 +49,9 @@ export async function loginAdmin(email: string, password: string): Promise<{ suc
         createdAt: data.user.created_at,
       };
 
-      document.cookie = `fincollect_admin_session=active; path=/; max-age=${60 * 60 * 24 * 7}`;
+      if (typeof document !== 'undefined') {
+        document.cookie = `fincollect_admin_session=active; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      }
       return { success: true, user: userProfile };
     }
   } catch (err: any) {
@@ -66,30 +70,43 @@ export async function logoutAdmin(): Promise<void> {
     console.error('Error signing out of Supabase:', e);
   }
 
-  document.cookie = 'fincollect_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  if (typeof document !== 'undefined') {
+    document.cookie = 'fincollect_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+  }
 }
 
 export async function getCurrentAdminServer(): Promise<UserProfile | null> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (user) {
-    return {
-      id: user.id,
-      email: user.email || 'admin@finance.com',
-      fullName: user.user_metadata?.full_name || 'Chief Financial Administrator',
-      role: 'admin',
-      isActive: true,
-      createdAt: user.created_at,
-    };
+    if (user) {
+      return {
+        id: user.id,
+        email: user.email || 'admin@finance.com',
+        fullName: user.user_metadata?.full_name || 'Chief Financial Administrator',
+        role: 'admin',
+        isActive: true,
+        createdAt: user.created_at,
+      };
+    }
+  } catch (e) {
+    // ignore
   }
 
-  return {
-    id: 'admin-101-system-user',
-    email: 'admin@finance.com',
-    fullName: 'Chief Financial Administrator',
-    role: 'admin',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  };
+  if (typeof document !== 'undefined') {
+    const hasAdminSession = document.cookie.split(';').some((c) => c.trim().startsWith('fincollect_admin_session=active'));
+    if (hasAdminSession) {
+      return {
+        id: 'admin-101-system-user',
+        email: 'admin@finance.com',
+        fullName: 'Chief Financial Administrator',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+    }
+  }
+
+  return null;
 }
