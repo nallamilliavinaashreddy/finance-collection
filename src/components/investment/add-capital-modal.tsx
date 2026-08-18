@@ -21,7 +21,13 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
 
-  const todayISO = new Date().toISOString().split('T')[0];
+  const getTodayISO = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   const {
     register,
@@ -32,7 +38,7 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
     resolver: zodResolver(addCapitalSchema),
     defaultValues: {
       amount: undefined,
-      transactionDate: todayISO,
+      transactionDate: getTodayISO(),
       source: 'Owner Capital',
       monthlyInterestRate: 5,
       remarks: '',

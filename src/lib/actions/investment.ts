@@ -148,6 +148,35 @@ export async function recordInvestmentTransaction(
   const supabase = createClient();
 
   try {
+    // Helper to get today's local date YYYY-MM-DD
+    const getLocalTodayISO = () => {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    let validDate = transactionDate ? transactionDate.trim() : '';
+    if (!validDate || !/^\d{4}-\d{2}-\d{2}$/.test(validDate) || isNaN(new Date(`${validDate}T00:00:00`).getTime())) {
+      validDate = getLocalTodayISO();
+    }
+
+    // Underlying Interest Uniqueness Check: Prevent duplicate interest records for the same date/month
+    if (transactionType === 'Daily Interest' || referenceType === 'monthly_interest' || referenceType === 'daily_interest') {
+      const monthKey = referenceId || validDate.substring(0, 7);
+
+      const { data: existingInterest } = await supabase
+        .from('investment_transactions')
+        .select('id')
+        .or(`and(transaction_type.eq.Daily Interest,transaction_date.eq.${validDate}),and(reference_type.eq.monthly_interest,reference_id.eq.${monthKey})`);
+
+      if (existingInterest && existingInterest.length > 0) {
+        // Interest record already exists for this date/month. Skip duplicate insert!
+        return { success: true };
+      }
+    }
+
     const openingBalance = await getCurrentInvestmentBalance();
     const { monthlyInterestRate } = await getInvestmentSettings();
 
@@ -158,7 +187,7 @@ export async function recordInvestmentTransaction(
     const closingBalance = Math.round((openingBalance + Number(amountIn || 0) - Number(amountOut || 0)) * 100) / 100;
 
     const payload = {
-      transaction_date: transactionDate || new Date().toISOString().split('T')[0],
+      transaction_date: validDate,
       transaction_type: transactionType,
       opening_balance: Math.round(openingBalance * 100) / 100,
       amount_in: Number(amountIn || 0),

@@ -19,7 +19,17 @@ export function formatCurrency(amount: number, maximumFractionDigits: number = 0
 
 export function formatDate(date: string | Date): string {
   if (!date) return 'N/A';
-  const d = typeof date === 'string' ? new Date(date) : date;
+  let d: Date;
+  if (typeof date === 'string') {
+    const trimmed = date.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      d = new Date(`${trimmed}T00:00:00`);
+    } else {
+      d = new Date(trimmed);
+    }
+  } else {
+    d = date;
+  }
   if (isNaN(d.getTime())) return 'N/A';
   return new Intl.DateTimeFormat('en-IN', {
     month: 'short',
