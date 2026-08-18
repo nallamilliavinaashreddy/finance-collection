@@ -33,6 +33,7 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<AddCapitalFormData>({
     resolver: zodResolver(addCapitalSchema),
@@ -44,6 +45,12 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
       remarks: '',
     },
   });
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setValue('transactionDate', getTodayISO());
+    }
+  }, [isOpen, setValue]);
 
   const onSubmit = async (formData: AddCapitalFormData) => {
     setIsSubmitting(true);

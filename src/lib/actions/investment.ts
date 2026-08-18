@@ -158,7 +158,13 @@ export async function recordInvestmentTransaction(
     };
 
     let validDate = transactionDate ? transactionDate.trim() : '';
-    if (!validDate || !/^\d{4}-\d{2}-\d{2}$/.test(validDate) || isNaN(new Date(`${validDate}T00:00:00`).getTime())) {
+    // Validate YYYY-MM-DD format and ensure year >= 2020 (overrides invalid or legacy 2009 dates with today's date)
+    if (
+      !validDate ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(validDate) ||
+      isNaN(new Date(`${validDate}T00:00:00`).getTime()) ||
+      parseInt(validDate.split('-')[0], 10) < 2020
+    ) {
       validDate = getLocalTodayISO();
     }
 
@@ -218,13 +224,9 @@ export async function recordInvestmentTransaction(
   }
 }
 
-/**
- * Auto-Accrue Monthly Investment Interest (Idempotent & Duplication-Proof)
- * Business Rule: ₹10,000 investment -> ₹600 monthly interest (6% / month)
- * Locks each month using reference_type='monthly_interest' and reference_id='YYYY-MM'
- * to guarantee that the same month's interest is NEVER added repeatedly!
- */
-export async function autoAccrueMonthlyInvestmentInterest(): Promise<{ success: boolean; accruedMonths?: number }> {
+let accrualInFlight: Promise<{ success: boolean; accruedMonths?: number }> | null = null;
+
+async function executeAutoAccrueInternal(): Promise<{ success: boolean; accruedMonths?: number }> {
   const supabase = createClient();
   try {
     const today = new Date();
@@ -273,12 +275,11 @@ export async function autoAccrueMonthlyInvestmentInterest(): Promise<{ success: 
         const todayISO = today.toISOString().split('T')[0];
         const remarks = `Monthly Accrued Interest @ ${monthlyInterestRate}%/month on Capital ₹${activeCapital.toLocaleString('en-IN')}`;
 
-        await recordInvestmentTransaction(
-          'Daily Interest', // Preserves enum compatibility with DB constraints
-          0,
-          0,
+        await updateInvestmentTransactionByReference(
           'monthly_interest',
           currentYearMonth,
+          0,
+          0,
           remarks,
           todayISO,
           monthlyInterestAmount
@@ -293,6 +294,24 @@ export async function autoAccrueMonthlyInvestmentInterest(): Promise<{ success: 
     console.warn('Monthly interest accrual notice:', err);
     return { success: false, accruedMonths: 0 };
   }
+}
+
+/**
+ * Auto-Accrue Monthly Investment Interest (Idempotent & Duplication-Proof)
+ * Serialized via in-flight promise lock to prevent concurrent Promise.all race conditions!
+ */
+export async function autoAccrueMonthlyInvestmentInterest(): Promise<{ success: boolean; accruedMonths?: number }> {
+  if (accrualInFlight) {
+    return accrualInFlight;
+  }
+  accrualInFlight = (async () => {
+    try {
+      return await executeAutoAccrueInternal();
+    } finally {
+      accrualInFlight = null;
+    }
+  })();
+  return accrualInFlight;
 }
 
 /**
@@ -495,22 +514,28 @@ export async function updateInvestmentTransactionByReference(
   amountIn: number,
   amountOut: number,
   remarks?: string,
-  transactionDate?: string
+  transactionDate?: string,
+  dailyInterestOverride?: number
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
   try {
-    const { data: existing } = await supabase
+    const { data: existingList } = await supabase
       .from('investment_transactions')
       .select('id')
       .eq('reference_type', referenceType)
       .eq('reference_id', referenceId)
-      .maybeSingle();
+      .limit(1);
+
+    const existing = existingList && existingList.length > 0 ? existingList[0] : null;
 
     if (existing) {
       const payload: any = {
         amount_in: Number(amountIn || 0),
         amount_out: Number(amountOut || 0),
       };
+      if (dailyInterestOverride !== undefined) {
+        payload.daily_interest_added = Number(dailyInterestOverride);
+      }
       if (remarks) payload.remarks = remarks;
       if (transactionDate) payload.transaction_date = transactionDate;
 
@@ -529,7 +554,7 @@ export async function updateInvestmentTransactionByReference(
         ? 'Chit Prize Received'
         : (referenceType === 'depositor'
             ? 'Deposit Received'
-            : (referenceType === 'chit_payment' ? 'Chit Installment' : 'Capital Added'));
+            : (referenceType === 'chit_payment' ? 'Chit Installment' : (referenceType === 'monthly_interest' ? 'Daily Interest' : 'Capital Added')));
 
       return await recordInvestmentTransaction(
         mappedType,
@@ -538,7 +563,8 @@ export async function updateInvestmentTransactionByReference(
         referenceType,
         referenceId,
         remarks,
-        transactionDate
+        transactionDate,
+        dailyInterestOverride
       );
     }
   } catch (err: any) {
