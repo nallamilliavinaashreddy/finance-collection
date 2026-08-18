@@ -158,12 +158,11 @@ export async function recordInvestmentTransaction(
     };
 
     let validDate = transactionDate ? transactionDate.trim() : '';
-    // Validate YYYY-MM-DD format and ensure year >= 2020 (overrides invalid or legacy 2009 dates with today's date)
+    // Validate YYYY-MM-DD format (preserves authoritative user-selected historical dates)
     if (
       !validDate ||
       !/^\d{4}-\d{2}-\d{2}$/.test(validDate) ||
-      isNaN(new Date(`${validDate}T00:00:00`).getTime()) ||
-      parseInt(validDate.split('-')[0], 10) < 2020
+      isNaN(new Date(`${validDate}T00:00:00`).getTime())
     ) {
       validDate = getLocalTodayISO();
     }

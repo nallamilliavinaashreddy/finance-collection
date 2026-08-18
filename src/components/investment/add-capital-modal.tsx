@@ -46,11 +46,16 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
     },
   });
 
-  React.useEffect(() => {
-    if (isOpen) {
-      setValue('transactionDate', getTodayISO());
-    }
-  }, [isOpen, setValue]);
+  const handleClose = () => {
+    reset({
+      amount: undefined,
+      transactionDate: getTodayISO(),
+      source: 'Owner Capital',
+      monthlyInterestRate: 5,
+      remarks: '',
+    });
+    onClose();
+  };
 
   const onSubmit = async (formData: AddCapitalFormData) => {
     setIsSubmitting(true);
@@ -59,8 +64,7 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
       if (res.success) {
         showToast('Capital added to Investment Khata successfully!', 'success');
         reset();
-        onSuccess();
-        onClose();
+        handleClose();
       } else {
         showToast(res.error || 'Failed to add capital', 'error');
       }
@@ -74,7 +78,7 @@ export function AddCapitalModal({ isOpen, onClose, onSuccess }: AddCapitalModalP
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Add Capital / Investment"
       description="Inject new capital into your business investment ledger balance."
     >
