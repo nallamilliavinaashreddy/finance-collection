@@ -483,6 +483,16 @@ export async function recordChitPrizeReceived(payload: {
 
     const remarksStr = remarksParts.join(' | ');
 
+    await supabase
+      .from('chits')
+      .update({
+        prize_taken: true,
+        prize_amount: payload.prizeAmount,
+        prize_date: payload.receivedDate,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', payload.chitId);
+
     const res = await updateInvestmentTransactionByReference(
       'chit_prize',
       payload.chitId,

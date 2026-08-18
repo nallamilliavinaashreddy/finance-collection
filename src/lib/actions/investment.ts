@@ -230,66 +230,85 @@ async function executeAutoAccrueInternal(): Promise<{ success: boolean; accruedM
   const supabase = createClient();
   try {
     const today = new Date();
-    const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayISO = `${yyyy}-${mm}-${dd}`;
+    const todayTime = new Date(`${todayISO}T00:00:00`).getTime();
+    const currentYearMonth = `${yyyy}-${mm}`;
 
-    // Check if this month's interest has ALREADY been accrued
-    const { data: existingMonthlyTx } = await supabase
-      .from('investment_transactions')
-      .select('id')
-      .eq('reference_type', 'monthly_interest')
-      .eq('reference_id', currentYearMonth);
-
-    if (existingMonthlyTx && existingMonthlyTx.length > 0) {
-      // Already accrued for this month! Instant exit to prevent duplicate interest!
-      return { success: true, accruedMonths: 0 };
-    }
-
-    // Fetch all transactions to compute current active capital
+    // Fetch all transactions to compute active capital additions and dates
     const { data: txData } = await supabase.from('investment_transactions').select('*');
     const transactions = txData || [];
 
-    const totalCapitalAdded = transactions
-      .filter((t: any) =>
-        t.transaction_type === 'Capital Added' ||
-        t.transaction_type === 'Chit Prize Received' ||
-        t.transaction_type === 'Deposit Received' ||
-        t.transaction_type === 'Withdrawal Return'
-      )
-      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
+    const { monthlyInterestRate } = await getInvestmentSettings(); // e.g. 1.5%
+    const dailyRate = (monthlyInterestRate / 100) / 30; // Daily interest rate per day
 
-    const totalCapitalWithdrawn = transactions
-      .filter((t: any) =>
-        t.transaction_type === 'Business Withdrawal' ||
-        t.transaction_type === 'Capital Returned'
-      )
-      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+    // Filter active capital additions (Capital Added, Chit Prize Received, Deposit Received, Withdrawal Return)
+    const capitalTxList = transactions.filter((t: any) =>
+      (t.transaction_type === 'Capital Added' ||
+       t.transaction_type === 'Chit Prize Received' ||
+       t.transaction_type === 'Deposit Received' ||
+       t.transaction_type === 'Withdrawal Return') &&
+      Number(t.amount_in || 0) > 0
+    );
 
-    const activeCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
+    // Filter capital withdrawals (Business Withdrawal, Capital Returned)
+    const withdrawalsList = transactions.filter((t: any) =>
+      (t.transaction_type === 'Business Withdrawal' ||
+       t.transaction_type === 'Capital Returned') &&
+      Number(t.amount_out || 0) > 0
+    );
 
-    if (activeCapital > 0) {
-      const { monthlyInterestRate } = await getInvestmentSettings();
-      // Monthly interest formula: ₹10,000 -> ₹600 (6% per month)
-      const monthlyInterestAmount = Math.round(((activeCapital * monthlyInterestRate) / 100) * 100) / 100;
+    const totalCapitalWithdrawn = withdrawalsList.reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
 
-      if (monthlyInterestAmount > 0) {
-        const todayISO = today.toISOString().split('T')[0];
-        const remarks = `Monthly Accrued Interest @ ${monthlyInterestRate}%/month on Capital ₹${activeCapital.toLocaleString('en-IN')}`;
+    // Sum pro-rata elapsed daily interest across all active capital additions
+    let totalAccruedInterest = 0;
+    let remainingWithdrawalsToDeduct = totalCapitalWithdrawn;
 
-        await updateInvestmentTransactionByReference(
-          'monthly_interest',
-          currentYearMonth,
-          0,
-          0,
-          remarks,
-          todayISO,
-          monthlyInterestAmount
-        );
+    // Process capital transactions chronologically
+    const sortedCapitalTx = [...capitalTxList].sort((a: any, b: any) => {
+      return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+    });
 
-        return { success: true, accruedMonths: 1 };
+    for (const capTx of sortedCapitalTx) {
+      let capAmount = Number(capTx.amount_in || 0);
+
+      // Reduce capital addition by executed withdrawals
+      if (remainingWithdrawalsToDeduct > 0) {
+        const deduct = Math.min(capAmount, remainingWithdrawalsToDeduct);
+        capAmount -= deduct;
+        remainingWithdrawalsToDeduct -= deduct;
+      }
+
+      if (capAmount > 0) {
+        const capDateStr = capTx.transaction_date || todayISO;
+        const capDateTime = new Date(`${capDateStr}T00:00:00`).getTime();
+
+        if (!isNaN(capDateTime) && todayTime >= capDateTime) {
+          const elapsedDays = Math.floor((todayTime - capDateTime) / (1000 * 60 * 60 * 24));
+          if (elapsedDays > 0) {
+            const txInterest = capAmount * dailyRate * elapsedDays;
+            totalAccruedInterest += txInterest;
+          }
+        }
       }
     }
 
-    return { success: true, accruedMonths: 0 };
+    const roundedInterestAmount = Math.round(totalAccruedInterest * 100) / 100;
+    const remarks = `Accrued Interest @ ${monthlyInterestRate}%/mo calculated for elapsed days as of ${todayISO}`;
+
+    await updateInvestmentTransactionByReference(
+      'monthly_interest',
+      currentYearMonth,
+      0,
+      0,
+      remarks,
+      todayISO,
+      roundedInterestAmount
+    );
+
+    return { success: true, accruedMonths: 1 };
   } catch (err: any) {
     console.warn('Monthly interest accrual notice:', err);
     return { success: false, accruedMonths: 0 };
