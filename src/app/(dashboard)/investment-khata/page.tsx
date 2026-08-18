@@ -250,7 +250,7 @@ export default function InvestmentKhataPage() {
             onClick={() => setIsSettingsOpen(true)}
             leftIcon={<Settings className="w-3.5 h-3.5 text-amber-600" />}
           >
-            Monthly Rate: {metrics.monthlyInterestRate}%/mo
+            Annual Rate: {metrics.annualInterestRate ?? 18}%/yr ({metrics.interestType === 'compound' ? 'Compound' : 'Simple'})
           </Button>
 
           <Button
@@ -260,7 +260,7 @@ export default function InvestmentKhataPage() {
             isLoading={isAccruingInterest}
             leftIcon={<TrendingUp className="w-3.5 h-3.5 text-emerald-600" />}
           >
-            Check Monthly Interest
+            Check Yearly Interest
           </Button>
 
           <Button
@@ -326,18 +326,20 @@ export default function InvestmentKhataPage() {
           <p className="text-[11px] text-slate-400 mt-1">Total taken capital</p>
         </Card>
 
-        {/* Card 4: Accrued Monthly Interest */}
+        {/* Card 4: Accrued Interest */}
         <Card className="p-4 flex flex-col justify-between border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              Monthly Interest
+              Accrued Interest
             </span>
             <Coins className="w-3.5 h-3.5 text-amber-500" />
           </div>
           <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2 truncate">
             {isLoading ? '...' : formatCurrency(metrics.accruedInterest ?? metrics.investmentInterest)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Accrued monthly interest (6%)</p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            {metrics.interestType === 'compound' ? 'Compound' : 'Simple'} interest ({metrics.annualInterestRate ?? 18}%/yr)
+          </p>
         </Card>
 
         {/* Card 5: Total Investment Value */}
@@ -445,7 +447,8 @@ export default function InvestmentKhataPage() {
 
       <InvestmentSettingsModal
         isOpen={isSettingsOpen}
-        currentRate={metrics.monthlyInterestRate}
+        currentRate={metrics.annualInterestRate ?? 18}
+        currentInterestType={metrics.interestType || 'simple'}
         onClose={() => setIsSettingsOpen(false)}
         onSuccess={fetchInvestmentData}
       />

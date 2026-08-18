@@ -271,6 +271,8 @@ export interface InvestmentMetrics {
   businessWithdrawals: number;
   netProfit: number;
   monthlyInterestRate: number;
+  annualInterestRate?: number;
+  interestType?: 'simple' | 'compound';
   totalCapitalAdded?: number;
   totalCapitalWithdrawn?: number;
   currentCapital?: number;
@@ -287,6 +289,8 @@ export interface Depositor {
   address?: string;
   depositAmount: number;
   monthlyInterestRate: number;
+  annualInterestRate?: number;
+  interestType?: 'simple' | 'compound';
   depositDate: string;
   expectedReturnDate?: string;
   paymentMode: PaymentMode | string;

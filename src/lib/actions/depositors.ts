@@ -91,6 +91,8 @@ export async function getDepositors(
         address: row.address || undefined,
         depositAmount: Number(row.deposit_amount || 0),
         monthlyInterestRate: Number(row.monthly_interest_rate || 0),
+        annualInterestRate: Number(row.annual_interest_rate || (Number(row.monthly_interest_rate || 0) * 12)),
+        interestType: row.interest_type === 'compound' ? 'compound' : 'simple',
         depositDate: row.deposit_date,
         expectedReturnDate: row.expected_return_date || undefined,
         paymentMode: row.payment_mode || 'Bank Transfer',

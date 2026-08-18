@@ -14,6 +14,7 @@ import { Percent, Settings, CheckCircle2 } from 'lucide-react';
 interface InvestmentSettingsModalProps {
   isOpen: boolean;
   currentRate: number;
+  currentInterestType?: 'simple' | 'compound';
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -21,6 +22,7 @@ interface InvestmentSettingsModalProps {
 export function InvestmentSettingsModal({
   isOpen,
   currentRate,
+  currentInterestType = 'simple',
   onClose,
   onSuccess,
 }: InvestmentSettingsModalProps) {
@@ -34,7 +36,8 @@ export function InvestmentSettingsModal({
   } = useForm<InvestmentSettingsFormData>({
     resolver: zodResolver(investmentSettingsSchema),
     values: {
-      monthlyInterestRate: currentRate || 5.0,
+      annualInterestRate: currentRate || 18.0,
+      interestType: currentInterestType,
     },
   });
 
@@ -43,7 +46,7 @@ export function InvestmentSettingsModal({
     try {
       const res = await updateInvestmentSettings(formData);
       if (res.success) {
-        showToast(`Monthly interest rate updated to ${formData.monthlyInterestRate}% successfully!`, 'success');
+        showToast(`Annual interest rate updated to ${formData.annualInterestRate}% per year (${formData.interestType === 'compound' ? 'Compound' : 'Simple'}) successfully!`, 'success');
         onSuccess();
         onClose();
       } else {
@@ -60,35 +63,52 @@ export function InvestmentSettingsModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Configure Monthly Interest Rate"
-      description="Set the monthly interest percentage used to calculate daily simple interest on Current Investment Balance."
+      title="Configure Annual Interest Settings"
+      description="Set the annual interest percentage and calculation type (Simple vs Compound) for Investment Khata."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-        {/* Monthly Interest Rate */}
+        {/* Interest Type */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Monthly Interest Rate (%) <span className="text-rose-500">*</span>
+            Interest Type <span className="text-rose-500">*</span>
+          </label>
+          <select
+            className="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            {...register('interestType')}
+          >
+            <option value="simple">Simple Interest (Default)</option>
+            <option value="compound">Compound Interest (Annual Compounding)</option>
+          </select>
+        </div>
+
+        {/* Annual Interest Rate */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Annual Interest Rate (% per year) <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
             <Percent className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <Input
               type="number"
               step="any"
-              placeholder="e.g. 5 or 6"
+              placeholder="e.g. 18"
               className="pl-9"
-              {...register('monthlyInterestRate', { valueAsNumber: true })}
+              {...register('annualInterestRate', { valueAsNumber: true })}
             />
           </div>
           <div className="mt-2 text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1">
             <div className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-              <Settings className="w-3 h-3 text-[#FF7A00]" /> Daily Interest Formula:
+              <Settings className="w-3 h-3 text-[#FF7A00]" /> Formula:
             </div>
             <p className="font-mono text-[#FF7A00] dark:text-[#FF7A00] font-bold">
-              Daily Interest = (Current Balance × Monthly Rate %) ÷ 30
+              Simple: P × (Annual Rate %) × (Elapsed Days ÷ 365)
+            </p>
+            <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+              Compound: P × [(1 + Annual Rate %)^(Elapsed Days ÷ 365) - 1]
             </p>
           </div>
-          {errors.monthlyInterestRate && (
-            <p className="text-xs text-rose-500 font-medium mt-1">{errors.monthlyInterestRate.message}</p>
+          {errors.annualInterestRate && (
+            <p className="text-xs text-rose-500 font-medium mt-1">{errors.annualInterestRate.message}</p>
           )}
         </div>
 

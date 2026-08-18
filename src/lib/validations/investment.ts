@@ -6,10 +6,11 @@ export const addCapitalSchema = z.object({
     .positive({ message: 'Capital amount must be greater than ₹0' }),
   transactionDate: z.string().min(1, { message: 'Date is required' }),
   source: z.string().min(1, { message: 'Source of funds is required' }),
-  monthlyInterestRate: z
-    .number({ invalid_type_error: 'Monthly interest rate must be a number' })
-    .min(0, { message: 'Monthly interest rate cannot be negative' })
+  annualInterestRate: z
+    .number({ invalid_type_error: 'Annual interest rate must be a number' })
+    .min(0, { message: 'Annual interest rate cannot be negative' })
     .optional(),
+  interestType: z.enum(['simple', 'compound']).default('simple').optional(),
   remarks: z.string().optional(),
 });
 
@@ -39,9 +40,10 @@ export const withdrawalReturnSchema = z.object({
 export type WithdrawalReturnFormData = z.infer<typeof withdrawalReturnSchema>;
 
 export const investmentSettingsSchema = z.object({
-  monthlyInterestRate: z
-    .number({ invalid_type_error: 'Monthly interest rate must be a number' })
+  annualInterestRate: z
+    .number({ invalid_type_error: 'Annual interest rate must be a number' })
     .min(0, { message: 'Interest rate cannot be negative' }),
+  interestType: z.enum(['simple', 'compound']),
 });
 
 export type InvestmentSettingsFormData = z.infer<typeof investmentSettingsSchema>;

@@ -41,17 +41,21 @@ function isTableNotFoundError(error: any): boolean {
 /**
  * 1. Get Global Monthly Interest Rate Setting (Default: 6.00% / month = ₹600 for ₹10,000)
  */
-export async function getInvestmentSettings(): Promise<{ monthlyInterestRate: number }> {
+export async function getInvestmentSettings(): Promise<{ monthlyInterestRate: number; annualInterestRate: number; interestType: 'simple' | 'compound' }> {
   const supabase = createClient();
   try {
     const { data, error } = await supabase.from('investment_settings').select('*').limit(1);
 
     if (error || !data || data.length === 0) {
-      return { monthlyInterestRate: 6.00 }; // Default 6% per month (₹600 on ₹10,000)
+      return { monthlyInterestRate: 1.5, annualInterestRate: 18.0, interestType: 'simple' };
     }
-    return { monthlyInterestRate: Number(data[0].monthly_interest_rate || 6.00) };
+    const row = data[0];
+    const annualRate = Number(row.annual_interest_rate ?? (row.monthly_interest_rate ? row.monthly_interest_rate * 12 : 18.0));
+    const interestType = row.interest_type === 'compound' ? 'compound' : 'simple';
+
+    return { monthlyInterestRate: annualRate / 12, annualInterestRate: annualRate, interestType };
   } catch (err) {
-    return { monthlyInterestRate: 6.00 };
+    return { monthlyInterestRate: 1.5, annualInterestRate: 18.0, interestType: 'simple' };
   }
 }
 
@@ -59,26 +63,36 @@ export async function getInvestmentSettings(): Promise<{ monthlyInterestRate: nu
  * 2. Update Global Monthly Interest Rate Setting
  */
 export async function updateInvestmentSettings(
-  formData: InvestmentSettingsFormData
+  formData: { annualInterestRate?: number; interestType?: 'simple' | 'compound' }
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
   try {
     const { data } = await supabase.from('investment_settings').select('id').limit(1);
 
+    const payload: any = {
+      updated_at: new Date().toISOString(),
+    };
+    if (formData.annualInterestRate !== undefined) {
+      payload.annual_interest_rate = Number(formData.annualInterestRate);
+      payload.monthly_interest_rate = Number(formData.annualInterestRate) / 12;
+    }
+    if (formData.interestType) {
+      payload.interest_type = formData.interestType;
+    }
+
     let error: any = null;
     if (data && data.length > 0) {
       const res = await supabase
         .from('investment_settings')
-        .update({
-          monthly_interest_rate: formData.monthlyInterestRate,
-          updated_at: new Date().toISOString(),
-        })
+        .update(payload)
         .eq('id', data[0].id);
       error = res.error;
     } else {
       const res = await supabase.from('investment_settings').insert([
         {
-          monthly_interest_rate: formData.monthlyInterestRate,
+          annual_interest_rate: formData.annualInterestRate || 18.0,
+          monthly_interest_rate: (formData.annualInterestRate || 18.0) / 12,
+          interest_type: formData.interestType || 'simple',
         },
       ]);
       error = res.error;
@@ -372,8 +386,11 @@ export async function addCapital(formData: AddCapitalFormData): Promise<{ succes
       return { success: false, error: 'Investment amount must be greater than ₹0.' };
     }
 
-    if (formData.monthlyInterestRate !== undefined && !isNaN(Number(formData.monthlyInterestRate))) {
-      await updateInvestmentSettings({ monthlyInterestRate: Number(formData.monthlyInterestRate) });
+    if (formData.annualInterestRate !== undefined && !isNaN(Number(formData.annualInterestRate))) {
+      await updateInvestmentSettings({
+        annualInterestRate: Number(formData.annualInterestRate),
+        interestType: formData.interestType || 'simple',
+      });
     }
 
     const sourceStr = (formData.source || 'Direct Investment').trim();
@@ -696,7 +713,9 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
       getInvestmentSettings()
     ]);
 
-    const monthlyInterestRate = settings.monthlyInterestRate;
+    const annualInterestRate = settings.annualInterestRate;
+    const interestType = settings.interestType;
+    const monthlyInterestRate = Math.round((annualInterestRate / 12) * 100) / 100;
     const rawTransactions = txData || [];
 
     // Chronological calculation of running balances
@@ -777,6 +796,8 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
         businessWithdrawals: Math.round(businessWithdrawals * 100) / 100,
         netProfit,
         monthlyInterestRate,
+        annualInterestRate,
+        interestType,
         totalCapitalAdded: Math.round(totalCapitalAdded * 100) / 100,
         totalCapitalWithdrawn: Math.round(totalCapitalWithdrawn * 100) / 100,
         currentCapital: Math.round(currentCapital * 100) / 100,
