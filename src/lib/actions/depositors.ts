@@ -185,7 +185,7 @@ export async function createDepositor(
       0,
       'depositor',
       depositor.id,
-      `Deposit Received: ${formData.depositorName} (₹${formData.depositAmount} @ ${formData.monthlyInterestRate}%/mo)`,
+      `Deposit Received: ${formData.depositorName} (₹${formData.depositAmount} @ ${formData.monthlyInterestRate}%/yr)`,
       formData.depositDate
     );
 

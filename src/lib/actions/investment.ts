@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { InvestmentTransaction, InvestmentMetrics, InvestmentTransactionType } from '@/types';
 import { AddCapitalFormData, BusinessWithdrawalFormData, WithdrawalReturnFormData, InvestmentSettingsFormData } from '@/lib/validations/investment';
+import { calculateYearlyBreakdown } from '@/lib/utils/yearly-interest-engine';
 
 /**
  * Safely format and log PostgrestError properties
@@ -273,99 +274,20 @@ export function calculateYearlyInterestDetails(
   totalCapitalWithdrawn: number;
   elapsedDaysForPrimaryCap: number;
   remarks: string;
+  periods?: any[];
 } {
-  const getTodayISO = () => {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const todayISO = asOfDateStr || getTodayISO();
-  const todayTime = new Date(`${todayISO}T00:00:00Z`).getTime();
-
-  // Filter capital additions
-  const capitalTxList = transactions.filter((t: any) =>
-    (t.transaction_type === 'Capital Added' ||
-     t.transaction_type === 'Chit Prize Received' ||
-     t.transaction_type === 'Deposit Received' ||
-     t.transaction_type === 'Withdrawal Return') &&
-    Number(t.amount_in || 0) > 0
-  );
-
-  // Filter capital withdrawals
-  const withdrawalsList = transactions.filter((t: any) =>
-    (t.transaction_type === 'Business Withdrawal' ||
-     t.transaction_type === 'Capital Returned') &&
-    Number(t.amount_out || 0) > 0
-  );
-
-  const totalCapitalAdded = capitalTxList.reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
-  const totalCapitalWithdrawn = withdrawalsList.reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
-  const currentCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
-
-  // Process capital transactions chronologically
-  const sortedCapitalTx = [...capitalTxList].sort((a: any, b: any) => {
-    const dateA = a.transaction_date || todayISO;
-    const dateB = b.transaction_date || todayISO;
-    return new Date(`${dateA}T00:00:00Z`).getTime() - new Date(`${dateB}T00:00:00Z`).getTime();
-  });
-
-  let totalAccruedInterest = 0;
-  let remainingWithdrawalsToDeduct = totalCapitalWithdrawn;
-  let primaryElapsedDays = 0;
-
-  for (const capTx of sortedCapitalTx) {
-    let capAmount = Number(capTx.amount_in || 0);
-
-    if (remainingWithdrawalsToDeduct > 0) {
-      const deduct = Math.min(capAmount, remainingWithdrawalsToDeduct);
-      capAmount -= deduct;
-      remainingWithdrawalsToDeduct -= deduct;
-    }
-
-    if (capAmount > 0) {
-      const capDateStr = capTx.transaction_date || todayISO;
-      const capDateTime = new Date(`${capDateStr}T00:00:00Z`).getTime();
-
-      if (!isNaN(capDateTime) && todayTime >= capDateTime) {
-        const elapsedDays = Math.floor((todayTime - capDateTime) / (1000 * 60 * 60 * 24));
-        if (primaryElapsedDays === 0) {
-          primaryElapsedDays = elapsedDays;
-        }
-
-        if (elapsedDays > 0) {
-          const elapsedYears = elapsedDays / 365.0;
-          let txInterest = 0;
-
-          if (interestType === 'compound') {
-            // Compound Interest: Interest = P * ((1 + R/100)^T - 1)
-            const amount = capAmount * Math.pow(1 + annualRate / 100, elapsedYears);
-            txInterest = amount - capAmount;
-          } else {
-            // Simple Interest: Interest = P * (R / 100) * (elapsedDays / 365)
-            txInterest = capAmount * (annualRate / 100) * elapsedYears;
-          }
-
-          totalAccruedInterest += txInterest;
-        }
-      }
-    }
-  }
-
-  const roundedInterest = Math.round(totalAccruedInterest * 100) / 100;
-  const typeLabel = interestType === 'compound' ? 'Compound' : 'Simple';
-  const remarks = `Annual ${typeLabel} Interest @ ${annualRate}%/year`;
+  const summary = calculateYearlyBreakdown(transactions, annualRate, interestType, asOfDateStr);
+  const primaryElapsed = summary.periods.reduce((sum, p) => sum + p.elapsedDays, 0);
 
   return {
-    totalAccruedInterest: roundedInterest,
-    currentCapital: Math.round(currentCapital * 100) / 100,
-    totalInvestmentValue: Math.round((currentCapital + roundedInterest) * 100) / 100,
-    totalCapitalAdded: Math.round(totalCapitalAdded * 100) / 100,
-    totalCapitalWithdrawn: Math.round(totalCapitalWithdrawn * 100) / 100,
-    elapsedDaysForPrimaryCap: primaryElapsedDays,
-    remarks,
+    totalAccruedInterest: summary.totalAccruedInterest,
+    currentCapital: summary.currentCapital,
+    totalInvestmentValue: summary.totalInvestmentValue,
+    totalCapitalAdded: summary.totalCapitalAdded,
+    totalCapitalWithdrawn: summary.totalCapitalWithdrawn,
+    elapsedDaysForPrimaryCap: primaryElapsed,
+    remarks: `Annual ${interestType === 'compound' ? 'Compound' : 'Simple'} Interest @ ${annualRate}%/year`,
+    periods: summary.periods,
   };
 }
 
@@ -402,49 +324,40 @@ async function executeAutoAccrueInternal(): Promise<{ success: boolean; accruedM
         .in('id', legacyRows.map((r: any) => r.id));
     }
 
-    // Check if annual interest record already exists for current year
-    const { data: existingList } = await supabase
-      .from('investment_transactions')
-      .select('*')
-      .eq('reference_type', 'yearly_interest')
-      .eq('reference_id', currentYearKey)
-      .limit(1);
+    // Persist each period breakdown row into investment_transactions table with reference_type = 'yearly_interest'
+    const periods = calc.periods || [];
+    for (const period of periods) {
+      const refId = `yearly_${period.startDate}_${period.endDate}`;
 
-    const openingBal = calc.currentCapital;
-    const closingBal = Math.round((openingBal + calc.totalAccruedInterest) * 100) / 100;
-    const remarks = `Annual ${interestType === 'compound' ? 'Compound' : 'Simple'} Interest @ ${annualInterestRate}%/year`;
-
-    if (existingList && existingList.length > 0) {
-      await supabase
+      const { data: existing } = await supabase
         .from('investment_transactions')
-        .update({
-          transaction_date: todayISO,
-          transaction_type: 'Annual Interest',
-          opening_balance: openingBal,
-          amount_in: 0,
-          amount_out: 0,
-          interest_rate: annualInterestRate,
-          daily_interest_added: calc.totalAccruedInterest,
-          balance: closingBal,
-          remarks: remarks,
-        })
-        .eq('id', existingList[0].id);
-    } else {
-      await supabase.from('investment_transactions').insert([
-        {
-          transaction_date: todayISO,
-          transaction_type: 'Annual Interest',
-          opening_balance: openingBal,
-          amount_in: 0,
-          amount_out: 0,
-          interest_rate: annualInterestRate,
-          daily_interest_added: calc.totalAccruedInterest,
-          balance: closingBal,
-          reference_type: 'yearly_interest',
-          reference_id: currentYearKey,
-          remarks: remarks,
-        },
-      ]);
+        .select('id')
+        .eq('reference_type', 'yearly_interest')
+        .eq('reference_id', refId)
+        .limit(1);
+
+      const payload = {
+        transaction_date: period.endDate,
+        transaction_type: 'Annual Interest',
+        opening_balance: period.openingBalance,
+        amount_in: 0,
+        amount_out: 0,
+        interest_rate: annualInterestRate,
+        daily_interest_added: period.interestEarned,
+        balance: period.closingBalance,
+        reference_type: 'yearly_interest',
+        reference_id: refId,
+        remarks: `${period.periodLabel} | ${period.remarks}`,
+      };
+
+      if (existing && existing.length > 0) {
+        await supabase
+          .from('investment_transactions')
+          .update(payload)
+          .eq('id', existing[0].id);
+      } else {
+        await supabase.from('investment_transactions').insert([payload]);
+      }
     }
 
     return { success: true, accruedMonths: 1 };
