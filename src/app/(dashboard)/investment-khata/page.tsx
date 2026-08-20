@@ -145,7 +145,7 @@ export default function InvestmentKhataPage() {
           type === 'Chit Installment'
         ) {
           variant = 'warning';
-        } else if (type === 'Daily Interest') {
+        } else if (type === 'Daily Interest' || type === 'Annual Interest') {
           variant = 'info';
         }
 
@@ -185,7 +185,7 @@ export default function InvestmentKhataPage() {
     },
     {
       accessorKey: 'dailyInterestAdded',
-      header: 'Daily Interest Added (₹)',
+      header: 'Accrued Interest (₹)',
       cell: ({ row }) => (
         <span className="font-bold text-amber-600 dark:text-amber-400">
           {row.original.dailyInterestAdded > 0 ? formatCurrency(row.original.dailyInterestAdded) : '-'}
@@ -377,7 +377,7 @@ export default function InvestmentKhataPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle className="text-xs uppercase font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
               <History className="w-4 h-4 text-emerald-500" />
-              Central Cash Flow Ledger & Daily Interest Feed
+              Central Cash Flow Ledger & Accrued Interest Feed
             </CardTitle>
 
             {/* Filters */}

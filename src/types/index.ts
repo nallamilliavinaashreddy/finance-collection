@@ -229,6 +229,7 @@ export type InvestmentTransactionType =
   | 'Business Withdrawal'
   | 'Withdrawal Return'
   | 'Daily Interest'
+  | 'Annual Interest'
   | 'Capital Returned';
 
 export interface InvestmentTransaction {

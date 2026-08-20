@@ -99,6 +99,27 @@ export async function updateInvestmentSettings(
     }
 
     if (error) {
+      // Handle PGRST204 (column missing in PostgreSQL schema cache) gracefully
+      if (
+        error.code === 'PGRST204' ||
+        (error.message || '').includes('annual_interest_rate') ||
+        (error.message || '').includes('interest_type')
+      ) {
+        const fallbackPayload: any = {
+          monthly_interest_rate: formData.annualInterestRate !== undefined ? Number(formData.annualInterestRate) / 12 : 1.5,
+          updated_at: new Date().toISOString(),
+        };
+        if (data && data.length > 0) {
+          const fbRes = await supabase
+            .from('investment_settings')
+            .update(fallbackPayload)
+            .eq('id', data[0].id);
+          if (!fbRes.error) return { success: true };
+        } else {
+          const fbRes = await supabase.from('investment_settings').insert([fallbackPayload]);
+          if (!fbRes.error) return { success: true };
+        }
+      }
       if (isTableNotFoundError(error)) {
         return { success: false, error: 'investment_settings table does not exist in Supabase.' };
       }
@@ -181,23 +202,22 @@ export async function recordInvestmentTransaction(
       validDate = getLocalTodayISO();
     }
 
-    // Underlying Interest Uniqueness Check: Prevent duplicate interest records for the same date/month
-    if (transactionType === 'Daily Interest' || referenceType === 'monthly_interest' || referenceType === 'daily_interest') {
-      const monthKey = referenceId || validDate.substring(0, 7);
+    // Underlying Interest Uniqueness Check: Prevent duplicate interest records for the same date/year
+    if (transactionType === 'Annual Interest' || transactionType === 'Daily Interest' || referenceType === 'yearly_interest' || referenceType === 'monthly_interest') {
+      const yearKey = referenceId || validDate.substring(0, 4);
 
       const { data: existingInterest } = await supabase
         .from('investment_transactions')
         .select('id')
-        .or(`and(transaction_type.eq.Daily Interest,transaction_date.eq.${validDate}),and(reference_type.eq.monthly_interest,reference_id.eq.${monthKey})`);
+        .or(`and(transaction_type.eq.Annual Interest,transaction_date.eq.${validDate}),and(reference_type.eq.yearly_interest,reference_id.eq.${yearKey})`);
 
       if (existingInterest && existingInterest.length > 0) {
-        // Interest record already exists for this date/month. Skip duplicate insert!
         return { success: true };
       }
     }
 
     const openingBalance = await getCurrentInvestmentBalance();
-    const { monthlyInterestRate } = await getInvestmentSettings();
+    const { annualInterestRate } = await getInvestmentSettings();
 
     const dailyInterestAdded = dailyInterestOverride !== undefined
       ? Number(dailyInterestOverride)
@@ -211,7 +231,7 @@ export async function recordInvestmentTransaction(
       opening_balance: Math.round(openingBalance * 100) / 100,
       amount_in: Number(amountIn || 0),
       amount_out: Number(amountOut || 0),
-      interest_rate: monthlyInterestRate,
+      interest_rate: annualInterestRate,
       daily_interest_added: Math.round(dailyInterestAdded * 100) / 100,
       balance: closingBalance,
       reference_type: referenceType || null,
@@ -237,6 +257,118 @@ export async function recordInvestmentTransaction(
   }
 }
 
+/**
+ * Single Authoritative Yearly Interest Calculation Engine
+ */
+export function calculateYearlyInterestDetails(
+  transactions: any[],
+  annualRate: number,
+  interestType: 'simple' | 'compound',
+  asOfDateStr?: string
+): {
+  totalAccruedInterest: number;
+  currentCapital: number;
+  totalInvestmentValue: number;
+  totalCapitalAdded: number;
+  totalCapitalWithdrawn: number;
+  elapsedDaysForPrimaryCap: number;
+  remarks: string;
+} {
+  const getTodayISO = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const todayISO = asOfDateStr || getTodayISO();
+  const todayTime = new Date(`${todayISO}T00:00:00Z`).getTime();
+
+  // Filter capital additions
+  const capitalTxList = transactions.filter((t: any) =>
+    (t.transaction_type === 'Capital Added' ||
+     t.transaction_type === 'Chit Prize Received' ||
+     t.transaction_type === 'Deposit Received' ||
+     t.transaction_type === 'Withdrawal Return') &&
+    Number(t.amount_in || 0) > 0
+  );
+
+  // Filter capital withdrawals
+  const withdrawalsList = transactions.filter((t: any) =>
+    (t.transaction_type === 'Business Withdrawal' ||
+     t.transaction_type === 'Capital Returned') &&
+    Number(t.amount_out || 0) > 0
+  );
+
+  const totalCapitalAdded = capitalTxList.reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
+  const totalCapitalWithdrawn = withdrawalsList.reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+  const currentCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
+
+  // Process capital transactions chronologically
+  const sortedCapitalTx = [...capitalTxList].sort((a: any, b: any) => {
+    const dateA = a.transaction_date || todayISO;
+    const dateB = b.transaction_date || todayISO;
+    return new Date(`${dateA}T00:00:00Z`).getTime() - new Date(`${dateB}T00:00:00Z`).getTime();
+  });
+
+  let totalAccruedInterest = 0;
+  let remainingWithdrawalsToDeduct = totalCapitalWithdrawn;
+  let primaryElapsedDays = 0;
+
+  for (const capTx of sortedCapitalTx) {
+    let capAmount = Number(capTx.amount_in || 0);
+
+    if (remainingWithdrawalsToDeduct > 0) {
+      const deduct = Math.min(capAmount, remainingWithdrawalsToDeduct);
+      capAmount -= deduct;
+      remainingWithdrawalsToDeduct -= deduct;
+    }
+
+    if (capAmount > 0) {
+      const capDateStr = capTx.transaction_date || todayISO;
+      const capDateTime = new Date(`${capDateStr}T00:00:00Z`).getTime();
+
+      if (!isNaN(capDateTime) && todayTime >= capDateTime) {
+        const elapsedDays = Math.floor((todayTime - capDateTime) / (1000 * 60 * 60 * 24));
+        if (primaryElapsedDays === 0) {
+          primaryElapsedDays = elapsedDays;
+        }
+
+        if (elapsedDays > 0) {
+          const elapsedYears = elapsedDays / 365.0;
+          let txInterest = 0;
+
+          if (interestType === 'compound') {
+            // Compound Interest: Interest = P * ((1 + R/100)^T - 1)
+            const amount = capAmount * Math.pow(1 + annualRate / 100, elapsedYears);
+            txInterest = amount - capAmount;
+          } else {
+            // Simple Interest: Interest = P * (R / 100) * (elapsedDays / 365)
+            txInterest = capAmount * (annualRate / 100) * elapsedYears;
+          }
+
+          totalAccruedInterest += txInterest;
+        }
+      }
+    }
+  }
+
+  const roundedInterest = Math.round(totalAccruedInterest * 100) / 100;
+  const typeLabel = interestType === 'compound' ? 'Compound' : 'Simple';
+  const remarks = `Annual ${typeLabel} Interest @ ${annualRate}%/year`;
+
+  return {
+    totalAccruedInterest: roundedInterest,
+    currentCapital: Math.round(currentCapital * 100) / 100,
+    totalInvestmentValue: Math.round((currentCapital + roundedInterest) * 100) / 100,
+    totalCapitalAdded: Math.round(totalCapitalAdded * 100) / 100,
+    totalCapitalWithdrawn: Math.round(totalCapitalWithdrawn * 100) / 100,
+    elapsedDaysForPrimaryCap: primaryElapsedDays,
+    remarks,
+  };
+}
+
 let accrualInFlight: Promise<{ success: boolean; accruedMonths?: number }> | null = null;
 
 async function executeAutoAccrueInternal(): Promise<{ success: boolean; accruedMonths?: number }> {
@@ -247,83 +379,77 @@ async function executeAutoAccrueInternal(): Promise<{ success: boolean; accruedM
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     const todayISO = `${yyyy}-${mm}-${dd}`;
-    const todayTime = new Date(`${todayISO}T00:00:00`).getTime();
-    const currentYearMonth = `${yyyy}-${mm}`;
+    const currentYearKey = `${yyyy}`;
 
     // Fetch all transactions to compute active capital additions and dates
     const { data: txData } = await supabase.from('investment_transactions').select('*');
     const transactions = txData || [];
 
-    const { monthlyInterestRate } = await getInvestmentSettings(); // e.g. 1.5%
-    const dailyRate = (monthlyInterestRate / 100) / 30; // Daily interest rate per day
+    const { annualInterestRate, interestType } = await getInvestmentSettings();
 
-    // Filter active capital additions (Capital Added, Chit Prize Received, Deposit Received, Withdrawal Return)
-    const capitalTxList = transactions.filter((t: any) =>
-      (t.transaction_type === 'Capital Added' ||
-       t.transaction_type === 'Chit Prize Received' ||
-       t.transaction_type === 'Deposit Received' ||
-       t.transaction_type === 'Withdrawal Return') &&
-      Number(t.amount_in || 0) > 0
-    );
+    const calc = calculateYearlyInterestDetails(transactions, annualInterestRate, interestType, todayISO);
 
-    // Filter capital withdrawals (Business Withdrawal, Capital Returned)
-    const withdrawalsList = transactions.filter((t: any) =>
-      (t.transaction_type === 'Business Withdrawal' ||
-       t.transaction_type === 'Capital Returned') &&
-      Number(t.amount_out || 0) > 0
-    );
+    // Purge any legacy monthly_interest or Daily Interest rows
+    const { data: legacyRows } = await supabase
+      .from('investment_transactions')
+      .select('id')
+      .or(`reference_type.eq.monthly_interest,transaction_type.eq.Daily Interest`);
 
-    const totalCapitalWithdrawn = withdrawalsList.reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
-
-    // Sum pro-rata elapsed daily interest across all active capital additions
-    let totalAccruedInterest = 0;
-    let remainingWithdrawalsToDeduct = totalCapitalWithdrawn;
-
-    // Process capital transactions chronologically
-    const sortedCapitalTx = [...capitalTxList].sort((a: any, b: any) => {
-      return new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
-    });
-
-    for (const capTx of sortedCapitalTx) {
-      let capAmount = Number(capTx.amount_in || 0);
-
-      // Reduce capital addition by executed withdrawals
-      if (remainingWithdrawalsToDeduct > 0) {
-        const deduct = Math.min(capAmount, remainingWithdrawalsToDeduct);
-        capAmount -= deduct;
-        remainingWithdrawalsToDeduct -= deduct;
-      }
-
-      if (capAmount > 0) {
-        const capDateStr = capTx.transaction_date || todayISO;
-        const capDateTime = new Date(`${capDateStr}T00:00:00`).getTime();
-
-        if (!isNaN(capDateTime) && todayTime >= capDateTime) {
-          const elapsedDays = Math.floor((todayTime - capDateTime) / (1000 * 60 * 60 * 24));
-          if (elapsedDays > 0) {
-            const txInterest = capAmount * dailyRate * elapsedDays;
-            totalAccruedInterest += txInterest;
-          }
-        }
-      }
+    if (legacyRows && legacyRows.length > 0) {
+      await supabase
+        .from('investment_transactions')
+        .delete()
+        .in('id', legacyRows.map((r: any) => r.id));
     }
 
-    const roundedInterestAmount = Math.round(totalAccruedInterest * 100) / 100;
-    const remarks = `Accrued Interest @ ${monthlyInterestRate}%/mo calculated for elapsed days as of ${todayISO}`;
+    // Check if annual interest record already exists for current year
+    const { data: existingList } = await supabase
+      .from('investment_transactions')
+      .select('*')
+      .eq('reference_type', 'yearly_interest')
+      .eq('reference_id', currentYearKey)
+      .limit(1);
 
-    await updateInvestmentTransactionByReference(
-      'monthly_interest',
-      currentYearMonth,
-      0,
-      0,
-      remarks,
-      todayISO,
-      roundedInterestAmount
-    );
+    const openingBal = calc.currentCapital;
+    const closingBal = Math.round((openingBal + calc.totalAccruedInterest) * 100) / 100;
+    const remarks = `Annual ${interestType === 'compound' ? 'Compound' : 'Simple'} Interest @ ${annualInterestRate}%/year`;
+
+    if (existingList && existingList.length > 0) {
+      await supabase
+        .from('investment_transactions')
+        .update({
+          transaction_date: todayISO,
+          transaction_type: 'Annual Interest',
+          opening_balance: openingBal,
+          amount_in: 0,
+          amount_out: 0,
+          interest_rate: annualInterestRate,
+          daily_interest_added: calc.totalAccruedInterest,
+          balance: closingBal,
+          remarks: remarks,
+        })
+        .eq('id', existingList[0].id);
+    } else {
+      await supabase.from('investment_transactions').insert([
+        {
+          transaction_date: todayISO,
+          transaction_type: 'Annual Interest',
+          opening_balance: openingBal,
+          amount_in: 0,
+          amount_out: 0,
+          interest_rate: annualInterestRate,
+          daily_interest_added: calc.totalAccruedInterest,
+          balance: closingBal,
+          reference_type: 'yearly_interest',
+          reference_id: currentYearKey,
+          remarks: remarks,
+        },
+      ]);
+    }
 
     return { success: true, accruedMonths: 1 };
   } catch (err: any) {
-    console.warn('Monthly interest accrual notice:', err);
+    console.warn('Yearly interest accrual notice:', err);
     return { success: false, accruedMonths: 0 };
   }
 }
@@ -717,8 +843,9 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
     const interestType = settings.interestType;
     const monthlyInterestRate = Math.round((annualInterestRate / 12) * 100) / 100;
     const rawTransactions = txData || [];
+    const calc = calculateYearlyInterestDetails(rawTransactions, annualInterestRate, interestType);
 
-    // Chronological calculation of running balances
+    // Running cash balance (excluding interest entries from cash pool)
     const chronological = [...rawTransactions].sort((a: any, b: any) => {
       const dateA = new Date(a.transaction_date).getTime();
       const dateB = new Date(b.transaction_date).getTime();
@@ -734,36 +861,7 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
       tx.balance = runningBal;
     }
 
-    const transactions = chronological;
     const currentBalance = runningBal;
-
-    // Capital Calculations: Direct Investments + Chits Received + Deposits Received + Returns - Withdrawals
-    const totalCapitalAdded = transactions
-      .filter((t: any) =>
-        t.transaction_type === 'Capital Added' ||
-        t.transaction_type === 'Chit Prize Received' ||
-        t.transaction_type === 'Deposit Received' ||
-        t.transaction_type === 'Withdrawal Return'
-      )
-      .reduce((sum: number, t: any) => sum + Number(t.amount_in || 0), 0);
-
-    const totalCapitalWithdrawn = transactions
-      .filter((t: any) =>
-        t.transaction_type === 'Business Withdrawal' ||
-        t.transaction_type === 'Capital Returned'
-      )
-      .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
-
-    const currentCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
-    const ownerCapital = currentCapital;
-
-    // Accrued Interest (Sum of monthly interest entries)
-    const accruedInterest = transactions.reduce(
-      (sum: number, t: any) => sum + Number(t.daily_interest_added || 0),
-      0
-    );
-
-    const totalInvestmentValue = Math.round((currentCapital + accruedInterest) * 100) / 100;
 
     // Loan Interest (Total interest earned from active loans)
     const loans = loansData || [];
@@ -781,28 +879,27 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
       0
     );
 
-    const businessWithdrawals = totalCapitalWithdrawn;
-    const netProfit = Math.round((loanInterest - accruedInterest - expenses) * 100) / 100;
+    const netProfit = Math.round((loanInterest - calc.totalAccruedInterest - expenses) * 100) / 100;
 
     return {
       success: true,
       data: {
-        ownerCapital: Math.round(ownerCapital * 100) / 100,
+        ownerCapital: calc.currentCapital,
         currentBalance: Math.round(currentBalance * 100) / 100,
         totalWorkingCapital: Math.round(currentBalance * 100) / 100,
-        investmentInterest: Math.round(accruedInterest * 100) / 100,
+        investmentInterest: calc.totalAccruedInterest,
         loanInterest: Math.round(loanInterest * 100) / 100,
         expenses: Math.round(expenses * 100) / 100,
-        businessWithdrawals: Math.round(businessWithdrawals * 100) / 100,
+        businessWithdrawals: calc.totalCapitalWithdrawn,
         netProfit,
         monthlyInterestRate,
         annualInterestRate,
         interestType,
-        totalCapitalAdded: Math.round(totalCapitalAdded * 100) / 100,
-        totalCapitalWithdrawn: Math.round(totalCapitalWithdrawn * 100) / 100,
-        currentCapital: Math.round(currentCapital * 100) / 100,
-        accruedInterest: Math.round(accruedInterest * 100) / 100,
-        totalInvestmentValue,
+        totalCapitalAdded: calc.totalCapitalAdded,
+        totalCapitalWithdrawn: calc.totalCapitalWithdrawn,
+        currentCapital: calc.currentCapital,
+        accruedInterest: calc.totalAccruedInterest,
+        totalInvestmentValue: calc.totalInvestmentValue,
       },
     };
   } catch (err: any) {
@@ -817,7 +914,9 @@ export async function getInvestmentMetrics(): Promise<{ success: boolean; data: 
         expenses: 0,
         businessWithdrawals: 0,
         netProfit: 0,
-        monthlyInterestRate: 6.0,
+        monthlyInterestRate: 1.5,
+        annualInterestRate: 18,
+        interestType: 'simple',
         totalCapitalAdded: 0,
         totalCapitalWithdrawn: 0,
         currentCapital: 0,
