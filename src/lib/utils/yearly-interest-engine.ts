@@ -41,26 +41,35 @@ function toISOFormat(date: Date): string {
 }
 
 /**
- * Parse YYYY-MM-DD string to Date object in UTC
+ * Parse YYYY-MM-DD string to Date object in UTC safely
  */
 function parseUTCDate(dateStr: string): Date {
-  const parts = dateStr.trim().split('-');
+  if (!dateStr) return new Date();
+  const cleanStr = String(dateStr).trim().split('T')[0].split(' ')[0];
+  const parts = cleanStr.split('-');
   const yyyy = parseInt(parts[0], 10);
   const mm = parseInt(parts[1], 10) - 1;
   const dd = parseInt(parts[2], 10);
+  if (isNaN(yyyy) || isNaN(mm) || isNaN(dd)) {
+    return new Date();
+  }
   return new Date(Date.UTC(yyyy, mm, dd));
 }
 
 /**
- * Calculate Year-by-Year Interest Breakdown
+ * Robust transaction date extractor supporting property variations
+ */
+function getTxDate(t: any): string {
+  const raw = t.transaction_date || t.transactionDate || t.created_at || t.createdAt;
+  if (!raw) return toISOFormat(new Date());
+  return String(raw).trim().split('T')[0].split(' ')[0];
+}
+
+/**
+ * Calculate Year-by-Year Interest Breakdown from historical transaction start date up to current date
  */
 export function calculateYearlyBreakdown(
-  transactions: {
-    transaction_date: string;
-    transaction_type: string;
-    amount_in?: number;
-    amount_out?: number;
-  }[],
+  transactions: any[],
   annualRate: number,
   interestType: 'simple' | 'compound',
   asOfDateStr?: string
@@ -72,25 +81,37 @@ export function calculateYearlyBreakdown(
   const capitalTxList = transactions.filter(
     (t) =>
       (t.transaction_type === 'Capital Added' ||
+        t.transactionType === 'Capital Added' ||
         t.transaction_type === 'Chit Prize Received' ||
+        t.transactionType === 'Chit Prize Received' ||
         t.transaction_type === 'Deposit Received' ||
-        t.transaction_type === 'Withdrawal Return') &&
-      Number(t.amount_in || 0) > 0
+        t.transactionType === 'Deposit Received' ||
+        t.transaction_type === 'Withdrawal Return' ||
+        t.transactionType === 'Withdrawal Return') &&
+      Number(t.amount_in || t.amountIn || 0) > 0
   );
 
   // Filter capital withdrawals
   const withdrawalsList = transactions.filter(
     (t) =>
       (t.transaction_type === 'Business Withdrawal' ||
-        t.transaction_type === 'Capital Returned') &&
-      Number(t.amount_out || 0) > 0
+        t.transactionType === 'Business Withdrawal' ||
+        t.transaction_type === 'Capital Returned' ||
+        t.transactionType === 'Capital Returned') &&
+      Number(t.amount_out || t.amountOut || 0) > 0
   );
 
-  const totalCapitalAdded = capitalTxList.reduce((sum, t) => sum + Number(t.amount_in || 0), 0);
-  const totalCapitalWithdrawn = withdrawalsList.reduce((sum, t) => sum + Number(t.amount_out || 0), 0);
+  const totalCapitalAdded = capitalTxList.reduce(
+    (sum, t) => sum + Number(t.amount_in || t.amountIn || 0),
+    0
+  );
+  const totalCapitalWithdrawn = withdrawalsList.reduce(
+    (sum, t) => sum + Number(t.amount_out || t.amountOut || 0),
+    0
+  );
   const currentCapital = Math.max(0, totalCapitalAdded - totalCapitalWithdrawn);
 
-  // If no transactions exist, return empty summary
+  // If no capital transactions exist, return zero summary
   if (capitalTxList.length === 0) {
     return {
       initialPrincipal: 0,
@@ -105,20 +126,33 @@ export function calculateYearlyBreakdown(
     };
   }
 
-  // Sort capital transactions chronologically
+  // Sort capital transactions chronologically by actual transaction date
   const sortedCapitalTx = [...capitalTxList].sort((a, b) => {
-    return parseUTCDate(a.transaction_date).getTime() - parseUTCDate(b.transaction_date).getTime();
+    return parseUTCDate(getTxDate(a)).getTime() - parseUTCDate(getTxDate(b)).getTime();
   });
 
-  const firstCapDateStr = sortedCapitalTx[0].transaction_date || todayISO;
+  const firstCapDateStr = getTxDate(sortedCapitalTx[0]);
   const startDate = parseUTCDate(firstCapDateStr);
 
-  // Generate Year-by-Year Periods
+  // Generate Year-by-Year Periods starting from the ORIGINAL historical transaction date
   const periods: PeriodBreakdown[] = [];
   let periodStart = new Date(startDate.getTime());
   let periodIndex = 1;
-  let runningPrincipal = currentCapital;
+  let accumulatedCompoundedBalance = 0;
   let totalAccruedInterest = 0;
+
+  // Helper to compute active net principal added up to a specific date
+  const getActiveNetPrincipalAsOf = (asOfDate: Date): number => {
+    const added = capitalTxList
+      .filter((t) => parseUTCDate(getTxDate(t)) <= asOfDate)
+      .reduce((sum, t) => sum + Number(t.amount_in || t.amountIn || 0), 0);
+
+    const withdrawn = withdrawalsList
+      .filter((t) => parseUTCDate(getTxDate(t)) <= asOfDate)
+      .reduce((sum, t) => sum + Number(t.amount_out || t.amountOut || 0), 0);
+
+    return Math.max(0, added - withdrawn);
+  };
 
   while (periodStart < todayDate) {
     // Next anniversary date (1 year later)
@@ -140,14 +174,29 @@ export function calculateYearlyBreakdown(
       break;
     }
 
-    const openingBalance = Math.round(runningPrincipal * 100) / 100;
+    const netActivePrincipalAtStart = getActiveNetPrincipalAsOf(periodStart);
+
+    let openingBalance = 0;
+    if (periodIndex === 1) {
+      openingBalance = netActivePrincipalAtStart;
+      accumulatedCompoundedBalance = netActivePrincipalAtStart;
+    } else {
+      if (interestType === 'compound') {
+        const netPrincipalDelta = netActivePrincipalAtStart - getActiveNetPrincipalAsOf(new Date(periodStart.getTime() - 86400000));
+        accumulatedCompoundedBalance += Math.max(0, netPrincipalDelta);
+        openingBalance = Math.round(accumulatedCompoundedBalance * 100) / 100;
+      } else {
+        openingBalance = Math.round(netActivePrincipalAtStart * 100) / 100;
+      }
+    }
+
     let interestEarned = 0;
 
     if (isFullYear) {
-      // Full Completed Year: Simple = P * (R / 100), Compound = P * (R / 100)
+      // Full Completed Year: Interest = openingBalance * (annualRate / 100)
       interestEarned = Math.round((openingBalance * (annualRate / 100)) * 100) / 100;
     } else {
-      // Partial Year Period
+      // Partial Current Period
       const elapsedYears = elapsedDays / 365.0;
       if (interestType === 'compound') {
         const compoundAmt = openingBalance * Math.pow(1 + annualRate / 100, elapsedYears);
@@ -162,6 +211,10 @@ export function calculateYearlyBreakdown(
       interestType === 'compound'
         ? Math.round((openingBalance + interestEarned) * 100) / 100
         : openingBalance;
+
+    if (interestType === 'compound') {
+      accumulatedCompoundedBalance = closingBalance;
+    }
 
     const label = isFullYear
       ? `Year ${periodIndex} (${periodStartISO} → ${periodEndISO})`
@@ -182,18 +235,15 @@ export function calculateYearlyBreakdown(
       remarks: `Annual ${interestType === 'compound' ? 'Compound' : 'Simple'} Interest @ ${annualRate}%/year`,
     });
 
-    if (interestType === 'compound') {
-      runningPrincipal = closingBalance;
-    }
-
     periodStart = periodEnd;
     periodIndex++;
   }
 
   const roundedTotalInterest = Math.round(totalAccruedInterest * 100) / 100;
+  const initialPrincipal = Number(sortedCapitalTx[0].amount_in || sortedCapitalTx[0].amountIn || 0);
 
   return {
-    initialPrincipal: Number(sortedCapitalTx[0].amount_in || 0),
+    initialPrincipal,
     currentCapital: Math.round(currentCapital * 100) / 100,
     totalAccruedInterest: roundedTotalInterest,
     totalInvestmentValue: Math.round((currentCapital + roundedTotalInterest) * 100) / 100,

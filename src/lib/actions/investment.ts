@@ -396,12 +396,12 @@ export async function addDailyInterest(
     const res = await autoAccrueMonthlyInvestmentInterest();
 
     const supabase = createClient();
-    const { data: todayTx } = await supabase
+    const { data: yearlyTx } = await supabase
       .from('investment_transactions')
       .select('daily_interest_added')
-      .eq('reference_type', 'monthly_interest');
+      .eq('reference_type', 'yearly_interest');
 
-    const totalInterestAccrued = (todayTx || []).reduce(
+    const totalInterestAccrued = (yearlyTx || []).reduce(
       (sum: number, t: any) => sum + Number(t.daily_interest_added || 0),
       0
     );
@@ -411,7 +411,7 @@ export async function addDailyInterest(
       interestAdded: Math.round(totalInterestAccrued * 100) / 100,
     };
   } catch (err: any) {
-    return { success: false, error: err.message || 'Failed to add monthly interest' };
+    return { success: false, error: err.message || 'Failed to check yearly interest' };
   }
 }
 
