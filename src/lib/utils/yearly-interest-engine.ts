@@ -195,26 +195,51 @@ export function calculateYearlyBreakdown(
     subIntervalDates.push(periodEnd);
 
     let periodInterest = 0;
+    const hasIntraPeriodEvents = subIntervalDates.length > 2;
 
-    // Calculate interest across sub-intervals inside this period
-    for (let i = 0; i < subIntervalDates.length - 1; i++) {
-      const subStart = subIntervalDates[i];
-      const subEnd = subIntervalDates[i + 1];
+    if (isFullYear && !hasIntraPeriodEvents) {
+      // Full Completed Year with no intra-year transactions: Exact annual rate (e.g. 18%)
+      periodInterest = openingBalance * (annualRate / 100);
+    } else if (!isFullYear && !hasIntraPeriodEvents) {
+      // Partial Period with no intra-period transactions
+      const elapsedYears = elapsedDays / 365.0;
+      if (interestType === 'compound') {
+        periodInterest = openingBalance * (Math.pow(1 + annualRate / 100, elapsedYears) - 1);
+      } else {
+        periodInterest = openingBalance * (annualRate / 100) * elapsedYears;
+      }
+    } else {
+      // Intra-period transactions exist: Calculate across sub-intervals
+      for (let i = 0; i < subIntervalDates.length - 1; i++) {
+        const subStart = subIntervalDates[i];
+        const subEnd = subIntervalDates[i + 1];
 
-      const subDays = Math.max(
-        0,
-        Math.floor((subEnd.getTime() - subStart.getTime()) / (1000 * 60 * 60 * 24))
-      );
+        const subDays = Math.max(
+          0,
+          Math.floor((subEnd.getTime() - subStart.getTime()) / (1000 * 60 * 60 * 24))
+        );
 
-      if (subDays > 0) {
-        const activeNetCapitalAtSubStart = getActiveNetPrincipalAsOf(subStart);
-        const subBaseBalance =
-          interestType === 'compound'
-            ? activeNetCapitalAtSubStart + accumulatedInterestCompounded
-            : activeNetCapitalAtSubStart;
+        if (subDays > 0) {
+          const activeNetCapitalAtSubStart = getActiveNetPrincipalAsOf(subStart);
+          const subBaseBalance =
+            interestType === 'compound'
+              ? activeNetCapitalAtSubStart + accumulatedInterestCompounded
+              : activeNetCapitalAtSubStart;
 
-        const subInterest = subBaseBalance * (annualRate / 100) * (subDays / 365.0);
-        periodInterest += subInterest;
+          if (isFullYear) {
+            const subInterest = subBaseBalance * (annualRate / 100) * (subDays / 365.0);
+            periodInterest += subInterest;
+          } else {
+            const subYears = subDays / 365.0;
+            if (interestType === 'compound') {
+              const subInterest = subBaseBalance * (Math.pow(1 + annualRate / 100, subYears) - 1);
+              periodInterest += subInterest;
+            } else {
+              const subInterest = subBaseBalance * (annualRate / 100) * subYears;
+              periodInterest += subInterest;
+            }
+          }
+        }
       }
     }
 
