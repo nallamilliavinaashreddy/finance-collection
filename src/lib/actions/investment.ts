@@ -133,6 +133,17 @@ export async function updateInvestmentSettings(
   }
 }
 
+function parseUTCDateString(dateStr: any): number {
+  if (!dateStr) return 0;
+  const clean = String(dateStr).trim().split('T')[0].split(' ')[0];
+  const parts = clean.split('-');
+  const yyyy = parseInt(parts[0], 10);
+  const mm = parseInt(parts[1], 10) - 1;
+  const dd = parseInt(parts[2], 10);
+  if (isNaN(yyyy) || isNaN(mm) || isNaN(dd)) return 0;
+  return Date.UTC(yyyy, mm, dd);
+}
+
 /**
  * Get current running investment cash balance (Working Capital)
  */
@@ -150,8 +161,8 @@ export async function getCurrentInvestmentBalance(): Promise<number> {
 
     let running = 0;
     const sorted = [...data].sort((a: any, b: any) => {
-      const dateA = new Date(a.transaction_date).getTime();
-      const dateB = new Date(b.transaction_date).getTime();
+      const dateA = parseUTCDateString(a.transaction_date);
+      const dateB = parseUTCDateString(b.transaction_date);
       if (dateA !== dateB) return dateA - dateB;
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
@@ -311,21 +322,29 @@ async function executeAutoAccrueInternal(): Promise<{ success: boolean; accruedM
 
     const calc = calculateYearlyInterestDetails(transactions, annualInterestRate, interestType, todayISO);
 
-    // Purge any legacy monthly_interest or Daily Interest rows
-    const { data: legacyRows } = await supabase
-      .from('investment_transactions')
-      .select('id')
-      .or(`reference_type.eq.monthly_interest,transaction_type.eq.Daily Interest`);
+    // Purge any stale interest rows (monthly_interest, Daily Interest, or outdated yearly_interest refIds)
+    const periods = calc.periods || [];
+    const activeRefIds = periods.map((p: any) => `yearly_${p.startDate}_${p.endDate}`);
 
-    if (legacyRows && legacyRows.length > 0) {
-      await supabase
-        .from('investment_transactions')
-        .delete()
-        .in('id', legacyRows.map((r: any) => r.id));
+    const { data: allInterestRows } = await supabase
+      .from('investment_transactions')
+      .select('id, reference_id')
+      .or(`reference_type.eq.monthly_interest,reference_type.eq.yearly_interest,transaction_type.eq.Daily Interest,transaction_type.eq.Annual Interest`);
+
+    if (allInterestRows && allInterestRows.length > 0) {
+      const staleRowIds = allInterestRows
+        .filter((r: any) => !r.reference_id || !activeRefIds.includes(r.reference_id))
+        .map((r: any) => r.id);
+
+      if (staleRowIds.length > 0) {
+        await supabase
+          .from('investment_transactions')
+          .delete()
+          .in('id', staleRowIds);
+      }
     }
 
     // Persist each period breakdown row into investment_transactions table with reference_type = 'yearly_interest'
-    const periods = calc.periods || [];
     for (const period of periods) {
       const refId = `yearly_${period.startDate}_${period.endDate}`;
 
