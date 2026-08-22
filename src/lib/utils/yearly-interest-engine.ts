@@ -134,13 +134,6 @@ export function calculateYearlyBreakdown(
   const firstCapDateStr = getTxDate(sortedCapitalTx[0]);
   const startDate = parseUTCDate(firstCapDateStr);
 
-  // Generate Year-by-Year Periods starting from the ORIGINAL historical transaction date
-  const periods: PeriodBreakdown[] = [];
-  let periodStart = new Date(startDate.getTime());
-  let periodIndex = 1;
-  let accumulatedCompoundedBalance = 0;
-  let totalAccruedInterest = 0;
-
   // Helper to compute active net principal added up to a specific date
   const getActiveNetPrincipalAsOf = (asOfDate: Date): number => {
     const added = capitalTxList
@@ -153,6 +146,18 @@ export function calculateYearlyBreakdown(
 
     return Math.max(0, added - withdrawn);
   };
+
+  // Combine all capital transaction dates for sub-interval event tracking
+  const allTxDates = [...capitalTxList, ...withdrawalsList]
+    .map((t) => parseUTCDate(getTxDate(t)))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  // Generate Year-by-Year Periods starting from the ORIGINAL historical transaction date
+  const periods: PeriodBreakdown[] = [];
+  let periodStart = new Date(startDate.getTime());
+  let periodIndex = 1;
+  let accumulatedInterestCompounded = 0; // Cumulative interest added to principal for compound interest
+  let totalAccruedInterest = 0;
 
   while (periodStart < todayDate) {
     // Next anniversary date (1 year later)
@@ -175,46 +180,56 @@ export function calculateYearlyBreakdown(
     }
 
     const netActivePrincipalAtStart = getActiveNetPrincipalAsOf(periodStart);
-
-    let openingBalance = 0;
-    if (periodIndex === 1) {
-      openingBalance = netActivePrincipalAtStart;
-      accumulatedCompoundedBalance = netActivePrincipalAtStart;
-    } else {
-      if (interestType === 'compound') {
-        const netPrincipalDelta = netActivePrincipalAtStart - getActiveNetPrincipalAsOf(new Date(periodStart.getTime() - 86400000));
-        accumulatedCompoundedBalance += Math.max(0, netPrincipalDelta);
-        openingBalance = Math.round(accumulatedCompoundedBalance * 100) / 100;
-      } else {
-        openingBalance = Math.round(netActivePrincipalAtStart * 100) / 100;
-      }
-    }
-
-    let interestEarned = 0;
-
-    if (isFullYear) {
-      // Full Completed Year: Interest = openingBalance * (annualRate / 100)
-      interestEarned = Math.round((openingBalance * (annualRate / 100)) * 100) / 100;
-    } else {
-      // Partial Current Period
-      const elapsedYears = elapsedDays / 365.0;
-      if (interestType === 'compound') {
-        const compoundAmt = openingBalance * Math.pow(1 + annualRate / 100, elapsedYears);
-        interestEarned = Math.round((compoundAmt - openingBalance) * 100) / 100;
-      } else {
-        interestEarned = Math.round((openingBalance * (annualRate / 100) * elapsedYears) * 100) / 100;
-      }
-    }
-
-    totalAccruedInterest += interestEarned;
-    const closingBalance =
+    const openingBalance =
       interestType === 'compound'
-        ? Math.round((openingBalance + interestEarned) * 100) / 100
-        : openingBalance;
+        ? Math.round((netActivePrincipalAtStart + accumulatedInterestCompounded) * 100) / 100
+        : Math.round(netActivePrincipalAtStart * 100) / 100;
+
+    // Collect all sub-interval boundary dates within [periodStart, periodEnd]
+    const subIntervalDates: Date[] = [periodStart];
+    for (const d of allTxDates) {
+      if (d > periodStart && d < periodEnd) {
+        subIntervalDates.push(d);
+      }
+    }
+    subIntervalDates.push(periodEnd);
+
+    let periodInterest = 0;
+
+    // Calculate interest across sub-intervals inside this period
+    for (let i = 0; i < subIntervalDates.length - 1; i++) {
+      const subStart = subIntervalDates[i];
+      const subEnd = subIntervalDates[i + 1];
+
+      const subDays = Math.max(
+        0,
+        Math.floor((subEnd.getTime() - subStart.getTime()) / (1000 * 60 * 60 * 24))
+      );
+
+      if (subDays > 0) {
+        const activeNetCapitalAtSubStart = getActiveNetPrincipalAsOf(subStart);
+        const subBaseBalance =
+          interestType === 'compound'
+            ? activeNetCapitalAtSubStart + accumulatedInterestCompounded
+            : activeNetCapitalAtSubStart;
+
+        const subInterest = subBaseBalance * (annualRate / 100) * (subDays / 365.0);
+        periodInterest += subInterest;
+      }
+    }
+
+    const roundedPeriodInterest = Math.round(periodInterest * 100) / 100;
+    totalAccruedInterest += roundedPeriodInterest;
 
     if (interestType === 'compound') {
-      accumulatedCompoundedBalance = closingBalance;
+      accumulatedInterestCompounded += roundedPeriodInterest;
     }
+
+    const netActivePrincipalAtEnd = getActiveNetPrincipalAsOf(periodEnd);
+    const closingBalance =
+      interestType === 'compound'
+        ? Math.round((netActivePrincipalAtEnd + accumulatedInterestCompounded) * 100) / 100
+        : Math.round(netActivePrincipalAtEnd * 100) / 100;
 
     const label = isFullYear
       ? `Year ${periodIndex} (${periodStartISO} → ${periodEndISO})`
@@ -230,7 +245,7 @@ export function calculateYearlyBreakdown(
       openingBalance,
       annualInterestRate: annualRate,
       interestType,
-      interestEarned,
+      interestEarned: roundedPeriodInterest,
       closingBalance,
       remarks: `Annual ${interestType === 'compound' ? 'Compound' : 'Simple'} Interest @ ${annualRate}%/year`,
     });
