@@ -18,6 +18,23 @@ function parseUTCDate(dateStr: string): number {
   return Date.UTC(yyyy, mm, dd);
 }
 
+const MIRROR_REFERENCE_TYPES = new Set([
+  'loan',
+  'collection',
+  'expense',
+  'stamp',
+  'chit',
+  'depositor',
+  'salary',
+  'employee',
+]);
+
+function isMirrorInvestmentTransaction(i: any): boolean {
+  if (!i) return false;
+  const refType = (i.reference_type || '').toLowerCase();
+  return MIRROR_REFERENCE_TYPES.has(refType);
+}
+
 function isTableNotFoundError(error: any): boolean {
   if (!error) return false;
   return (
@@ -76,7 +93,11 @@ export async function getDayBookData(dateISO?: string): Promise<{
     // Add historical Inflows
     prevCols.forEach((c: any) => (openingCash += Number(c.amount_paid || 0)));
     prevInvest.forEach((i: any) => {
-      if (i.reference_type !== 'yearly_interest' && i.transaction_type !== 'Annual Interest') {
+      if (
+        i.reference_type !== 'yearly_interest' &&
+        i.transaction_type !== 'Annual Interest' &&
+        !isMirrorInvestmentTransaction(i)
+      ) {
         openingCash += Number(i.amount_in || 0);
       }
     });
@@ -86,7 +107,11 @@ export async function getDayBookData(dateISO?: string): Promise<{
     prevLoans.forEach((l: any) => (openingCash -= Number(l.amount_given || 0)));
     prevExp.forEach((e: any) => (openingCash -= Number(e.amount || 0)));
     prevInvest.forEach((i: any) => {
-      if (i.reference_type !== 'yearly_interest' && i.transaction_type !== 'Annual Interest') {
+      if (
+        i.reference_type !== 'yearly_interest' &&
+        i.transaction_type !== 'Annual Interest' &&
+        !isMirrorInvestmentTransaction(i)
+      ) {
         openingCash -= Number(i.amount_out || 0);
       }
     });
@@ -264,7 +289,13 @@ export async function getDayBookData(dateISO?: string): Promise<{
 
     // Process Investment & Owner Transactions
     dayInvest.forEach((i: any) => {
-      if (i.reference_type === 'yearly_interest' || i.transaction_type === 'Annual Interest') return;
+      if (
+        i.reference_type === 'yearly_interest' ||
+        i.transaction_type === 'Annual Interest' ||
+        isMirrorInvestmentTransaction(i)
+      ) {
+        return;
+      }
 
       const inAmt = Number(i.amount_in || 0);
       const outAmt = Number(i.amount_out || 0);
