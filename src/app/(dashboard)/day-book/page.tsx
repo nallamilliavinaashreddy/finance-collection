@@ -18,7 +18,7 @@ import {
   FileText,
   PlusCircle,
 } from 'lucide-react';
-import { getDayBookData, saveDailyCashClosure, recordTransactionReversal } from '@/lib/actions/day-book';
+import { getDayBookData, saveDailyCashClosure, deleteDailyCashClosure, recordTransactionReversal } from '@/lib/actions/day-book';
 import { DayBookData, DayBookEntry } from '@/types';
 
 export default function DayBookPage() {
@@ -101,6 +101,21 @@ export default function DayBookPage() {
       loadData(selectedDate);
     } else {
       alert(res.error || 'Failed to save cash closure');
+    }
+  };
+
+  const handleResetClosure = async () => {
+    setIsSavingClosure(true);
+    const res = await deleteDailyCashClosure(selectedDate);
+    setIsSavingClosure(false);
+
+    if (res.success) {
+      setShowClosureModal(false);
+      setPhysicalCashInput('');
+      setClosureNotes('');
+      loadData(selectedDate);
+    } else {
+      alert(res.error || 'Failed to clear cash closure');
     }
   };
 
@@ -571,20 +586,33 @@ export default function DayBookPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setShowClosureModal(false)}
-                className="px-4 py-2 bg-[#262626] hover:bg-[#333333] text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveClosure}
-                disabled={isSavingClosure}
-                className="px-5 py-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white text-sm font-bold rounded-xl transition-colors shadow-md shadow-[#FF7A00]/20 disabled:opacity-50"
-              >
-                {isSavingClosure ? 'Saving...' : 'Confirm Closure'}
-              </button>
+            <div className="flex items-center justify-between pt-2">
+              {cm?.isClosed ? (
+                <button
+                  onClick={handleResetClosure}
+                  disabled={isSavingClosure}
+                  className="px-3.5 py-2 bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20 border border-[#EF4444]/30 text-xs font-bold rounded-xl transition-colors disabled:opacity-50"
+                >
+                  Reset / Clear Closure
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowClosureModal(false)}
+                  className="px-4 py-2 bg-[#262626] hover:bg-[#333333] text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveClosure}
+                  disabled={isSavingClosure}
+                  className="px-5 py-2 bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white text-sm font-bold rounded-xl transition-colors shadow-md shadow-[#FF7A00]/20 disabled:opacity-50"
+                >
+                  {isSavingClosure ? 'Saving...' : 'Confirm Closure'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

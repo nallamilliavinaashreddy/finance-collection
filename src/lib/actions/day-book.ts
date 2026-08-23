@@ -18,6 +18,17 @@ function parseUTCDate(dateStr: string): number {
   return Date.UTC(yyyy, mm, dd);
 }
 
+function isTableNotFoundError(error: any): boolean {
+  if (!error) return false;
+  return (
+    error.code === 'PGRST204' ||
+    error.code === '42P01' ||
+    (error.message || '').includes('does not exist') ||
+    (error.message || '').includes('Could not find the table') ||
+    (error.message || '').includes('schema cache')
+  );
+}
+
 export async function getDayBookData(dateISO?: string): Promise<{
   success: boolean;
   data: DayBookData | null;
@@ -36,7 +47,7 @@ export async function getDayBookData(dateISO?: string): Promise<{
       { data: prevDep },
       { data: prevStamps },
       { data: prevSalaries },
-      { data: prevReversals },
+      resPrevReversals,
     ] = await Promise.all([
       supabase.from('collections').select('amount, payment_date').lt('payment_date', selectedDate),
       supabase.from('loans').select('amount_given, start_date, created_at').or(`start_date.lt.${selectedDate},created_at.lt.${selectedDate}`),
@@ -50,6 +61,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       supabase.from('employee_transactions').select('amount, payment_date').lt('payment_date', selectedDate),
       supabase.from('transaction_reversals').select('reversal_amount, reversal_type, reversal_date').lt('reversal_date', selectedDate),
     ]);
+
+    const prevReversals = resPrevReversals?.error && isTableNotFoundError(resPrevReversals.error) ? [] : (resPrevReversals?.data || []);
 
     let openingCash = 0;
 
@@ -92,8 +105,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       { data: dayDep },
       { data: dayStamps },
       { data: daySalaries },
-      { data: dayReversals },
-      { data: dayClosure },
+      resDayReversals,
+      resDayClosure,
     ] = await Promise.all([
       supabase
         .from('collections')
@@ -117,6 +130,9 @@ export async function getDayBookData(dateISO?: string): Promise<{
       supabase.from('transaction_reversals').select('*').eq('reversal_date', selectedDate),
       supabase.from('daily_cash_closures').select('*').eq('closure_date', selectedDate).maybeSingle(),
     ]);
+
+    const dayReversals = resDayReversals?.error && isTableNotFoundError(resDayReversals.error) ? [] : (resDayReversals?.data || []);
+    const dayClosure = resDayClosure?.error && isTableNotFoundError(resDayClosure.error) ? null : (resDayClosure?.data || null);
 
     const rawEntries: any[] = [];
     const collectionSummary: DailyCollectionSummary = {
@@ -498,5 +514,21 @@ export async function recordTransactionReversal(payload: {
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to record transaction reversal' };
+  }
+}
+
+export async function deleteDailyCashClosure(closureDate: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  try {
+    const { error } = await supabase
+      .from('daily_cash_closures')
+      .delete()
+      .eq('closure_date', closureDate);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to delete daily cash closure' };
   }
 }
