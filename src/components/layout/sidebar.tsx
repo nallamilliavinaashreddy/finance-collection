@@ -23,6 +23,7 @@ import {
   PiggyBank,
   Percent,
   Handshake,
+  BookOpen,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -31,6 +32,7 @@ const iconMap: Record<string, React.ElementType> = {
   Users,
   Landmark,
   Receipt,
+  BookOpen,
   Percent,
   Wallet,
   FileSignature,

@@ -38,6 +38,12 @@ export const navigationItems: NavItem[] = [
     translationKey: 'nav.collections',
   },
   {
+    title: 'Day Book',
+    href: '/day-book',
+    icon: 'BookOpen',
+    translationKey: 'nav.dayBook',
+  },
+  {
     title: 'Interest',
     href: '/interest',
     icon: 'Percent',
