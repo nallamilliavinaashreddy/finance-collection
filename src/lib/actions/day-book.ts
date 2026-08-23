@@ -38,73 +38,79 @@ export async function getDayBookData(dateISO?: string): Promise<{
   const selectedDate = dateISO || new Date().toISOString().split('T')[0];
 
   try {
-    // 1. Calculate Opening Cash (All cash transactions strictly before selectedDate)
+    // 1. Calculate Historical Opening Cash (All actual cash transactions strictly before selectedDate)
     const [
-      { data: prevCols },
-      { data: prevLoans },
-      { data: prevExp },
-      { data: prevInvest },
-      { data: prevDep },
-      { data: prevStamps },
-      { data: prevSalaries },
+      resPrevCols,
+      resPrevLoans,
+      resPrevExp,
+      resPrevInvest,
+      resPrevDep,
+      resPrevStamps,
+      resPrevSalaries,
       resPrevReversals,
     ] = await Promise.all([
-      supabase.from('collections').select('amount, payment_date').lt('payment_date', selectedDate),
-      supabase.from('loans').select('amount_given, start_date, created_at').or(`start_date.lt.${selectedDate},created_at.lt.${selectedDate}`),
+      supabase.from('collections').select('amount_paid, payment_date').lt('payment_date', selectedDate),
+      supabase.from('loans').select('amount_given, start_date').lt('start_date', selectedDate),
       supabase.from('expenses').select('amount, expense_date').lt('expense_date', selectedDate),
       supabase
         .from('investment_transactions')
         .select('amount_in, amount_out, transaction_date, reference_type, transaction_type')
         .lt('transaction_date', selectedDate),
       supabase.from('depositor_transactions').select('amount_in, amount_out, transaction_date').lt('transaction_date', selectedDate),
-      supabase.from('stamps').select('amount_in, amount_out, transaction_date').lt('transaction_date', selectedDate),
-      supabase.from('employee_transactions').select('amount, payment_date').lt('payment_date', selectedDate),
+      supabase.from('stamps').select('amount, stamp_date').lt('stamp_date', selectedDate),
+      supabase.from('employee_salaries').select('net_salary_paid, payment_date').lt('payment_date', selectedDate),
       supabase.from('transaction_reversals').select('reversal_amount, reversal_type, reversal_date').lt('reversal_date', selectedDate),
     ]);
 
+    const prevCols = resPrevCols.data || [];
+    const prevLoans = resPrevLoans.data || [];
+    const prevExp = resPrevExp.data || [];
+    const prevInvest = resPrevInvest.data || [];
+    const prevDep = resPrevDep.data || [];
+    const prevStamps = resPrevStamps.data || [];
+    const prevSalaries = resPrevSalaries.data || [];
     const prevReversals = resPrevReversals?.error && isTableNotFoundError(resPrevReversals.error) ? [] : (resPrevReversals?.data || []);
 
     let openingCash = 0;
 
     // Add historical Inflows
-    (prevCols || []).forEach((c: any) => (openingCash += Number(c.amount || 0)));
-    (prevInvest || []).forEach((i: any) => {
+    prevCols.forEach((c: any) => (openingCash += Number(c.amount_paid || 0)));
+    prevInvest.forEach((i: any) => {
       if (i.reference_type !== 'yearly_interest' && i.transaction_type !== 'Annual Interest') {
         openingCash += Number(i.amount_in || 0);
       }
     });
-    (prevDep || []).forEach((d: any) => (openingCash += Number(d.amount_in || 0)));
-    (prevStamps || []).forEach((s: any) => (openingCash += Number(s.amount_in || 0)));
+    prevDep.forEach((d: any) => (openingCash += Number(d.amount_in || 0)));
 
     // Subtract historical Outflows
-    (prevLoans || []).forEach((l: any) => (openingCash -= Number(l.amount_given || 0)));
-    (prevExp || []).forEach((e: any) => (openingCash -= Number(e.amount || 0)));
-    (prevInvest || []).forEach((i: any) => {
+    prevLoans.forEach((l: any) => (openingCash -= Number(l.amount_given || 0)));
+    prevExp.forEach((e: any) => (openingCash -= Number(e.amount || 0)));
+    prevInvest.forEach((i: any) => {
       if (i.reference_type !== 'yearly_interest' && i.transaction_type !== 'Annual Interest') {
         openingCash -= Number(i.amount_out || 0);
       }
     });
-    (prevDep || []).forEach((d: any) => (openingCash -= Number(d.amount_out || 0)));
-    (prevStamps || []).forEach((s: any) => (openingCash -= Number(s.amount_out || 0)));
-    (prevSalaries || []).forEach((s: any) => (openingCash -= Number(s.amount || 0)));
+    prevDep.forEach((d: any) => (openingCash -= Number(d.amount_out || 0)));
+    prevStamps.forEach((s: any) => (openingCash -= Number(s.amount || 0)));
+    prevSalaries.forEach((s: any) => (openingCash -= Number(s.net_salary_paid || 0)));
 
-    // Reversals impact
-    (prevReversals || []).forEach((r: any) => {
+    // Historical Reversals
+    prevReversals.forEach((r: any) => {
       if (r.reversal_type === 'cash_in') openingCash += Number(r.reversal_amount || 0);
       else if (r.reversal_type === 'cash_out') openingCash -= Number(r.reversal_amount || 0);
     });
 
     openingCash = Math.round(openingCash * 100) / 100;
 
-    // 2. Fetch Day's Transactions for selectedDate
+    // 2. Fetch Day's Transactions for selectedDate ONLY
     const [
-      { data: dayCols },
-      { data: dayLoans },
-      { data: dayExp },
-      { data: dayInvest },
-      { data: dayDep },
-      { data: dayStamps },
-      { data: daySalaries },
+      resDayCols,
+      resDayLoans,
+      resDayExp,
+      resDayInvest,
+      resDayDep,
+      resDayStamps,
+      resDaySalaries,
       resDayReversals,
       resDayClosure,
     ] = await Promise.all([
@@ -115,7 +121,7 @@ export async function getDayBookData(dateISO?: string): Promise<{
       supabase
         .from('loans')
         .select('*, customers(id, customer_id, customer_name, mobile_number)')
-        .or(`start_date.eq.${selectedDate},created_at.gte.${selectedDate}T00:00:00,created_at.lte.${selectedDate}T23:59:59`),
+        .eq('start_date', selectedDate),
       supabase.from('expenses').select('*').eq('expense_date', selectedDate),
       supabase
         .from('investment_transactions')
@@ -123,14 +129,21 @@ export async function getDayBookData(dateISO?: string): Promise<{
         .eq('transaction_date', selectedDate),
       supabase
         .from('depositor_transactions')
-        .select('*, depositors(depositor_name)')
+        .select('*, depositors(name)')
         .eq('transaction_date', selectedDate),
-      supabase.from('stamps').select('*').eq('transaction_date', selectedDate),
-      supabase.from('employee_transactions').select('*, employees(employee_name)').eq('payment_date', selectedDate),
+      supabase.from('stamps').select('*, customers(customer_name)').eq('stamp_date', selectedDate),
+      supabase.from('employee_salaries').select('*, employees(employee_name)').eq('payment_date', selectedDate),
       supabase.from('transaction_reversals').select('*').eq('reversal_date', selectedDate),
       supabase.from('daily_cash_closures').select('*').eq('closure_date', selectedDate).maybeSingle(),
     ]);
 
+    const dayCols = resDayCols.data || [];
+    const dayLoans = resDayLoans.data || [];
+    const dayExp = resDayExp.data || [];
+    const dayInvest = resDayInvest.data || [];
+    const dayDep = resDayDep.data || [];
+    const dayStamps = resDayStamps.data || [];
+    const daySalaries = resDaySalaries.data || [];
     const dayReversals = resDayReversals?.error && isTableNotFoundError(resDayReversals.error) ? [] : (resDayReversals?.data || []);
     const dayClosure = resDayClosure?.error && isTableNotFoundError(resDayClosure.error) ? null : (resDayClosure?.data || null);
 
@@ -146,8 +159,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
     };
 
     // Process Collections
-    (dayCols || []).forEach((c: any) => {
-      const amt = Number(c.amount || 0);
+    dayCols.forEach((c: any) => {
+      const amt = Number(c.amount_paid || 0);
       if (amt <= 0) return;
 
       const loan = c.loans || {};
@@ -166,7 +179,7 @@ export async function getDayBookData(dateISO?: string): Promise<{
         sourceMod = 'weekly_finance';
         typeLabel = 'Weekly Collection';
       } else if (loanType === 'monthly') {
-        if (c.payment_type === 'interest' || c.remarks?.includes('Interest')) {
+        if (c.remarks?.toLowerCase().includes('interest') || c.payment_type === 'interest') {
           collectionSummary.monthlyInterest += amt;
           typeLabel = 'Monthly Interest';
         } else {
@@ -194,16 +207,16 @@ export async function getDayBookData(dateISO?: string): Promise<{
         sourceTransactionId: c.id,
         transactionType: typeLabel,
         customerOrAccountName: cust.customer_name || 'Customer',
-        loanOrRefCode: loan.loan_id || loan.loan_code || 'LOAN',
+        loanOrRefCode: loan.loan_id || 'LOAN',
         description: c.remarks || `${typeLabel} received`,
         cashIn: amt,
         cashOut: 0,
-        collectorOrUser: c.collector_name || 'Admin',
+        collectorOrUser: 'Admin',
       });
     });
 
     // Process Loan Disbursements
-    (dayLoans || []).forEach((l: any) => {
+    dayLoans.forEach((l: any) => {
       const amt = Number(l.amount_given || 0);
       if (amt <= 0) return;
 
@@ -228,7 +241,7 @@ export async function getDayBookData(dateISO?: string): Promise<{
     });
 
     // Process Office Expenses
-    (dayExp || []).forEach((e: any) => {
+    dayExp.forEach((e: any) => {
       const amt = Number(e.amount || 0);
       if (amt <= 0) return;
 
@@ -242,15 +255,15 @@ export async function getDayBookData(dateISO?: string): Promise<{
         transactionType: `Office Expense (${e.category || 'General'})`,
         customerOrAccountName: e.category || 'Office Expense',
         loanOrRefCode: 'EXPENSE',
-        description: e.remarks || e.title || 'Office Expense',
+        description: e.description || e.remarks || 'Office Expense',
         cashIn: 0,
         cashOut: amt,
-        collectorOrUser: e.created_by || 'Admin',
+        collectorOrUser: e.paid_to || 'Admin',
       });
     });
 
     // Process Investment & Owner Transactions
-    (dayInvest || []).forEach((i: any) => {
+    dayInvest.forEach((i: any) => {
       if (i.reference_type === 'yearly_interest' || i.transaction_type === 'Annual Interest') return;
 
       const inAmt = Number(i.amount_in || 0);
@@ -298,10 +311,10 @@ export async function getDayBookData(dateISO?: string): Promise<{
     });
 
     // Process Depositor Transactions
-    (dayDep || []).forEach((d: any) => {
+    dayDep.forEach((d: any) => {
       const inAmt = Number(d.amount_in || 0);
       const outAmt = Number(d.amount_out || 0);
-      const depName = d.depositors?.depositor_name || 'Depositor';
+      const depName = d.depositors?.name || 'Depositor';
 
       if (inAmt > 0) {
         collectionSummary.otherCollection += inAmt;
@@ -343,8 +356,54 @@ export async function getDayBookData(dateISO?: string): Promise<{
       }
     });
 
+    // Process Stamp Expenses
+    dayStamps.forEach((s: any) => {
+      const amt = Number(s.amount || 0);
+      if (amt <= 0) return;
+
+      const custName = s.customers?.customer_name || 'Customer';
+      rawEntries.push({
+        id: `stamp_${s.id}`,
+        time: s.created_at ? new Date(s.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '11:30 AM',
+        date: s.stamp_date || selectedDate,
+        rawTimestamp: s.created_at ? new Date(s.created_at).getTime() : parseUTCDate(selectedDate),
+        sourceModule: 'expense',
+        sourceTransactionId: s.id,
+        transactionType: `Stamp Expense (${s.stamp_type || 'Stamp'})`,
+        customerOrAccountName: custName,
+        loanOrRefCode: 'STAMP',
+        description: s.remarks || `Stamp purchase for ${custName}`,
+        cashIn: 0,
+        cashOut: amt,
+        collectorOrUser: 'Admin',
+      });
+    });
+
+    // Process Employee Salaries
+    daySalaries.forEach((s: any) => {
+      const amt = Number(s.net_salary_paid || 0);
+      if (amt <= 0) return;
+
+      const empName = s.employees?.employee_name || 'Employee';
+      rawEntries.push({
+        id: `sal_${s.id}`,
+        time: s.created_at ? new Date(s.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '05:30 PM',
+        date: s.payment_date || selectedDate,
+        rawTimestamp: s.created_at ? new Date(s.created_at).getTime() : parseUTCDate(selectedDate),
+        sourceModule: 'expense',
+        sourceTransactionId: s.id,
+        transactionType: `Salary Paid (${s.salary_month || ''})`,
+        customerOrAccountName: empName,
+        loanOrRefCode: 'SALARY',
+        description: s.remarks || `Salary paid to ${empName}`,
+        cashIn: 0,
+        cashOut: amt,
+        collectorOrUser: 'Admin',
+      });
+    });
+
     // Process Reversals
-    (dayReversals || []).forEach((r: any) => {
+    dayReversals.forEach((r: any) => {
       const amt = Number(r.reversal_amount || 0);
       const isIn = r.reversal_type === 'cash_in';
 
@@ -398,6 +457,15 @@ export async function getDayBookData(dateISO?: string): Promise<{
         reversalOfId: e.reversalOfId,
       };
     });
+
+    // Round summaries
+    collectionSummary.dailyCollection = Math.round(collectionSummary.dailyCollection * 100) / 100;
+    collectionSummary.weeklyCollection = Math.round(collectionSummary.weeklyCollection * 100) / 100;
+    collectionSummary.monthlyInterest = Math.round(collectionSummary.monthlyInterest * 100) / 100;
+    collectionSummary.monthlyPrincipal = Math.round(collectionSummary.monthlyPrincipal * 100) / 100;
+    collectionSummary.emiCollection = Math.round(collectionSummary.emiCollection * 100) / 100;
+    collectionSummary.otherCollection = Math.round(collectionSummary.otherCollection * 100) / 100;
+    collectionSummary.totalCollection = Math.round(collectionSummary.totalCollection * 100) / 100;
 
     const expectedClosingCash = Math.round((openingCash + totalCashIn - totalCashOut) * 100) / 100;
     const actualPhysicalCash = dayClosure ? Number(dayClosure.actual_physical_cash) : undefined;
