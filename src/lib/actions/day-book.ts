@@ -46,16 +46,24 @@ function isTableNotFoundError(error: any): boolean {
   );
 }
 
-export async function getDayBookData(dateISO?: string): Promise<{
+export async function getDayBookData(
+  dateISOOrStart?: string,
+  endDateISO?: string
+): Promise<{
   success: boolean;
   data: DayBookData | null;
   error?: string;
 }> {
   const supabase = createClient();
-  const selectedDate = dateISO || new Date().toISOString().split('T')[0];
+  const todayISO = new Date().toISOString().split('T')[0];
+
+  const startDate = dateISOOrStart || todayISO;
+  const endDate = endDateISO || startDate;
+  const isDateRange = startDate !== endDate;
+  const activeDate = startDate;
 
   try {
-    // 1. Calculate Historical Opening Cash (All actual cash transactions strictly before selectedDate)
+    // 1. Calculate Historical Opening Cash (All actual cash transactions strictly before startDate)
     const [
       resPrevCols,
       resPrevLoans,
@@ -66,17 +74,17 @@ export async function getDayBookData(dateISO?: string): Promise<{
       resPrevSalaries,
       resPrevReversals,
     ] = await Promise.all([
-      supabase.from('collections').select('amount_paid, payment_date').lt('payment_date', selectedDate),
-      supabase.from('loans').select('amount_given, start_date').lt('start_date', selectedDate),
-      supabase.from('expenses').select('amount, expense_date').lt('expense_date', selectedDate),
+      supabase.from('collections').select('amount_paid, payment_date').lt('payment_date', startDate),
+      supabase.from('loans').select('amount_given, start_date').lt('start_date', startDate),
+      supabase.from('expenses').select('amount, expense_date').lt('expense_date', startDate),
       supabase
         .from('investment_transactions')
         .select('amount_in, amount_out, transaction_date, reference_type, transaction_type')
-        .lt('transaction_date', selectedDate),
-      supabase.from('depositor_transactions').select('amount_in, amount_out, transaction_date').lt('transaction_date', selectedDate),
-      supabase.from('stamps').select('amount, stamp_date').lt('stamp_date', selectedDate),
-      supabase.from('employee_salaries').select('net_salary_paid, payment_date').lt('payment_date', selectedDate),
-      supabase.from('transaction_reversals').select('reversal_amount, reversal_type, reversal_date').lt('reversal_date', selectedDate),
+        .lt('transaction_date', startDate),
+      supabase.from('depositor_transactions').select('amount_in, amount_out, transaction_date').lt('transaction_date', startDate),
+      supabase.from('stamps').select('amount, stamp_date').lt('stamp_date', startDate),
+      supabase.from('employee_salaries').select('net_salary_paid, payment_date').lt('payment_date', startDate),
+      supabase.from('transaction_reversals').select('reversal_amount, reversal_type, reversal_date').lt('reversal_date', startDate),
     ]);
 
     const prevCols = resPrevCols.data || [];
@@ -127,7 +135,7 @@ export async function getDayBookData(dateISO?: string): Promise<{
 
     openingCash = Math.round(openingCash * 100) / 100;
 
-    // 2. Fetch Day's Transactions for selectedDate ONLY
+    // 2. Fetch Transactions for range [startDate, endDate]
     const [
       resDayCols,
       resDayLoans,
@@ -142,24 +150,28 @@ export async function getDayBookData(dateISO?: string): Promise<{
       supabase
         .from('collections')
         .select('*, loans(*, customers(id, customer_id, customer_name, mobile_number))')
-        .eq('payment_date', selectedDate),
+        .gte('payment_date', startDate)
+        .lte('payment_date', endDate),
       supabase
         .from('loans')
         .select('*, customers(id, customer_id, customer_name, mobile_number)')
-        .eq('start_date', selectedDate),
-      supabase.from('expenses').select('*').eq('expense_date', selectedDate),
+        .gte('start_date', startDate)
+        .lte('start_date', endDate),
+      supabase.from('expenses').select('*').gte('expense_date', startDate).lte('expense_date', endDate),
       supabase
         .from('investment_transactions')
         .select('*')
-        .eq('transaction_date', selectedDate),
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate),
       supabase
         .from('depositor_transactions')
         .select('*, depositors(name)')
-        .eq('transaction_date', selectedDate),
-      supabase.from('stamps').select('*, customers(customer_name)').eq('stamp_date', selectedDate),
-      supabase.from('employee_salaries').select('*, employees(employee_name)').eq('payment_date', selectedDate),
-      supabase.from('transaction_reversals').select('*').eq('reversal_date', selectedDate),
-      supabase.from('daily_cash_closures').select('*').eq('closure_date', selectedDate).maybeSingle(),
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate),
+      supabase.from('stamps').select('*, customers(customer_name)').gte('stamp_date', startDate).lte('stamp_date', endDate),
+      supabase.from('employee_salaries').select('*, employees(employee_name)').gte('payment_date', startDate).lte('payment_date', endDate),
+      supabase.from('transaction_reversals').select('*').gte('reversal_date', startDate).lte('reversal_date', endDate),
+      supabase.from('daily_cash_closures').select('*').eq('closure_date', endDate).maybeSingle(),
     ]);
 
     const dayCols = resDayCols.data || [];
@@ -226,8 +238,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       rawEntries.push({
         id: `col_${c.id}`,
         time: c.created_at ? new Date(c.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '10:00 AM',
-        date: c.payment_date || selectedDate,
-        rawTimestamp: c.created_at ? new Date(c.created_at).getTime() : parseUTCDate(selectedDate),
+        date: c.payment_date || activeDate,
+        rawTimestamp: c.created_at ? new Date(c.created_at).getTime() : parseUTCDate(activeDate),
         sourceModule: sourceMod,
         sourceTransactionId: c.id,
         transactionType: typeLabel,
@@ -251,8 +263,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       rawEntries.push({
         id: `loan_${l.id}`,
         time: l.created_at ? new Date(l.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '11:00 AM',
-        date: l.start_date || selectedDate,
-        rawTimestamp: l.created_at ? new Date(l.created_at).getTime() : parseUTCDate(selectedDate),
+        date: l.start_date || activeDate,
+        rawTimestamp: l.created_at ? new Date(l.created_at).getTime() : parseUTCDate(activeDate),
         sourceModule: 'loan_disbursement',
         sourceTransactionId: l.id,
         transactionType: `${lType.toUpperCase()} Loan Disbursement`,
@@ -273,8 +285,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       rawEntries.push({
         id: `exp_${e.id}`,
         time: e.created_at ? new Date(e.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '02:00 PM',
-        date: e.expense_date || selectedDate,
-        rawTimestamp: e.created_at ? new Date(e.created_at).getTime() : parseUTCDate(selectedDate),
+        date: e.expense_date || activeDate,
+        rawTimestamp: e.created_at ? new Date(e.created_at).getTime() : parseUTCDate(activeDate),
         sourceModule: 'expense',
         sourceTransactionId: e.id,
         transactionType: `Office Expense (${e.category || 'General'})`,
@@ -307,8 +319,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
         rawEntries.push({
           id: `inv_in_${i.id}`,
           time: i.created_at ? new Date(i.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '03:00 PM',
-          date: i.transaction_date || selectedDate,
-          rawTimestamp: i.created_at ? new Date(i.created_at).getTime() : parseUTCDate(selectedDate),
+          date: i.transaction_date || activeDate,
+          rawTimestamp: i.created_at ? new Date(i.created_at).getTime() : parseUTCDate(activeDate),
           sourceModule: 'investment',
           sourceTransactionId: i.id,
           transactionType: i.transaction_type || 'Capital Added',
@@ -326,8 +338,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
         rawEntries.push({
           id: `inv_out_${i.id}`,
           time: i.created_at ? new Date(i.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '04:00 PM',
-          date: i.transaction_date || selectedDate,
-          rawTimestamp: i.created_at ? new Date(i.created_at).getTime() : parseUTCDate(selectedDate),
+          date: i.transaction_date || activeDate,
+          rawTimestamp: i.created_at ? new Date(i.created_at).getTime() : parseUTCDate(activeDate),
           sourceModule: 'investment',
           sourceTransactionId: i.id,
           transactionType: isDrawing ? 'Owner Drawing' : i.transaction_type || 'Capital Withdrawal',
@@ -354,8 +366,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
         rawEntries.push({
           id: `dep_in_${d.id}`,
           time: d.created_at ? new Date(d.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '01:00 PM',
-          date: d.transaction_date || selectedDate,
-          rawTimestamp: d.created_at ? new Date(d.created_at).getTime() : parseUTCDate(selectedDate),
+          date: d.transaction_date || activeDate,
+          rawTimestamp: d.created_at ? new Date(d.created_at).getTime() : parseUTCDate(activeDate),
           sourceModule: 'depositor',
           sourceTransactionId: d.id,
           transactionType: 'Depositor Receipt',
@@ -372,8 +384,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
         rawEntries.push({
           id: `dep_out_${d.id}`,
           time: d.created_at ? new Date(d.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '05:00 PM',
-          date: d.transaction_date || selectedDate,
-          rawTimestamp: d.created_at ? new Date(d.created_at).getTime() : parseUTCDate(selectedDate),
+          date: d.transaction_date || activeDate,
+          rawTimestamp: d.created_at ? new Date(d.created_at).getTime() : parseUTCDate(activeDate),
           sourceModule: 'depositor',
           sourceTransactionId: d.id,
           transactionType: 'Depositor Payout',
@@ -396,8 +408,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       rawEntries.push({
         id: `stamp_${s.id}`,
         time: s.created_at ? new Date(s.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '11:30 AM',
-        date: s.stamp_date || selectedDate,
-        rawTimestamp: s.created_at ? new Date(s.created_at).getTime() : parseUTCDate(selectedDate),
+        date: s.stamp_date || activeDate,
+        rawTimestamp: s.created_at ? new Date(s.created_at).getTime() : parseUTCDate(activeDate),
         sourceModule: 'expense',
         sourceTransactionId: s.id,
         transactionType: `Stamp Expense (${s.stamp_type || 'Stamp'})`,
@@ -419,8 +431,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       rawEntries.push({
         id: `sal_${s.id}`,
         time: s.created_at ? new Date(s.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '05:30 PM',
-        date: s.payment_date || selectedDate,
-        rawTimestamp: s.created_at ? new Date(s.created_at).getTime() : parseUTCDate(selectedDate),
+        date: s.payment_date || activeDate,
+        rawTimestamp: s.created_at ? new Date(s.created_at).getTime() : parseUTCDate(activeDate),
         sourceModule: 'expense',
         sourceTransactionId: s.id,
         transactionType: `Salary Paid (${s.salary_month || ''})`,
@@ -441,8 +453,8 @@ export async function getDayBookData(dateISO?: string): Promise<{
       rawEntries.push({
         id: `rev_${r.id}`,
         time: r.created_at ? new Date(r.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '06:00 PM',
-        date: r.reversal_date || selectedDate,
-        rawTimestamp: r.created_at ? new Date(r.created_at).getTime() : parseUTCDate(selectedDate),
+        date: r.reversal_date || activeDate,
+        rawTimestamp: r.created_at ? new Date(r.created_at).getTime() : parseUTCDate(activeDate),
         sourceModule: 'reversal',
         sourceTransactionId: r.source_transaction_id,
         transactionType: isIn ? 'Reversal Receipt (+)' : 'Reversal Deduction (-)',
@@ -516,7 +528,10 @@ export async function getDayBookData(dateISO?: string): Promise<{
     return {
       success: true,
       data: {
-        selectedDate,
+        selectedDate: startDate,
+        startDate,
+        endDate,
+        isDateRange,
         collectionSummary,
         cashManagement,
         entries,

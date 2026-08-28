@@ -25,6 +25,14 @@ export default function DayBookPage() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [dateMode, setDateMode] = useState<'single' | 'range'>('single');
+  const [startDate, setStartDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+
   const [data, setData] = useState<DayBookData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPending, startTransition] = useTransition();
@@ -44,9 +52,9 @@ export default function DayBookPage() {
   const [reversalReason, setReversalReason] = useState<string>('');
   const [isSavingReversal, setIsSavingReversal] = useState<boolean>(false);
 
-  const loadData = async (dateStr: string) => {
+  const loadData = async (startStr: string, endStr?: string) => {
     setLoading(true);
-    const res = await getDayBookData(dateStr);
+    const res = await getDayBookData(startStr, endStr);
     if (res.success && res.data) {
       setData(res.data);
       if (res.data.cashManagement.actualPhysicalCash !== undefined) {
@@ -60,8 +68,12 @@ export default function DayBookPage() {
   };
 
   useEffect(() => {
-    loadData(selectedDate);
-  }, [selectedDate]);
+    if (dateMode === 'single') {
+      loadData(selectedDate);
+    } else {
+      loadData(startDate, endDate);
+    }
+  }, [selectedDate, startDate, endDate, dateMode]);
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
@@ -186,41 +198,91 @@ export default function DayBookPage() {
           </p>
         </div>
 
-        {/* Date Selector */}
-        <div className="flex items-center gap-2 bg-[#1F1F1F] p-1.5 rounded-xl border border-[#333333]">
-          <button
-            onClick={handlePrevDay}
-            className="p-2 hover:bg-[#2A2A2A] rounded-lg text-white transition-colors"
-            title="Previous Day"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div className="flex items-center gap-2 px-3 py-1 bg-[#141414] rounded-lg border border-[#333333]">
-            <CalendarIcon className="w-4 h-4 text-[#FF7A00]" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="bg-transparent text-white font-medium text-sm focus:outline-none cursor-pointer"
-            />
+        {/* Date Selector & Mode Controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Mode Switcher */}
+          <div className="flex items-center bg-[#191919] p-1 rounded-xl border border-[#333333]">
+            <button
+              onClick={() => setDateMode('single')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                dateMode === 'single'
+                  ? 'bg-[#FF7A00] text-white shadow-md'
+                  : 'text-[#A3A3A3] hover:text-white'
+              }`}
+            >
+              Single Date
+            </button>
+            <button
+              onClick={() => setDateMode('range')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                dateMode === 'range'
+                  ? 'bg-[#FF7A00] text-white shadow-md'
+                  : 'text-[#A3A3A3] hover:text-white'
+              }`}
+            >
+              Date Range
+            </button>
           </div>
 
-          <button
-            onClick={handleNextDay}
-            className="p-2 hover:bg-[#2A2A2A] rounded-lg text-white transition-colors"
-            title="Next Day"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+          {dateMode === 'single' ? (
+            <div className="flex items-center gap-2 bg-[#1F1F1F] p-1.5 rounded-xl border border-[#333333]">
+              <button
+                onClick={handlePrevDay}
+                className="p-2 hover:bg-[#2A2A2A] rounded-lg text-white transition-colors"
+                title="Previous Day"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
 
-          {!isToday && (
-            <button
-              onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-              className="px-3 py-1.5 text-xs font-semibold bg-[#FF7A00]/10 text-[#FF7A00] hover:bg-[#FF7A00]/20 rounded-lg transition-colors border border-[#FF7A00]/30"
-            >
-              Today
-            </button>
+              <div className="flex items-center gap-2 px-3 py-1 bg-[#141414] rounded-lg border border-[#333333]">
+                <CalendarIcon className="w-4 h-4 text-[#FF7A00]" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  className="bg-transparent text-white font-medium text-sm focus:outline-none cursor-pointer"
+                />
+              </div>
+
+              <button
+                onClick={handleNextDay}
+                className="p-2 hover:bg-[#2A2A2A] rounded-lg text-white transition-colors"
+                title="Next Day"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              {!isToday && (
+                <button
+                  onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                  className="px-3 py-1.5 text-xs font-semibold bg-[#FF7A00]/10 text-[#FF7A00] hover:bg-[#FF7A00]/20 rounded-lg transition-colors border border-[#FF7A00]/30"
+                >
+                  Today
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-[#1F1F1F] p-1.5 rounded-xl border border-[#333333]">
+              <div className="flex items-center gap-2 px-2.5 py-1 bg-[#141414] rounded-lg border border-[#333333]">
+                <CalendarIcon className="w-4 h-4 text-[#FF7A00]" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer"
+                />
+              </div>
+              <span className="text-xs text-[#A3A3A3] font-medium">to</span>
+              <div className="flex items-center gap-2 px-2.5 py-1 bg-[#141414] rounded-lg border border-[#333333]">
+                <CalendarIcon className="w-4 h-4 text-[#FF7A00]" />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent text-white font-medium text-xs sm:text-sm focus:outline-none cursor-pointer"
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>

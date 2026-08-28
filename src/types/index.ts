@@ -458,6 +458,9 @@ export interface CashManagementSummary {
 
 export interface DayBookData {
   selectedDate: string;
+  startDate?: string;
+  endDate?: string;
+  isDateRange?: boolean;
   collectionSummary: DailyCollectionSummary;
   cashManagement: CashManagementSummary;
   entries: DayBookEntry[];
