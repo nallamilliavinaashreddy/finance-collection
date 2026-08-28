@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { decodeLoanType } from '@/lib/actions/loans';
 import {
   DayBookData,
   DayBookEntry,
@@ -202,7 +203,7 @@ export async function getDayBookData(
 
       const loan = c.loans || {};
       const cust = loan.customers || {};
-      const loanType = (loan.loan_type || loan.loanType || '').toLowerCase();
+      const loanType = decodeLoanType(loan.working_days, loan.loan_type);
 
       let sourceMod: DayBookSourceModule = 'daily_finance';
       let typeLabel = 'Collection';
@@ -258,7 +259,7 @@ export async function getDayBookData(
       if (amt <= 0) return;
 
       const cust = l.customers || {};
-      const lType = (l.loan_type || '').toLowerCase();
+      const lType = decodeLoanType(l.working_days, l.loan_type);
 
       rawEntries.push({
         id: `loan_${l.id}`,
@@ -313,9 +314,6 @@ export async function getDayBookData(
       const outAmt = Number(i.amount_out || 0);
 
       if (inAmt > 0) {
-        collectionSummary.otherCollection += inAmt;
-        collectionSummary.totalCollection += inAmt;
-
         rawEntries.push({
           id: `inv_in_${i.id}`,
           time: i.created_at ? new Date(i.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '03:00 PM',
@@ -360,9 +358,6 @@ export async function getDayBookData(
       const depName = d.depositors?.name || 'Depositor';
 
       if (inAmt > 0) {
-        collectionSummary.otherCollection += inAmt;
-        collectionSummary.totalCollection += inAmt;
-
         rawEntries.push({
           id: `dep_in_${d.id}`,
           time: d.created_at ? new Date(d.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '01:00 PM',
