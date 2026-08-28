@@ -73,6 +73,8 @@ export default function StampsPage() {
       if (res.success && res.data) {
         setCustomers(res.data);
       }
+    }).catch((err) => {
+      console.error('Error loading customers in stamps page:', err);
     });
   }, []);
 

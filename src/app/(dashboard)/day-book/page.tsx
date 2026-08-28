@@ -54,17 +54,22 @@ export default function DayBookPage() {
 
   const loadData = async (startStr: string, endStr?: string) => {
     setLoading(true);
-    const res = await getDayBookData(startStr, endStr);
-    if (res.success && res.data) {
-      setData(res.data);
-      if (res.data.cashManagement.actualPhysicalCash !== undefined) {
-        setPhysicalCashInput(String(res.data.cashManagement.actualPhysicalCash));
-      } else {
-        setPhysicalCashInput('');
+    try {
+      const res = await getDayBookData(startStr, endStr);
+      if (res.success && res.data) {
+        setData(res.data);
+        if (res.data.cashManagement.actualPhysicalCash !== undefined) {
+          setPhysicalCashInput(String(res.data.cashManagement.actualPhysicalCash));
+        } else {
+          setPhysicalCashInput('');
+        }
+        setClosureNotes(res.data.cashManagement.notes || '');
       }
-      setClosureNotes(res.data.cashManagement.notes || '');
+    } catch (err: any) {
+      console.error('Error fetching Day Book data:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

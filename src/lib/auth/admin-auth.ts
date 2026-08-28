@@ -76,6 +76,21 @@ export async function logoutAdmin(): Promise<void> {
 }
 
 export async function getCurrentAdminServer(): Promise<UserProfile | null> {
+  // Check cookie first for single-admin session to prevent network timeout hanging when using default admin account
+  if (typeof document !== 'undefined') {
+    const hasAdminSession = document.cookie.split(';').some((c) => c.trim().startsWith('fincollect_admin_session=active'));
+    if (hasAdminSession) {
+      return {
+        id: 'admin-101-system-user',
+        email: 'admin@finance.com',
+        fullName: 'Chief Financial Administrator',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+    }
+  }
+
   const supabase = createClient();
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -92,20 +107,6 @@ export async function getCurrentAdminServer(): Promise<UserProfile | null> {
     }
   } catch (e) {
     // ignore
-  }
-
-  if (typeof document !== 'undefined') {
-    const hasAdminSession = document.cookie.split(';').some((c) => c.trim().startsWith('fincollect_admin_session=active'));
-    if (hasAdminSession) {
-      return {
-        id: 'admin-101-system-user',
-        email: 'admin@finance.com',
-        fullName: 'Chief Financial Administrator',
-        role: 'admin',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
-    }
   }
 
   return null;

@@ -50,9 +50,13 @@ export default function InterestPage() {
   // Load customer list for dropdown
   useEffect(() => {
     async function loadCustomers() {
-      const res = await getCustomers();
-      if (res.success && res.data) {
-        setCustomers(res.data);
+      try {
+        const res = await getCustomers();
+        if (res.success && res.data) {
+          setCustomers(res.data);
+        }
+      } catch (err) {
+        console.error('Error loading customers in interest page:', err);
       }
     }
     loadCustomers();
