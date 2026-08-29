@@ -188,8 +188,8 @@ export function AddDepositorModal({
               <Input
                 id="depositAmount"
                 type="number"
-                min={1}
-                step={1}
+                min={0.01}
+                step="0.01"
                 disabled={Boolean(depositorToEdit)}
                 placeholder="e.g. 200000"
                 className="pl-9 h-10 font-bold text-emerald-600 dark:text-emerald-400"
@@ -210,7 +210,7 @@ export function AddDepositorModal({
                 id="monthlyInterestRate"
                 type="number"
                 min={0}
-                step={0.1}
+                step="0.01"
                 placeholder="e.g. 2.0"
                 className="pl-9 h-10 font-bold text-amber-600 dark:text-amber-400"
                 {...register('monthlyInterestRate', { valueAsNumber: true })}

@@ -159,17 +159,19 @@ export default function DepositorsPage() {
     },
     {
       accessorKey: 'monthlyInterestRate',
-      header: 'Interest Rate & Accrual',
+      header: 'Interest Rate & Accrual Breakdown',
       cell: ({ row }) => {
-        const accrued = row.original.accruedInterest || 0;
-        const days = row.original.elapsedDays || 0;
+        const accrued = row.original.totalAccruedInterest || row.original.accruedInterest || 0;
+        const yrs = row.original.completedYears || 0;
+        const remDays = row.original.remainingDays || 0;
+        const totalDays = row.original.elapsedDays || 0;
         return (
           <div className="flex flex-col">
             <Badge variant="warning" className="w-fit font-bold text-xs">
               {row.original.monthlyInterestRate}% / mo
             </Badge>
             <span className="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5 font-medium">
-              Accrued: {formatCurrency(accrued)} ({days} {days === 1 ? 'day' : 'days'})
+              Accrued: {formatCurrency(accrued)} ({yrs > 0 ? `${yrs}y ${remDays}d` : `${totalDays}d`})
             </span>
           </div>
         );
@@ -177,11 +179,22 @@ export default function DepositorsPage() {
     },
     {
       accessorKey: 'outstandingPrincipal',
-      header: 'Outstanding Principal',
+      header: 'Compounded Base Balance',
       cell: ({ row }) => (
-        <span className="font-extrabold text-[#FF7A00] dark:text-[#FF7A00]">
-          {formatCurrency(row.original.outstandingPrincipal)}
-        </span>
+        <div className="flex flex-col">
+          <span className="font-extrabold text-[#FF7A00] dark:text-[#FF7A00]">
+            {formatCurrency(row.original.compoundedBalance || row.original.outstandingPrincipal)}
+          </span>
+          {row.original.compoundedBalance && row.original.compoundedBalance > row.original.depositAmount ? (
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+              Compounded from {formatCurrency(row.original.depositAmount)}
+            </span>
+          ) : (
+            <span className="text-[10px] text-slate-400">
+              Unpaid Principal
+            </span>
+          )}
+        </div>
       ),
     },
     {

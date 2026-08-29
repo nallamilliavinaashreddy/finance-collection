@@ -9,12 +9,17 @@ export function cn(...inputs: ClassValue[]) {
  * Formats amount in Indian Rupee (₹) format using 'en-IN' locale.
  * Example: ₹10,000, ₹8,500, ₹1,25,000
  */
-export function formatCurrency(amount: number, maximumFractionDigits: number = 0): string {
+export function formatCurrency(amount: number, maximumFractionDigits?: number): string {
+  const num = Number(amount || 0);
+  const hasDecimals = num % 1 !== 0;
+  const maxDigits = maximumFractionDigits !== undefined ? maximumFractionDigits : (hasDecimals ? 2 : 0);
+  const minDigits = hasDecimals ? 2 : 0;
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
-    maximumFractionDigits: maximumFractionDigits,
-  }).format(amount || 0);
+    maximumFractionDigits: maxDigits,
+    minimumFractionDigits: minDigits,
+  }).format(num);
 }
 
 export function formatDate(date: string | Date): string {

@@ -54,7 +54,21 @@ export function RecordDepositorTransactionModal({
 
   // Suggested interest calculation based on exact elapsed days
   const interestCalcInfo = useMemo(() => {
-    if (!depositor) return { accruedInterest: 0, elapsedDays: 0 };
+    if (!depositor) {
+      return {
+        elapsedDays: 0,
+        completedYears: 0,
+        remainingDays: 0,
+        initialDeposit: 0,
+        compoundedBalance: 0,
+        accruedCurrentInterest: 0,
+        totalAccruedInterest: 0,
+        interestPaid: 0,
+        unpaidAccruedInterest: 0,
+        accruedInterest: 0,
+        totalPayable: 0,
+      };
+    }
     const annualRate = depositor.annualInterestRate || (depositor.monthlyInterestRate * 12);
     const iType = depositor.interestType || 'simple';
     return calculateDepositorInterest(
@@ -62,16 +76,17 @@ export function RecordDepositorTransactionModal({
       annualRate,
       iType,
       depositor.depositDate,
-      selectedTxDate
+      selectedTxDate,
+      depositor.totalInterestPaid || 0
     );
   }, [depositor, selectedTxDate]);
 
   const suggestedInterest = useMemo(() => {
     if (!depositor) return 0;
     if (interestCalcInfo.elapsedDays > 0) {
-      return interestCalcInfo.accruedInterest;
+      return Math.round((interestCalcInfo.unpaidAccruedInterest ?? interestCalcInfo.accruedInterest) * 100) / 100;
     }
-    return Math.round((depositor.outstandingPrincipal * depositor.monthlyInterestRate) / 100);
+    return Math.round(((depositor.outstandingPrincipal * depositor.monthlyInterestRate) / 100) * 100) / 100;
   }, [depositor, interestCalcInfo]);
 
   useEffect(() => {
@@ -145,26 +160,34 @@ export function RecordDepositorTransactionModal({
               {depositor.status}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs pt-1.5 border-t border-amber-200/60 dark:border-amber-900/40">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs pt-1.5 border-t border-amber-200/60 dark:border-amber-900/40">
             <div>
-              <span className="text-slate-500">Deposit Amount:</span>
-              <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(depositor.depositAmount)}</p>
+              <span className="text-slate-500">Completed Years:</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{interestCalcInfo.completedYears} yrs</p>
             </div>
             <div>
-              <span className="text-slate-500">Outstanding Principal:</span>
-              <p className="font-extrabold text-[#FF7A00] dark:text-[#FF7A00]">{formatCurrency(depositor.outstandingPrincipal)}</p>
+              <span className="text-slate-500">Remaining Days:</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{interestCalcInfo.remainingDays} days</p>
+            </div>
+            <div>
+              <span className="text-slate-500">Before Compounding:</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(depositor.outstandingPrincipal)}</p>
+            </div>
+            <div>
+              <span className="text-slate-500">Compounded Principal:</span>
+              <p className="font-extrabold text-[#FF7A00] dark:text-[#FF7A00]">{formatCurrency(interestCalcInfo.compoundedBalance)}</p>
             </div>
             <div>
               <span className="text-slate-500">Accrued Interest:</span>
-              <p className="font-bold text-amber-600 dark:text-amber-400">{formatCurrency(depositor.accruedInterest || 0)}</p>
+              <p className="font-bold text-amber-600 dark:text-amber-400">{formatCurrency(interestCalcInfo.totalAccruedInterest)}</p>
             </div>
             <div>
-              <span className="text-slate-500">Total Payable:</span>
-              <p className="font-black text-rose-600 dark:text-rose-400">{formatCurrency(depositor.totalPayable || (depositor.outstandingPrincipal + (depositor.accruedInterest || 0)))}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Total Interest Paid:</span>
+              <span className="text-slate-500">Already Paid:</span>
               <p className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(depositor.totalInterestPaid)}</p>
+            </div>
+            <div>
+              <span className="text-slate-500">Currently Payable:</span>
+              <p className="font-black text-rose-600 dark:text-rose-400">{formatCurrency(interestCalcInfo.unpaidAccruedInterest)}</p>
             </div>
           </div>
         </div>
@@ -235,8 +258,8 @@ export function RecordDepositorTransactionModal({
             <Input
               id="amount"
               type="number"
-              min={1}
-              step={1}
+              min={0.01}
+              step="0.01"
               placeholder="Enter transaction amount"
               className="pl-9 h-10 font-bold text-slate-900 dark:text-slate-100"
               {...register('amount', { valueAsNumber: true })}

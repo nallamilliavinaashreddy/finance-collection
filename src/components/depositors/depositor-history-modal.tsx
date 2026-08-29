@@ -153,26 +153,34 @@ export function DepositorHistoryModal({
               {depositor.status}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
             <div>
-              <span className="text-slate-500">Initial Deposit:</span>
-              <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(depositor.depositAmount)}</p>
+              <span className="text-slate-500">Completed Years:</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{depositor.completedYears || 0} yrs</p>
             </div>
             <div>
-              <span className="text-slate-500">Outstanding Principal:</span>
-              <p className="font-extrabold text-[#FF7A00] dark:text-[#FF7A00]">{formatCurrency(depositor.outstandingPrincipal)}</p>
+              <span className="text-slate-500">Remaining Days:</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{depositor.remainingDays || 0} days</p>
+            </div>
+            <div>
+              <span className="text-slate-500">Before Compounding:</span>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(depositor.outstandingPrincipal)}</p>
+            </div>
+            <div>
+              <span className="text-slate-500">Compounded Principal:</span>
+              <p className="font-extrabold text-[#FF7A00] dark:text-[#FF7A00]">{formatCurrency(depositor.compoundedBalance || depositor.outstandingPrincipal)}</p>
             </div>
             <div>
               <span className="text-slate-500">Accrued Interest:</span>
-              <p className="font-bold text-amber-600 dark:text-amber-400">{formatCurrency(depositor.accruedInterest || 0)}</p>
+              <p className="font-bold text-amber-600 dark:text-amber-400">{formatCurrency(depositor.totalAccruedInterest || 0)}</p>
             </div>
             <div>
-              <span className="text-slate-500">Total Payable:</span>
-              <p className="font-black text-rose-600 dark:text-rose-400">{formatCurrency(depositor.totalPayable || (depositor.outstandingPrincipal + (depositor.accruedInterest || 0)))}</p>
-            </div>
-            <div>
-              <span className="text-slate-500">Total Interest Paid:</span>
+              <span className="text-slate-500">Already Paid:</span>
               <p className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(depositor.totalInterestPaid)}</p>
+            </div>
+            <div>
+              <span className="text-slate-500">Currently Payable:</span>
+              <p className="font-black text-rose-600 dark:text-rose-400">{formatCurrency(depositor.unpaidAccruedInterest || 0)}</p>
             </div>
           </div>
         </div>
