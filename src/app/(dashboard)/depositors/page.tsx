@@ -43,6 +43,8 @@ export default function DepositorsPage() {
     totalDepositedAmount: 0,
     activeDepositors: 0,
     outstandingDepositBalance: 0,
+    totalAccruedInterest: 0,
+    totalPayableOutstanding: 0,
     monthlyInterestPayable: 0,
     totalInterestPaid: 0,
     closedDeposits: 0,
@@ -181,6 +183,23 @@ export default function DepositorsPage() {
           {formatCurrency(row.original.outstandingPrincipal)}
         </span>
       ),
+    },
+    {
+      accessorKey: 'totalPayable',
+      header: 'Total Payable (Current)',
+      cell: ({ row }) => {
+        const total = row.original.totalPayable || (row.original.outstandingPrincipal + (row.original.accruedInterest || 0));
+        return (
+          <div className="flex flex-col">
+            <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
+              {formatCurrency(total)}
+            </span>
+            <span className="text-[10px] text-slate-400">
+              Principal + Accrued Int.
+            </span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'totalInterestPaid',
@@ -347,26 +366,26 @@ export default function DepositorsPage() {
           <p className="text-[11px] text-slate-400 mt-1">Total principal owed</p>
         </Card>
 
-        {/* Card 4: Monthly Interest Payable */}
-        <Card className="p-4 flex flex-col justify-between border-rose-200 dark:border-rose-900/60 bg-rose-50/30 dark:bg-rose-950/20">
-          <span className="text-xs font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
-            Monthly Payable
+        {/* Card 4: Total Accrued Interest */}
+        <Card className="p-4 flex flex-col justify-between border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20">
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+            Accrued Interest
           </span>
-          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.monthlyInterestPayable)}
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2 truncate">
+            {isLoading ? '...' : formatCurrency(metrics.totalAccruedInterest || 0)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Monthly interest due</p>
+          <p className="text-[11px] text-slate-400 mt-1">Unpaid accrued interest</p>
         </Card>
 
-        {/* Card 5: Total Interest Paid */}
-        <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-            Total Interest Paid
+        {/* Card 5: Total Payable Outstanding */}
+        <Card className="p-4 flex flex-col justify-between border-rose-200 dark:border-rose-900/60 bg-rose-50/30 dark:bg-rose-950/20">
+          <span className="text-xs font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+            Total Payable
           </span>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2 truncate">
-            {isLoading ? '...' : formatCurrency(metrics.totalInterestPaid)}
+          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2 truncate">
+            {isLoading ? '...' : formatCurrency(metrics.totalPayableOutstanding || (metrics.outstandingDepositBalance + (metrics.totalAccruedInterest || 0)))}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Cumulative interest paid</p>
+          <p className="text-[11px] text-slate-400 mt-1">Principal + Accrued Interest</p>
         </Card>
 
         {/* Card 6: Closed Deposits */}

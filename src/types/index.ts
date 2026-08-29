@@ -299,6 +299,7 @@ export interface Depositor {
   totalInterestPaid: number;
   accruedInterest?: number;
   elapsedDays?: number;
+  totalPayable?: number;
   status: DepositorStatus;
   remarks?: string;
   createdAt?: string;
@@ -331,6 +332,8 @@ export interface DepositorMetrics {
   totalDepositedAmount: number;
   activeDepositors: number;
   outstandingDepositBalance: number;
+  totalAccruedInterest: number;
+  totalPayableOutstanding: number;
   monthlyInterestPayable: number;
   totalInterestPaid: number;
   closedDeposits: number;

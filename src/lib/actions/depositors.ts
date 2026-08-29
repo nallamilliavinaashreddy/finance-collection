@@ -168,6 +168,9 @@ export async function getDepositors(
         todayISO
       );
 
+      const accrued = row.status === 'active' ? interestCalc.accruedInterest : 0;
+      const totalPayable = row.status === 'active' ? Math.round((outstandingPrincipal + accrued) * 100) / 100 : 0;
+
       return {
         id: row.id,
         depositorName: row.name || row.depositor_name || '',
@@ -182,8 +185,9 @@ export async function getDepositors(
         paymentMode: row.payment_mode || 'Bank Transfer',
         outstandingPrincipal,
         totalInterestPaid,
-        accruedInterest: row.status === 'active' ? interestCalc.accruedInterest : 0,
+        accruedInterest: accrued,
         elapsedDays: row.status === 'active' ? interestCalc.elapsedDays : 0,
+        totalPayable,
         status: row.status as DepositorStatus,
         remarks: row.remarks || undefined,
         createdAt: row.created_at,
@@ -287,6 +291,9 @@ export async function createDepositor(
       paymentMode: depositor.payment_mode || 'Bank Transfer',
       outstandingPrincipal: Number(depositor.deposit_amount || 0),
       totalInterestPaid: 0,
+      accruedInterest: 0,
+      elapsedDays: 0,
+      totalPayable: Number(depositor.deposit_amount || 0),
       status: depositor.status as DepositorStatus,
       remarks: depositor.remarks || undefined,
       createdAt: depositor.created_at,
@@ -345,6 +352,9 @@ export async function updateDepositor(
       paymentMode: depositor.payment_mode || 'Bank Transfer',
       outstandingPrincipal: Number(depositor.deposit_amount || 0),
       totalInterestPaid: 0,
+      accruedInterest: 0,
+      elapsedDays: 0,
+      totalPayable: Number(depositor.deposit_amount || 0),
       status: depositor.status as DepositorStatus,
       remarks: depositor.remarks || undefined,
       createdAt: depositor.created_at,
@@ -643,6 +653,8 @@ export async function getDepositorMetrics(): Promise<{
             totalDepositedAmount: 0,
             activeDepositors: 0,
             outstandingDepositBalance: 0,
+            totalAccruedInterest: 0,
+            totalPayableOutstanding: 0,
             monthlyInterestPayable: 0,
             totalInterestPaid: 0,
             closedDeposits: 0,
@@ -653,6 +665,7 @@ export async function getDepositorMetrics(): Promise<{
 
     const depositors = depRes.data || [];
     const allTx = txRes.data || [];
+    const todayISO = new Date().toISOString().split('T')[0];
 
     const totalDepositedAmount = depositors.reduce(
       (sum: number, d: any) => sum + Number(d.deposit_amount || 0),
@@ -664,15 +677,21 @@ export async function getDepositorMetrics(): Promise<{
 
     // Calculate outstanding balance & interest paid per depositor
     let outstandingDepositBalance = 0;
+    let totalAccruedInterest = 0;
     let monthlyInterestPayable = 0;
     let totalInterestPaid = 0;
 
     for (const d of depositors) {
       const myTx = allTx.filter((t: any) => t.depositor_id === d.id);
 
-      const paid = myTx
-        .filter((t: any) => t.transaction_type === 'Interest Paid' || t.transaction_type === 'interest_paid')
-        .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+      const interestPaidTxs = myTx.filter(
+        (t: any) => t.transaction_type === 'Interest Paid' || t.transaction_type === 'interest_paid'
+      );
+
+      const paid = interestPaidTxs.reduce(
+        (sum: number, t: any) => sum + Number(t.amount_out || 0),
+        0
+      );
 
       totalInterestPaid += paid;
 
@@ -684,9 +703,24 @@ export async function getDepositorMetrics(): Promise<{
       if (d.status === 'active') {
         outstandingDepositBalance += bal;
         const rate = Number(d.monthly_interest_rate || 0);
+        const annualRate = Number(d.annual_interest_rate || (rate * 12));
         monthlyInterestPayable += (bal * rate) / 100;
+
+        let interestStartDate = d.deposit_date;
+        if (interestPaidTxs.length > 0) {
+          const lastInterestPaid = interestPaidTxs[interestPaidTxs.length - 1];
+          if (lastInterestPaid.transaction_date) {
+            interestStartDate = lastInterestPaid.transaction_date;
+          }
+        }
+
+        const iType = d.interest_type === 'compound' ? 'compound' : 'simple';
+        const calc = calculateDepositorInterest(bal, annualRate, iType, interestStartDate, todayISO);
+        totalAccruedInterest += calc.accruedInterest;
       }
     }
+
+    const totalPayableOutstanding = outstandingDepositBalance + totalAccruedInterest;
 
     return {
       success: true,
@@ -694,6 +728,8 @@ export async function getDepositorMetrics(): Promise<{
         totalDepositedAmount: Math.round(totalDepositedAmount * 100) / 100,
         activeDepositors,
         outstandingDepositBalance: Math.round(outstandingDepositBalance * 100) / 100,
+        totalAccruedInterest: Math.round(totalAccruedInterest * 100) / 100,
+        totalPayableOutstanding: Math.round(totalPayableOutstanding * 100) / 100,
         monthlyInterestPayable: Math.round(monthlyInterestPayable * 100) / 100,
         totalInterestPaid: Math.round(totalInterestPaid * 100) / 100,
         closedDeposits,
@@ -706,6 +742,8 @@ export async function getDepositorMetrics(): Promise<{
         totalDepositedAmount: 0,
         activeDepositors: 0,
         outstandingDepositBalance: 0,
+        totalAccruedInterest: 0,
+        totalPayableOutstanding: 0,
         monthlyInterestPayable: 0,
         totalInterestPaid: 0,
         closedDeposits: 0,
