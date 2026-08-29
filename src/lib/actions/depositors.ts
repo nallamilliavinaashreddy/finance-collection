@@ -20,6 +20,62 @@ const TABLE_MISSING_ERROR =
   'The "depositors" or "depositor_transactions" table does not exist in Supabase yet. Please execute the SQL migration script in supabase/migrations/20260804145300_create_depositors_tables.sql in your Supabase SQL Editor.';
 
 /**
+ * Calculate short-period and long-period interest for depositors based on exact elapsed days
+ */
+export function calculateDepositorInterest(
+  principal: number,
+  annualRate: number,
+  interestType: 'simple' | 'compound' = 'simple',
+  startDateStr: string,
+  endDateStr: string = new Date().toISOString().split('T')[0]
+): {
+  elapsedDays: number;
+  completedYears: number;
+  remainingDays: number;
+  accruedInterest: number;
+} {
+  const p = Number(principal || 0);
+  const r = Number(annualRate || 0);
+
+  if (p <= 0 || r <= 0 || !startDateStr || !endDateStr) {
+    return { elapsedDays: 0, completedYears: 0, remainingDays: 0, accruedInterest: 0 };
+  }
+
+  const startDate = new Date(`${startDateStr}T00:00:00Z`);
+  const endDate = new Date(`${endDateStr}T00:00:00Z`);
+
+  const diffTime = endDate.getTime() - startDate.getTime();
+  const elapsedDays = Math.max(0, Math.round(diffTime / (1000 * 60 * 60 * 24)));
+
+  if (elapsedDays <= 0) {
+    return { elapsedDays: 0, completedYears: 0, remainingDays: 0, accruedInterest: 0 };
+  }
+
+  const completedYears = Math.floor(elapsedDays / 365);
+  const remainingDays = elapsedDays % 365;
+
+  let accruedInterest = 0;
+
+  if (interestType === 'compound') {
+    // Annual compounding for completed full years
+    const compoundedPrincipal = p * Math.pow(1 + r / 100, completedYears);
+    // Simple interest for remaining partial period days based on compounded principal
+    const partialInterest = compoundedPrincipal * (r / 100) * (remainingDays / 365);
+    accruedInterest = (compoundedPrincipal + partialInterest) - p;
+  } else {
+    // Simple interest based on actual elapsed days
+    accruedInterest = p * (r / 100) * (elapsedDays / 365);
+  }
+
+  return {
+    elapsedDays,
+    completedYears,
+    remainingDays,
+    accruedInterest: Math.round(accruedInterest * 100) / 100,
+  };
+}
+
+/**
  * 1. Fetch All Depositors with Calculated Balances & Transactions
  */
 export async function getDepositors(
@@ -68,14 +124,20 @@ export async function getDepositors(
       .order('created_at', { ascending: true });
 
     const allTx = txData || [];
+    const todayISO = new Date().toISOString().split('T')[0];
 
     let items: Depositor[] = depositorList.map((row: any) => {
       const myTx = allTx.filter((t: any) => t.depositor_id === row.id);
 
       // Compute total interest paid
-      const totalInterestPaid = myTx
-        .filter((t: any) => t.transaction_type === 'Interest Paid' || t.transaction_type === 'interest_paid')
-        .reduce((sum: number, t: any) => sum + Number(t.amount_out || 0), 0);
+      const interestPaidTxs = myTx.filter(
+        (t: any) => t.transaction_type === 'Interest Paid' || t.transaction_type === 'interest_paid'
+      );
+
+      const totalInterestPaid = interestPaidTxs.reduce(
+        (sum: number, t: any) => sum + Number(t.amount_out || 0),
+        0
+      );
 
       // Compute outstanding principal balance from latest transaction or initial deposit
       let outstandingPrincipal = Number(row.deposit_amount || 0);
@@ -84,20 +146,44 @@ export async function getDepositors(
         outstandingPrincipal = Number(lastTx.outstanding_balance || 0);
       }
 
+      // Determine interest start date (last interest paid transaction date, or initial deposit date)
+      let interestStartDate = row.deposit_date;
+      if (interestPaidTxs.length > 0) {
+        const lastInterestPaid = interestPaidTxs[interestPaidTxs.length - 1];
+        if (lastInterestPaid.transaction_date) {
+          interestStartDate = lastInterestPaid.transaction_date;
+        }
+      }
+
+      const monthlyRate = Number(row.monthly_interest_rate || 0);
+      const annualRate = Number(row.annual_interest_rate || (monthlyRate * 12));
+      const iType = row.interest_type === 'compound' ? 'compound' : 'simple';
+
+      // Calculate accrued interest for exact elapsed days
+      const interestCalc = calculateDepositorInterest(
+        outstandingPrincipal,
+        annualRate,
+        iType,
+        interestStartDate,
+        todayISO
+      );
+
       return {
         id: row.id,
         depositorName: row.name || row.depositor_name || '',
         mobileNumber: row.mobile || row.mobile_number || undefined,
         address: row.address || undefined,
         depositAmount: Number(row.deposit_amount || 0),
-        monthlyInterestRate: Number(row.monthly_interest_rate || 0),
-        annualInterestRate: Number(row.annual_interest_rate || (Number(row.monthly_interest_rate || 0) * 12)),
-        interestType: row.interest_type === 'compound' ? 'compound' : 'simple',
+        monthlyInterestRate: monthlyRate,
+        annualInterestRate: annualRate,
+        interestType: iType,
         depositDate: row.deposit_date,
         expectedReturnDate: row.expected_return_date || undefined,
         paymentMode: row.payment_mode || 'Bank Transfer',
         outstandingPrincipal,
         totalInterestPaid,
+        accruedInterest: row.status === 'active' ? interestCalc.accruedInterest : 0,
+        elapsedDays: row.status === 'active' ? interestCalc.elapsedDays : 0,
         status: row.status as DepositorStatus,
         remarks: row.remarks || undefined,
         createdAt: row.created_at,

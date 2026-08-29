@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Depositor } from '@/types';
 import { depositorTransactionSchema, DepositorTransactionFormData } from '@/lib/validations/depositor';
-import { recordDepositorTransaction } from '@/lib/actions/depositors';
+import { recordDepositorTransaction, calculateDepositorInterest } from '@/lib/actions/depositors';
 import { useToast } from '@/components/providers/toast-provider';
 import { formatCurrency } from '@/lib/utils';
 import { Calendar, DollarSign, FileText, User, Receipt, Landmark } from 'lucide-react';
@@ -50,31 +50,50 @@ export function RecordDepositorTransactionModal({
   });
 
   const selectedType = watch('transactionType');
+  const selectedTxDate = watch('transactionDate') || defaultDate;
 
-  // Suggested monthly interest calculation
+  // Suggested interest calculation based on exact elapsed days
+  const interestCalcInfo = useMemo(() => {
+    if (!depositor) return { accruedInterest: 0, elapsedDays: 0 };
+    const annualRate = depositor.annualInterestRate || (depositor.monthlyInterestRate * 12);
+    const iType = depositor.interestType || 'simple';
+    return calculateDepositorInterest(
+      depositor.outstandingPrincipal,
+      annualRate,
+      iType,
+      depositor.depositDate,
+      selectedTxDate
+    );
+  }, [depositor, selectedTxDate]);
+
   const suggestedInterest = useMemo(() => {
     if (!depositor) return 0;
+    if (interestCalcInfo.elapsedDays > 0) {
+      return interestCalcInfo.accruedInterest;
+    }
     return Math.round((depositor.outstandingPrincipal * depositor.monthlyInterestRate) / 100);
-  }, [depositor]);
+  }, [depositor, interestCalcInfo]);
 
   useEffect(() => {
     if (isOpen && depositor) {
+      const daysText = interestCalcInfo.elapsedDays > 0 ? `${interestCalcInfo.elapsedDays} days` : '1 month';
       reset({
         depositorId: depositor.id,
         transactionType: 'interest_paid',
         amount: suggestedInterest,
-        transactionDate: defaultDate,
-        remarks: `Monthly Interest Payment (${depositor.monthlyInterestRate}%/mo)`,
+        transactionDate: selectedTxDate,
+        remarks: `Interest Payment (${daysText} @ ${depositor.monthlyInterestRate}%/mo)`,
       });
     }
-  }, [isOpen, depositor, reset, defaultDate, suggestedInterest]);
+  }, [isOpen, depositor, reset, selectedTxDate, suggestedInterest, interestCalcInfo.elapsedDays]);
 
   // Update suggested amount when transaction type changes
   const handleTypeChange = (type: string) => {
     if (!depositor) return;
     if (type === 'interest_paid') {
+      const daysText = interestCalcInfo.elapsedDays > 0 ? `${interestCalcInfo.elapsedDays} days` : '1 month';
       setValue('amount', suggestedInterest);
-      setValue('remarks', `Monthly Interest Payment (${depositor.monthlyInterestRate}%/mo)`);
+      setValue('remarks', `Interest Payment (${daysText} @ ${depositor.monthlyInterestRate}%/mo)`);
     } else if (type === 'full_return') {
       setValue('amount', depositor.outstandingPrincipal);
       setValue('remarks', `Full Principal Returned & Settled`);
@@ -198,7 +217,7 @@ export function RecordDepositorTransactionModal({
             </label>
             {selectedType === 'interest_paid' && (
               <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200">
-                Monthly Interest ({depositor.monthlyInterestRate}%): {formatCurrency(suggestedInterest)}
+                Accrued Interest ({interestCalcInfo.elapsedDays > 0 ? `${interestCalcInfo.elapsedDays} elapsed days` : `${depositor.monthlyInterestRate}%/mo`}): {formatCurrency(suggestedInterest)}
               </span>
             )}
             {selectedType === 'full_return' && (

@@ -297,6 +297,8 @@ export interface Depositor {
   paymentMode: PaymentMode | string;
   outstandingPrincipal: number;
   totalInterestPaid: number;
+  accruedInterest?: number;
+  elapsedDays?: number;
   status: DepositorStatus;
   remarks?: string;
   createdAt?: string;

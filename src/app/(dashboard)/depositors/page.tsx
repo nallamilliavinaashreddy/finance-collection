@@ -157,16 +157,17 @@ export default function DepositorsPage() {
     },
     {
       accessorKey: 'monthlyInterestRate',
-      header: 'Monthly Rate (%)',
+      header: 'Interest Rate & Accrual',
       cell: ({ row }) => {
-        const due = Math.round((row.original.outstandingPrincipal * row.original.monthlyInterestRate) / 100);
+        const accrued = row.original.accruedInterest || 0;
+        const days = row.original.elapsedDays || 0;
         return (
           <div className="flex flex-col">
             <Badge variant="warning" className="w-fit font-bold text-xs">
               {row.original.monthlyInterestRate}% / mo
             </Badge>
-            <span className="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5">
-              Due: {formatCurrency(due)}/mo
+            <span className="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5 font-medium">
+              Accrued: {formatCurrency(accrued)} ({days} {days === 1 ? 'day' : 'days'})
             </span>
           </div>
         );
