@@ -87,12 +87,13 @@ export async function createEmployee(
   const supabase = createClient();
 
   try {
-    const payload = {
+    const payload: any = {
       employee_name: formData.employeeName,
+      full_name: formData.employeeName,
       mobile_number: formData.mobileNumber || null,
       address: formData.address || null,
       monthly_salary: formData.monthlySalary,
-      status: formData.status,
+      status: formData.status || 'active',
       remarks: formData.remarks || null,
     };
 
@@ -111,7 +112,7 @@ export async function createEmployee(
 
     const formatted: Employee = {
       id: emp.id,
-      employeeName: emp.employee_name || emp.name,
+      employeeName: emp.employee_name || emp.full_name || emp.name,
       mobileNumber: emp.mobile_number || emp.mobile || undefined,
       address: emp.address || undefined,
       monthlySalary: Number(emp.monthly_salary || 0),
@@ -138,12 +139,13 @@ export async function updateEmployee(
   const supabase = createClient();
 
   try {
-    const payload = {
+    const payload: any = {
       employee_name: formData.employeeName,
+      full_name: formData.employeeName,
       mobile_number: formData.mobileNumber || null,
       address: formData.address || null,
       monthly_salary: formData.monthlySalary,
-      status: formData.status,
+      status: formData.status || 'active',
       remarks: formData.remarks || null,
       updated_at: new Date().toISOString(),
     };
@@ -161,7 +163,7 @@ export async function updateEmployee(
 
     const formatted: Employee = {
       id: emp.id,
-      employeeName: emp.employee_name || emp.name,
+      employeeName: emp.employee_name || emp.full_name || emp.name,
       mobileNumber: emp.mobile_number || emp.mobile || undefined,
       address: emp.address || undefined,
       monthlySalary: Number(emp.monthly_salary || 0),

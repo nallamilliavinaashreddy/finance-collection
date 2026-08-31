@@ -9,6 +9,113 @@ import {
 import { getMonthDateRange } from '@/lib/utils';
 
 /**
+ * Synchronize Chit Net Profit / Net Loss accounting entries into Central Cash Flow / Investment Khata.
+ * - Called automatically when a chit is created, updated, payment added/deleted, or prize recorded/deleted.
+ * - Only records Profit/Loss when status is 'completed' or 'closed'.
+ * - If status is 'active' or if completed status is reversed, any posted profit/loss ledger entry is removed.
+ * - Prevents duplicate entries by using reference_type ('chit_profit' / 'chit_loss') and reference_id (chit.id).
+ */
+export async function syncChitProfitLossAccounting(
+  chitId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  try {
+    const { data: chit, error: chitErr } = await supabase
+      .from('chits')
+      .select('*')
+      .eq('id', chitId)
+      .single();
+
+    if (chitErr || !chit) {
+      return { success: true };
+    }
+
+    const totalM = Number(chit.total_months || 50);
+    const paidM = Number(chit.paid_months || 0);
+    const isCompletedOrClosed = chit.status === 'completed' || chit.status === 'closed' || paidM >= totalM;
+
+    if (!isCompletedOrClosed) {
+      // Reversed or Active: Remove any existing profit or loss entries
+      await deleteInvestmentTransactionByReference('chit_profit', chitId);
+      await deleteInvestmentTransactionByReference('chit_loss', chitId);
+      return { success: true };
+    }
+
+    // 1. Calculate Total Investment (all payments made for this chit)
+    const { data: payments } = await supabase
+      .from('chit_payments')
+      .select('amount')
+      .eq('chit_id', chitId);
+
+    const actualPaymentsSum = (payments || []).reduce(
+      (sum: number, p: any) => sum + Number(p.amount || 0),
+      0
+    );
+    const totalInvestment = Math.max(actualPaymentsSum, Number(chit.total_paid || 0));
+    const totalInvestmentRounded = Math.round(totalInvestment * 100) / 100;
+
+    // 2. Calculate Total Received (prize amount received)
+    const { data: prizeTx } = await supabase
+      .from('investment_transactions')
+      .select('amount_in, transaction_date')
+      .eq('reference_type', 'chit_prize')
+      .eq('reference_id', chitId)
+      .maybeSingle();
+
+    let totalReceived = 0;
+    let txDate = chit.prize_date || chit.updated_at || new Date().toISOString().split('T')[0];
+
+    if (prizeTx && Number(prizeTx.amount_in || 0) > 0) {
+      totalReceived = Number(prizeTx.amount_in || 0);
+      if (prizeTx.transaction_date) txDate = prizeTx.transaction_date;
+    } else if (chit.prize_amount && Number(chit.prize_amount) > 0) {
+      totalReceived = Number(chit.prize_amount);
+    }
+
+    const totalReceivedRounded = Math.round(totalReceived * 100) / 100;
+
+    // 3. Calculate Net Result
+    const netResult = Math.round((totalReceivedRounded - totalInvestmentRounded) * 100) / 100;
+    const chitRef = `${chit.chit_company} (${chit.group_number})`;
+
+    if (netResult > 0) {
+      // PROFIT: Post net positive difference to Investment Khata
+      await deleteInvestmentTransactionByReference('chit_loss', chitId);
+      await updateInvestmentTransactionByReference(
+        'chit_profit',
+        chitId,
+        netResult,
+        0,
+        `Chit Profit - ${chitRef}`,
+        txDate
+      );
+    } else if (netResult < 0) {
+      // LOSS: Post net negative difference to Investment Khata
+      const lossVal = Math.abs(netResult);
+      await deleteInvestmentTransactionByReference('chit_profit', chitId);
+      await updateInvestmentTransactionByReference(
+        'chit_loss',
+        chitId,
+        0,
+        lossVal,
+        `Chit Loss - ${chitRef}`,
+        txDate
+      );
+    } else {
+      // BREAK EVEN: Remove any profit or loss transaction
+      await deleteInvestmentTransactionByReference('chit_profit', chitId);
+      await deleteInvestmentTransactionByReference('chit_loss', chitId);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.warn('Notice: Error syncing chit profit/loss accounting:', chitId, err);
+    return { success: true };
+  }
+}
+
+/**
  * 1. Get Chits list
  */
 export async function getChits(
@@ -72,9 +179,23 @@ export async function getChits(
       const isCompleted = pdMonths >= totMonths;
 
       const pInfo = prizeMap.get(item.id);
-      const pTaken = Boolean(pInfo && pInfo.amount > 0);
-      const pAmount = pInfo ? pInfo.amount : 0;
-      const pDate = pInfo ? pInfo.date : undefined;
+      const pTaken = Boolean((pInfo && pInfo.amount > 0) || item.prize_taken);
+      const pAmount = pInfo ? pInfo.amount : Number(item.prize_amount || 0);
+      const pDate = pInfo ? pInfo.date : item.prize_date || undefined;
+
+      const totalInvestment = Math.round(Number(item.total_paid || 0) * 100) / 100;
+      const totalReceived = Math.round(pAmount * 100) / 100;
+      const principalRecovered = Math.round(Math.min(totalInvestment, totalReceived) * 100) / 100;
+      const netResult = Math.round((totalReceived - totalInvestment) * 100) / 100;
+
+      let resultStatus: 'profit' | 'loss' | 'break_even' = 'break_even';
+      if (netResult > 0) resultStatus = 'profit';
+      else if (netResult < 0) resultStatus = 'loss';
+
+      const profitAmount = netResult > 0 ? netResult : 0;
+      const lossAmount = netResult < 0 ? Math.abs(netResult) : 0;
+
+      const finalStatus = isCompleted ? 'completed' : (item.status || 'active');
 
       return {
         id: item.id,
@@ -91,10 +212,18 @@ export async function getChits(
         prizeDate: pDate,
         startDate: item.start_date,
         nextDueDate: item.next_due_date,
-        status: isCompleted ? 'completed' : (item.status || 'active'),
+        status: finalStatus,
         remarks: item.remarks || undefined,
         createdAt: item.created_at,
         updatedAt: item.updated_at,
+        // Profit / Loss Integration
+        totalInvestment,
+        totalReceived,
+        principalRecovered,
+        netResult,
+        resultStatus,
+        profitAmount,
+        lossAmount,
       };
     });
 
@@ -174,6 +303,8 @@ export async function createChit(
       updatedAt: data.updated_at,
     };
 
+    await syncChitProfitLossAccounting(data.id);
+
     return { success: true, data: newChit };
   } catch (err: any) {
     console.error('Unexpected error creating chit:', err);
@@ -234,6 +365,8 @@ export async function updateChit(
       updatedAt: data.updated_at,
     };
 
+    await syncChitProfitLossAccounting(id);
+
     return { success: true, data: updatedChit };
   } catch (err: any) {
     console.error('Unexpected error updating chit:', err);
@@ -269,11 +402,13 @@ export async function deleteChit(id: string): Promise<{ success: boolean; error?
       }
     }
 
-    // Automatically remove Investment transaction for Chit Prize Received if present
+    // Automatically remove Investment transaction for Chit Prize Received & Profit/Loss if present
     try {
       await deleteInvestmentTransactionByReference('chit_prize', id);
+      await deleteInvestmentTransactionByReference('chit_profit', id);
+      await deleteInvestmentTransactionByReference('chit_loss', id);
     } catch (pzErr) {
-      console.warn('Notice: Failed deleting chit prize investment transaction:', id, pzErr);
+      console.warn('Notice: Failed deleting chit prize/profit/loss investment transactions:', id, pzErr);
     }
 
     return { success: true };
@@ -371,6 +506,8 @@ export async function recordChitPayment(
       console.warn('Investment Khata chit installment hook notice:', invErr);
     }
 
+    await syncChitProfitLossAccounting(formData.chitId);
+
     return { success: true };
   } catch (err: any) {
     console.error('Unexpected error recording chit payment:', err);
@@ -422,6 +559,10 @@ export async function deleteChitPayment(paymentId: string): Promise<{ success: b
       await deleteInvestmentTransactionByReference('chit_payment', paymentId);
     } catch (invErr) {
       console.warn('Notice: Failed deleting investment transaction for chit payment:', paymentId, invErr);
+    }
+
+    if (chit) {
+      await syncChitProfitLossAccounting(chit.id);
     }
 
     return { success: true };
@@ -502,6 +643,8 @@ export async function recordChitPrizeReceived(payload: {
       payload.receivedDate
     );
 
+    await syncChitProfitLossAccounting(payload.chitId);
+
     return res;
   } catch (err: any) {
     return { success: false, error: err?.message || 'Failed to record chit prize received' };
@@ -514,6 +657,7 @@ export async function recordChitPrizeReceived(payload: {
 export async function deleteChitPrizeReceived(chitId: string): Promise<{ success: boolean; error?: string }> {
   try {
     await deleteInvestmentTransactionByReference('chit_prize', chitId);
+    await syncChitProfitLossAccounting(chitId);
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'Failed to delete chit prize transaction' };
@@ -593,6 +737,26 @@ export async function getChitMetrics(): Promise<{
     const { data: paymentsData } = await supabase.from('chit_payments').select('*');
     const allPayments = paymentsData || [];
 
+    // Fetch all profit/loss transactions
+    const { data: profitLossData } = await supabase
+      .from('investment_transactions')
+      .select('*')
+      .in('reference_type', ['chit_profit', 'chit_loss']);
+
+    let totalChitProfit = 0;
+    let totalChitLoss = 0;
+    (profitLossData || []).forEach((row: any) => {
+      if (row.reference_type === 'chit_profit') {
+        totalChitProfit += Number(row.amount_in || 0);
+      } else if (row.reference_type === 'chit_loss') {
+        totalChitLoss += Number(row.amount_out || 0);
+      }
+    });
+
+    totalChitProfit = Math.round(totalChitProfit * 100) / 100;
+    totalChitLoss = Math.round(totalChitLoss * 100) / 100;
+    const netChitProfitLoss = Math.round((totalChitProfit - totalChitLoss) * 100) / 100;
+
     // Fetch all prize received transactions
     const { data: prizesData } = await supabase
       .from('investment_transactions')
@@ -622,6 +786,9 @@ export async function getChitMetrics(): Promise<{
         totalPaidAmount,
         activeChitsCount,
         totalPrizeReceived,
+        totalChitProfit,
+        totalChitLoss,
+        netChitProfitLoss,
       },
     };
   } catch (err: any) {
@@ -635,6 +802,9 @@ export async function getChitMetrics(): Promise<{
         totalPaidAmount: 0,
         activeChitsCount: 0,
         totalPrizeReceived: 0,
+        totalChitProfit: 0,
+        totalChitLoss: 0,
+        netChitProfitLoss: 0,
       },
     };
   }

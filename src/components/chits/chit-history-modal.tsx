@@ -148,26 +148,55 @@ export function ChitHistoryModal({
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-2 border-t border-slate-800">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs pt-2 border-t border-slate-800">
             <div>
-              <span className="text-slate-400">Chit Pool Value:</span>
-              <p className="font-bold text-white mt-0.5">{formatCurrency(chit.chitValue)}</p>
+              <span className="text-slate-400">Total Invested:</span>
+              <p className="font-bold text-[#FF7A00] mt-0.5">{formatCurrency(chit.totalInvestment ?? chit.totalPaid)}</p>
             </div>
             <div>
-              <span className="text-slate-400">Monthly Installment:</span>
-              <p className="font-bold text-amber-400 mt-0.5">{formatCurrency(chit.monthlyInstallment)}</p>
+              <span className="text-slate-400">Total Received:</span>
+              <p className="font-bold text-emerald-400 mt-0.5">{formatCurrency(chit.totalReceived ?? chit.prizeAmount)}</p>
             </div>
             <div>
-              <span className="text-slate-400">Paid Installments:</span>
-              <p className="font-bold text-emerald-400 mt-0.5">
-                {chit.paidMonths} / {chit.totalMonths} months
+              <span className="text-slate-400">Principal Recovered:</span>
+              <p className="font-bold text-slate-200 mt-0.5">{formatCurrency(chit.principalRecovered ?? Math.min(chit.totalPaid, chit.prizeAmount))}</p>
+            </div>
+            <div>
+              <span className="text-slate-400">Net Profit / Loss:</span>
+              <p className={`font-black mt-0.5 ${(chit.netResult ?? 0) > 0 ? 'text-emerald-400' : (chit.netResult ?? 0) < 0 ? 'text-rose-400' : 'text-slate-300'}`}>
+                {formatCurrency(chit.netResult ?? 0)}
               </p>
             </div>
             <div>
-              <span className="text-slate-400">Total Amount Paid:</span>
-              <p className="font-bold text-[#FF7A00] mt-0.5">{formatCurrency(chit.totalPaid)}</p>
+              <span className="text-slate-400">Result Status:</span>
+              <div className="mt-0.5">
+                <Badge
+                  variant={
+                    chit.resultStatus === 'profit' || (chit.netResult ?? 0) > 0
+                      ? 'success'
+                      : chit.resultStatus === 'loss' || (chit.netResult ?? 0) < 0
+                      ? 'error'
+                      : 'outline'
+                  }
+                  className="uppercase text-[10px]"
+                >
+                  {(chit.netResult ?? 0) > 0 ? 'PROFIT' : (chit.netResult ?? 0) < 0 ? 'LOSS' : 'BREAK EVEN'}
+                </Badge>
+              </div>
             </div>
           </div>
+          {(chit.status === 'completed' || chit.status === 'closed') && (
+            <div className="text-[10px] text-slate-400 pt-1 flex items-center justify-between border-t border-slate-800/80">
+              <span>Accounting Ledger Sync:</span>
+              <span className="font-mono text-emerald-400 font-medium">
+                {(chit.netResult ?? 0) > 0
+                  ? `Posted ₹${(chit.netResult ?? 0)} to Central Cash Flow as "Chit Profit"`
+                  : (chit.netResult ?? 0) < 0
+                  ? `Posted ₹${Math.abs(chit.netResult ?? 0)} to Central Cash Flow as "Chit Loss"`
+                  : 'Break Even (No P/L entry required)'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Payments Data Table */}

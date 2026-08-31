@@ -146,8 +146,8 @@ export function AddEmployeeModal({
               <Input
                 id="monthlySalary"
                 type="number"
-                min={1}
-                step={1}
+                min={0.01}
+                step="0.01"
                 placeholder="e.g. 25000"
                 className="pl-9 h-10 font-bold text-emerald-600 dark:text-emerald-400"
                 {...register('monthlySalary', { valueAsNumber: true })}

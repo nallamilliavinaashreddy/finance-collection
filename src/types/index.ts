@@ -171,6 +171,7 @@ export interface StampMetrics {
 }
 
 export type ChitStatus = 'active' | 'completed' | 'closed';
+export type ChitResultStatus = 'profit' | 'loss' | 'break_even';
 
 export interface Chit {
   id: string;
@@ -191,6 +192,14 @@ export interface Chit {
   remarks?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Accounting & Profit/Loss Integration Fields
+  totalInvestment?: number;
+  totalReceived?: number;
+  principalRecovered?: number;
+  netResult?: number;
+  resultStatus?: ChitResultStatus;
+  profitAmount?: number;
+  lossAmount?: number;
 }
 
 export interface ChitPayment {
@@ -213,6 +222,9 @@ export interface ChitMetrics {
   totalPaidAmount: number;
   activeChitsCount: number;
   totalPrizeReceived: number;
+  totalChitProfit?: number;
+  totalChitLoss?: number;
+  netChitProfitLoss?: number;
 }
 
 export type InvestmentTransactionType =
@@ -225,6 +237,8 @@ export type InvestmentTransactionType =
   | 'Chit Payment'
   | 'Chit Installment'
   | 'Chit Prize Received'
+  | 'Chit Profit'
+  | 'Chit Loss'
   | 'Deposit Received'
   | 'Business Withdrawal'
   | 'Withdrawal Return'

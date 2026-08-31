@@ -176,30 +176,50 @@ export default function ChitsPage() {
     },
     {
       accessorKey: 'totalPaid',
-      header: 'Total Paid',
+      header: 'Total Invested',
       cell: ({ row }) => (
-        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-          {formatCurrency(row.original.totalPaid)}
+        <span className="font-bold text-[#FF7A00] dark:text-[#FF7A00]">
+          {formatCurrency(row.original.totalInvestment ?? row.original.totalPaid)}
         </span>
       ),
     },
     {
       accessorKey: 'prizeTaken',
-      header: 'Prize Taken',
+      header: 'Total Received / Prize',
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
-          {row.original.prizeTaken ? (
-            <Badge variant="success" className="w-fit text-[10px] gap-1">
-              <Trophy className="w-3 h-3" />
-              Yes ({formatCurrency(row.original.prizeAmount)})
-            </Badge>
+          {row.original.prizeTaken || (row.original.totalReceived && row.original.totalReceived > 0) ? (
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(row.original.totalReceived ?? row.original.prizeAmount)}
+            </span>
           ) : (
-            <Badge variant="outline" className="w-fit text-[10px] text-slate-500">
-              No
-            </Badge>
+            <span className="text-xs text-slate-400">Not Claimed</span>
           )}
         </div>
       ),
+    },
+    {
+      accessorKey: 'netResult',
+      header: 'Net Result (P/L)',
+      cell: ({ row }) => {
+        const isClosed = row.original.status === 'completed' || row.original.status === 'closed';
+        const net = row.original.netResult ?? 0;
+        if (!isClosed) {
+          return <span className="text-xs text-slate-400 font-mono">In Progress</span>;
+        }
+        return (
+          <div className="flex flex-col gap-0.5">
+            <Badge
+              variant={
+                net > 0 ? 'success' : net < 0 ? 'error' : 'outline'
+              }
+              className="w-fit text-[10px] uppercase font-bold"
+            >
+              {net > 0 ? `PROFIT: +${formatCurrency(net)}` : net < 0 ? `LOSS: -${formatCurrency(Math.abs(net))}` : 'BREAK EVEN'}
+            </Badge>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'status',

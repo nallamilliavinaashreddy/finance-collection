@@ -643,11 +643,13 @@ export async function updateInvestmentTransactionByReference(
 
       return { success: true };
     } else {
-      const mappedType = referenceType === 'chit_prize'
-        ? 'Chit Prize Received'
-        : (referenceType === 'depositor'
-            ? 'Deposit Received'
-            : (referenceType === 'chit_payment' ? 'Chit Installment' : (referenceType === 'monthly_interest' ? 'Daily Interest' : 'Capital Added')));
+      let mappedType: InvestmentTransactionType = 'Capital Added';
+      if (referenceType === 'chit_prize') mappedType = 'Chit Prize Received';
+      else if (referenceType === 'chit_profit') mappedType = 'Chit Profit';
+      else if (referenceType === 'chit_loss') mappedType = 'Chit Loss';
+      else if (referenceType === 'depositor') mappedType = 'Deposit Received';
+      else if (referenceType === 'chit_payment') mappedType = 'Chit Installment';
+      else if (referenceType === 'monthly_interest') mappedType = 'Daily Interest';
 
       return await recordInvestmentTransaction(
         mappedType,

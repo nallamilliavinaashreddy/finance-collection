@@ -197,7 +197,7 @@ export function PaySalaryModal({
                 id="salaryAmount"
                 type="number"
                 min={0}
-                step={1}
+                step="0.01"
                 className="pl-9 h-10 font-semibold"
                 {...register('salaryAmount', { valueAsNumber: true })}
               />
@@ -216,7 +216,7 @@ export function PaySalaryModal({
                 id="bonus"
                 type="number"
                 min={0}
-                step={1}
+                step="0.01"
                 className="pl-9 h-10 text-emerald-600 font-semibold"
                 {...register('bonus', { valueAsNumber: true })}
               />
@@ -234,7 +234,7 @@ export function PaySalaryModal({
                 id="deduction"
                 type="number"
                 min={0}
-                step={1}
+                step="0.01"
                 className="pl-9 h-10 text-rose-600 font-semibold"
                 {...register('deduction', { valueAsNumber: true })}
               />

@@ -1,6 +1,6 @@
 -- ==========================================================
 -- EMPLOYEES & SALARIES MODULE DATABASE MIGRATION
--- Migration: 20260804151700_create_employees_tables.sql
+-- Migration: 202608151700_create_employees_tables.sql
 -- ==========================================================
 
 -- 1. Employees Table
