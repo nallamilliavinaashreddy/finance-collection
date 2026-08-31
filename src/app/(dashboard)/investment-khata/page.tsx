@@ -215,31 +215,34 @@ export default function InvestmentKhataPage() {
   return (
     <div className="flex flex-col gap-6 pb-12">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl p-6 glass-panel shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-              <PiggyBank className="w-6 h-6 text-emerald-600" />
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+              <PiggyBank className="w-5 h-5" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Investment Khata
             </h2>
-            <Badge variant="success" className="gap-1 text-[10px]">
+            <Badge variant="success" className="gap-1 text-[10px] shadow-xs">
               <Database className="w-3 h-3 text-emerald-500" />
               Live PostgreSQL Central Cash Flow
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
             Central business cash-flow ledger recording all capital, loan collections, depositor flows, and expenses.
           </p>
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchInvestmentData}
             isLoading={isLoading}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            className="rounded-xl border-slate-300 dark:border-[#262626] bg-white/50 dark:bg-[#141414]/50 backdrop-blur-md shadow-xs"
           >
             Refresh
           </Button>
@@ -248,7 +251,8 @@ export default function InvestmentKhataPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsSettingsOpen(true)}
-            leftIcon={<Settings className="w-3.5 h-3.5 text-amber-600" />}
+            leftIcon={<Settings className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
+            className="rounded-xl border-slate-300 dark:border-[#262626] bg-white/50 dark:bg-[#141414]/50 backdrop-blur-md shadow-xs"
           >
             Annual Rate: {metrics.annualInterestRate ?? 18}%/yr ({metrics.interestType === 'compound' ? 'Compound' : 'Simple'})
           </Button>
@@ -258,7 +262,8 @@ export default function InvestmentKhataPage() {
             size="sm"
             onClick={handleAddDailyInterest}
             isLoading={isAccruingInterest}
-            leftIcon={<TrendingUp className="w-3.5 h-3.5 text-emerald-600" />}
+            leftIcon={<TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+            className="rounded-xl border-slate-300 dark:border-[#262626] bg-white/50 dark:bg-[#141414]/50 backdrop-blur-md shadow-xs"
           >
             Check Yearly Interest
           </Button>
@@ -267,7 +272,8 @@ export default function InvestmentKhataPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsWithdrawalOpen(true)}
-            leftIcon={<ArrowUpRight className="w-4 h-4 text-rose-600" />}
+            leftIcon={<ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />}
+            className="rounded-xl border-rose-300 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 backdrop-blur-md shadow-xs"
           >
             Take Capital
           </Button>
@@ -276,6 +282,7 @@ export default function InvestmentKhataPage() {
             size="sm"
             onClick={() => setIsAddCapitalOpen(true)}
             leftIcon={<Plus className="w-4 h-4" />}
+            className="rounded-xl shadow-md"
           >
             Add Direct Investment
           </Button>

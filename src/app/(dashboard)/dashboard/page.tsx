@@ -33,6 +33,8 @@ import {
   Percent,
   Wallet,
   FileSignature,
+  Scale,
+  BarChart3,
 } from 'lucide-react';
 
 import { AnimatedNumber } from '@/components/ui/animated-number';
@@ -242,108 +244,144 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8 pb-12">
-      {/* Page Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-0">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {t('dashboard.title', 'Executive Dashboard')}
+      {/* Welcome Hero Banner */}
+      <div className="rounded-2xl p-6 bg-gradient-to-r from-white/90 via-slate-50/80 to-amber-500/10 dark:from-[#111111]/90 dark:via-[#141414]/85 dark:to-[#FF7A00]/10 backdrop-blur-xl border border-slate-200/80 dark:border-[#262626]/80 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Welcome back, Administrator! 👋
             </h2>
-            <Badge variant="success" className="gap-1 text-[10px]">
-              <Database className="w-3 h-3 text-emerald-500" />
-              Live Supabase Data
+            <Badge variant="success" className="gap-1 text-[11px] py-0.5 shadow-xs">
+              <Database className="w-3.5 h-3.5 text-emerald-500" />
+              Live Supabase Engine
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 dark:text-[#A3A3A3]">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-[#A3A3A3] font-medium max-w-2xl">
             {t('dashboard.description', 'Portfolio summary, active investments, expenses, stamp costs & chit payments followed by 4 isolated loan sections.')}
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchMetrics}
-          isLoading={isLoading}
-          leftIcon={<RefreshCw className={cn("w-3.5 h-3.5 transition-transform duration-500", isLoading && "animate-spin")} />}
-        >
-          {t('nav.refreshFeed', 'Refresh Feed')}
-        </Button>
+        <div className="flex items-center gap-3 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchMetrics}
+            isLoading={isLoading}
+            leftIcon={<RefreshCw className={cn("w-3.5 h-3.5 transition-transform duration-500", isLoading && "animate-spin")} />}
+            className="h-10 px-4 rounded-xl border-slate-300 dark:border-[#262626] bg-white/50 dark:bg-[#141414]/50 backdrop-blur-md shadow-xs hover:border-[#FF7A00]/50"
+          >
+            {t('nav.refreshFeed', 'Refresh Feed')}
+          </Button>
+        </div>
       </div>
 
       {/* ================================================================ */}
       {/* PROFIT & LOSS STATEMENT SECTION (5 MANDATORY CARDS) */}
       {/* ================================================================ */}
-      <Card className="p-5 bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#262626] pb-3">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide uppercase">
+            <div className="w-8 h-8 rounded-xl bg-[#FF7A00]/10 border border-[#FF7A00]/20 flex items-center justify-center text-[#FF7A00]">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-wide uppercase">
               {t('dashboard.profitLossStatement', 'Profit & Loss Statement')}
             </h3>
           </div>
-          <Badge variant="outline" className="text-[11px] font-mono border-slate-300 dark:border-[#262626] text-slate-600 dark:text-[#A3A3A3]">
+          <Badge variant="outline" className="text-[11px] font-mono border-slate-300 dark:border-[#262626] text-slate-600 dark:text-[#A3A3A3] bg-white/50 dark:bg-[#111111]/50 backdrop-blur-md">
             {t('dashboard.netProfitFormula', 'Net Profit = Loan Interest - Investment Interest - Expenses')}
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Card 1: Total Investment */}
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
-            <span className="text-xs font-semibold text-[#FF7A00] uppercase tracking-wider">
-              {t('dashboard.totalInvestment', 'Total Investment')}
-            </span>
-            <div className="text-2xl font-extrabold text-[#FF7A00] mt-2 truncate">
+          <Card className="p-5 flex flex-col justify-between border-[#FF7A00]/30 dark:border-[#FF7A00]/30 bg-gradient-to-br from-amber-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#FF7A00] uppercase tracking-wider">
+                {t('dashboard.totalInvestment', 'Total Investment')}
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-[#FF7A00]/15 flex items-center justify-center text-[#FF7A00]">
+                <Wallet className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-[#FF7A00] mt-3 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.totalInvestment ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">{t('dashboard.investmentKhataBalance', 'Investment Khata balance')}</p>
-          </div>
+            <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1 font-medium">{t('dashboard.investmentKhataBalance', 'Investment Khata balance')}</p>
+          </Card>
 
           {/* Card 2: Loan Interest */}
-          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 flex flex-col justify-between">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Loan Interest
-            </span>
-            <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2 truncate">
+          <Card className="p-5 flex flex-col justify-between border-emerald-500/30 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                Loan Interest
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <Coins className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-3 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.loanInterest ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-emerald-600/80 dark:text-[#A3A3A3] mt-1">Earned from active loans</p>
-          </div>
+            <p className="text-[11px] text-emerald-600/80 dark:text-[#A3A3A3] mt-1 font-medium">Earned from active loans</p>
+          </Card>
 
           {/* Card 3: Investment Interest */}
-          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between">
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-              Investment Interest
-            </span>
-            <div className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-2 truncate">
+          <Card className="p-5 flex flex-col justify-between border-amber-500/30 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                Investment Interest
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <Percent className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-3 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.investmentInterest ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-amber-600/80 dark:text-[#A3A3A3] mt-1">Owner capital interest cost</p>
-          </div>
+            <p className="text-[11px] text-amber-600/80 dark:text-[#A3A3A3] mt-1 font-medium">Owner capital interest cost</p>
+          </Card>
 
           {/* Card 4: Expenses */}
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
-            <span className="text-xs font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
-              Expenses
-            </span>
-            <div className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2 truncate">
+          <Card className="p-5 flex flex-col justify-between border-rose-500/30 dark:border-rose-500/30 bg-gradient-to-br from-rose-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+                Expenses
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                <Receipt className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-3 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.totalExpenses ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">Operating expenses</p>
-          </div>
+            <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1 font-medium">Operating expenses</p>
+          </Card>
 
           {/* Card 5: Net Profit / Loss */}
-          <div
-            className={`p-3.5 rounded-xl border flex flex-col justify-between ${
+          <Card
+            className={`p-5 flex flex-col justify-between glass-card shadow-lg hover:-translate-y-1 transition-all duration-200 ${
               (data?.profitLoss?.netProfit ?? 0) >= 0
-                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400'
-                : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400'
+                ? 'border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95'
+                : 'border-rose-500/40 bg-gradient-to-br from-rose-500/20 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95'
             }`}
           >
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Net Profit / Loss
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                Net Profit / Loss
+              </span>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  (data?.profitLoss?.netProfit ?? 0) >= 0
+                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                }`}
+              >
+                <Scale className="w-4 h-4" />
+              </div>
+            </div>
             <div
-              className={`text-2xl font-black mt-2 truncate ${
+              className={`text-2xl font-black mt-3 truncate ${
                 (data?.profitLoss?.netProfit ?? 0) >= 0
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-rose-600 dark:text-rose-400'
@@ -351,124 +389,126 @@ export default function DashboardPage() {
             >
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.netProfit ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] opacity-80 mt-1">
-              {(data?.profitLoss?.netProfit ?? 0) >= 0 ? 'Net Profit' : 'Net Loss'}
+            <p className="text-[11px] font-semibold opacity-90 mt-1">
+              {(data?.profitLoss?.netProfit ?? 0) >= 0 ? 'NET PROFIT' : 'NET LOSS'}
             </p>
-          </div>
+          </Card>
         </div>
-      </Card>
+      </div>
 
       {/* ================================================================ */}
       {/* OVERALL SUMMARY SECTION (TOP WITH ALL SUMMARY CARDS) */}
       {/* ================================================================ */}
-      <Card className="p-5 bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] text-slate-900 dark:text-white flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#262626] pb-3">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#FF7A00]" />
+      <Card className="p-6 glass-card border-slate-200/80 dark:border-[#262626]/80 text-slate-900 dark:text-white flex flex-col gap-5 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#262626]/80 pb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+              <BarChart3 className="w-4 h-4" />
+            </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide uppercase">
               Overall Portfolio, Expenses, Stamps & Chits Summary
             </h3>
           </div>
-          <Badge variant="info" className="text-[11px] py-0.5">
+          <Badge variant="info" className="text-[11px] py-0.5 font-mono shadow-xs">
             Aggregated Live Data
           </Badge>
         </div>
 
         {/* Core Summary Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex flex-col justify-between hover:border-slate-300 dark:hover:border-[#FF7A00]/40 transition-colors">
+            <span className="text-[10px] font-bold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
               Total Customers
             </span>
-            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+            <div className="text-xl font-black text-slate-900 dark:text-white mt-1.5">
               {isLoading ? '...' : overall?.totalCustomers ?? 0}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex flex-col justify-between hover:border-slate-300 dark:hover:border-[#FF7A00]/40 transition-colors">
+            <span className="text-[10px] font-bold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
               Active Loans
             </span>
-            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+            <div className="text-xl font-black text-slate-900 dark:text-white mt-1.5">
               {isLoading ? '...' : overall?.activeLoansCount ?? 0}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-[#FF7A00] uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex flex-col justify-between hover:border-slate-300 dark:hover:border-[#FF7A00]/40 transition-colors">
+            <span className="text-[10px] font-bold text-[#FF7A00] uppercase tracking-wider">
               Active Investment
             </span>
-            <div className="text-lg font-bold text-[#FF7A00] mt-1 truncate">
+            <div className="text-lg font-black text-[#FF7A00] mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.activeInvestment ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-[#FF7A00] uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex flex-col justify-between hover:border-slate-300 dark:hover:border-[#FF7A00]/40 transition-colors">
+            <span className="text-[10px] font-bold text-[#FF7A00] uppercase tracking-wider">
               Portfolio Interest
             </span>
-            <div className="text-lg font-bold text-[#FF7A00] mt-1 truncate">
+            <div className="text-lg font-black text-[#FF7A00] mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.totalInterest ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-slate-800/80 border border-rose-200 dark:border-slate-700/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-rose-700 dark:text-slate-400 uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex flex-col justify-between hover:border-rose-300 dark:hover:border-rose-800 transition-colors">
+            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
               Remaining Balance
             </span>
-            <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1 truncate">
+            <div className="text-lg font-black text-rose-600 dark:text-rose-400 mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.remainingBalance ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-slate-800/80 border border-emerald-200 dark:border-emerald-900/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors">
+            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
               Today&apos;s Collections
             </span>
-            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1 truncate">
+            <div className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysCollections ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-gradient-to-br dark:from-rose-950/60 dark:to-slate-900 border border-rose-200 dark:border-rose-800/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex flex-col justify-between hover:border-rose-300 dark:hover:border-rose-800 transition-colors">
+            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
               Today&apos;s Expenses
             </span>
-            <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1 truncate">
+            <div className="text-lg font-black text-rose-600 dark:text-rose-400 mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysExpenses ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-violet-50/50 dark:bg-gradient-to-br dark:from-violet-950/60 dark:to-slate-900 border border-violet-200 dark:border-violet-800/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-violet-50/60 dark:bg-violet-950/20 border border-violet-200/80 dark:border-violet-900/40 flex flex-col justify-between hover:border-violet-300 dark:hover:border-violet-800 transition-colors">
+            <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
               Today&apos;s Stamp Cost
             </span>
-            <div className="text-lg font-bold text-violet-600 dark:text-violet-300 mt-1 truncate">
+            <div className="text-lg font-black text-violet-600 dark:text-violet-300 mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysStampCost ?? 0)}
             </div>
           </div>
 
           {/* CHIT CARDS 1 & 2 */}
-          <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-gradient-to-br dark:from-amber-950/60 dark:to-slate-900 border border-amber-200 dark:border-amber-800/60 flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex flex-col justify-between hover:border-amber-300 dark:hover:border-amber-800 transition-colors">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                 Today&apos;s Chit Pay
               </span>
-              <Badge variant="success" className="text-[9px] py-0 px-1">Today</Badge>
+              <Badge variant="success" className="text-[9px] py-0 px-1 font-mono">Today</Badge>
             </div>
-            <div className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1 truncate">
+            <div className="text-lg font-black text-amber-600 dark:text-amber-400 mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysChitPayments ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-yellow-50/50 dark:bg-gradient-to-br dark:from-yellow-950/60 dark:to-slate-900 border border-yellow-200 dark:border-yellow-800/60 flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex flex-col justify-between hover:border-amber-300 dark:hover:border-amber-800 transition-colors">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-yellow-700 dark:text-yellow-300 uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                 This Month Chit Pay
               </span>
-              <Badge variant="warning" className="text-[9px] py-0 px-1">Month</Badge>
+              <Badge variant="warning" className="text-[9px] py-0 px-1 font-mono">Month</Badge>
             </div>
-            <div className="text-lg font-bold text-yellow-600 dark:text-yellow-300 mt-1 truncate">
+            <div className="text-lg font-black text-amber-600 dark:text-amber-300 mt-1.5 truncate">
               {isLoading ? '...' : formatCurrency(overall?.thisMonthsChitPayments ?? 0)}
             </div>
           </div>
@@ -478,7 +518,7 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       {/* SECTION 1: DAILY LOANS */}
       {/* ================================================================ */}
-      <div className="flex flex-col gap-4 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col gap-5 p-6 rounded-2xl glass-panel shadow-xl">
         <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           <CalendarDays className="w-5 h-5 text-[#FF7A00]" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -557,7 +597,7 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       {/* SECTION 2: WEEKLY LOANS */}
       {/* ================================================================ */}
-      <div className="flex flex-col gap-4 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col gap-5 p-6 rounded-2xl glass-panel shadow-xl">
         <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           <Clock className="w-5 h-5 text-emerald-500" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -636,7 +676,7 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       {/* SECTION 3: MONTHLY LOANS */}
       {/* ================================================================ */}
-      <div className="flex flex-col gap-4 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col gap-5 p-6 rounded-2xl glass-panel shadow-xl">
         <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           <CalendarRange className="w-5 h-5 text-[#FF7A00]" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -715,7 +755,7 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       {/* SECTION 4: ADJUSTMENT LOANS */}
       {/* ================================================================ */}
-      <div className="flex flex-col gap-4 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col gap-5 p-6 rounded-2xl glass-panel shadow-xl">
         <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           <SlidersHorizontal className="w-5 h-5 text-violet-500" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">

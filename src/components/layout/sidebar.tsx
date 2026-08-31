@@ -54,14 +54,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 bg-white dark:bg-[#0D0D0D] border-r border-slate-200 dark:border-[#1E1E1E] transition-all duration-300 ease-in-out',
+        'hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 bg-white/80 dark:bg-[#0D0D0D]/85 backdrop-blur-xl border-r border-slate-200/80 dark:border-[#1E1E1E]/80 transition-all duration-300 ease-in-out shadow-xl',
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-[#1E1E1E] shrink-0">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80 dark:border-[#1E1E1E]/80 shrink-0">
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-[#FF7A00] flex items-center justify-center text-white shadow-md shadow-[#FF7A00]/20 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF7A00] to-amber-500 flex items-center justify-center text-white shadow-md shadow-[#FF7A00]/25 shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
           {!isCollapsed && (
@@ -85,7 +85,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 py-6 px-3 flex flex-col gap-1.5 overflow-y-auto">
+      <div className="flex-1 py-5 px-3 flex flex-col gap-1.5 overflow-y-auto">
         <div className={cn('px-3 mb-2 text-[11px] font-semibold text-slate-500 dark:text-[#737373] uppercase tracking-wider', isCollapsed && 'sr-only')}>
           {t('nav.navigationMenu', 'Navigation Menu')}
         </div>
@@ -101,8 +101,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 group relative',
                 isActive
-                  ? 'bg-[#FF7A00]/10 text-[#FF7A00] font-semibold border-l-2 border-[#FF7A00]'
-                  : 'text-slate-600 dark:text-[#A3A3A3] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
+                  ? 'bg-[#FF7A00]/15 text-[#FF7A00] font-bold border-l-2 border-[#FF7A00] shadow-sm shadow-[#FF7A00]/10 dark:shadow-[#FF7A00]/20'
+                  : 'text-slate-600 dark:text-[#A3A3A3] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-[#1A1A1A]/80'
               )}
             >
               <Icon
@@ -129,10 +129,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </div>
 
       {/* Footer Profile Preview */}
-      <div className="p-3 border-t border-slate-200 dark:border-[#1E1E1E] shrink-0">
+      <div className="p-3 border-t border-slate-200/80 dark:border-[#1E1E1E]/80 shrink-0">
         <div
           className={cn(
-            'flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626]',
+            'flex items-center gap-3 p-2 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 backdrop-blur-md',
             isCollapsed && 'justify-center p-2'
           )}
         >

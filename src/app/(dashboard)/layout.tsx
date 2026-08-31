@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Navbar } from '@/components/layout/navbar';
 import { MobileNav } from '@/components/layout/mobile-nav';
+import { MoneyRainBackground } from '@/components/ui/money-rain-background';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
@@ -15,7 +16,10 @@ export default function DashboardLayout({
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#070707] text-slate-900 dark:text-white flex flex-col transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#070707] text-slate-900 dark:text-white flex flex-col transition-colors relative overflow-x-hidden">
+      {/* Cinematic Falling Money Background Engine */}
+      <MoneyRainBackground />
+
       {/* Desktop Sidebar */}
       <Sidebar
         isCollapsed={isSidebarCollapsed}
@@ -31,7 +35,7 @@ export default function DashboardLayout({
       {/* Main App Container */}
       <div
         className={cn(
-          'flex-1 flex flex-col transition-all duration-300 ease-in-out',
+          'flex-1 flex flex-col transition-all duration-300 ease-in-out relative z-10',
           isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
         )}
       >

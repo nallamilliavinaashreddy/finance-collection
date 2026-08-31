@@ -5,7 +5,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111] text-slate-900 dark:text-white shadow-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 dark:hover:border-[#333333] hover:shadow-xl dark:hover:shadow-black/50',
+        'rounded-2xl border border-slate-200/80 dark:border-[#262626]/80 bg-white/85 dark:bg-[#111111]/85 backdrop-blur-xl text-slate-900 dark:text-white shadow-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 dark:hover:border-[#FF7A00]/40 hover:shadow-xl dark:hover:shadow-[#FF7A00]/10',
         className
       )}
       {...props}
@@ -49,7 +49,7 @@ export function CardContent({ className, children, ...props }: React.HTMLAttribu
 
 export function CardFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6 pt-0 flex items-center border-t border-slate-200 dark:border-[#262626] mt-4', className)} {...props}>
+    <div className={cn('p-6 pt-0 flex items-center border-t border-slate-200/80 dark:border-[#262626]/80 mt-4', className)} {...props}>
       {children}
     </div>
   );

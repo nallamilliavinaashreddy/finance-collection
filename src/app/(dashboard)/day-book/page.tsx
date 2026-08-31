@@ -20,6 +20,7 @@ import {
   ArrowUpRight,
   Scale,
   Wallet,
+  Database,
 } from 'lucide-react';
 
 export default function DayBookPage() {
@@ -129,18 +130,21 @@ export default function DayBookPage() {
   return (
     <div className="flex flex-col gap-6 pb-12">
       {/* Top Header & Date Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl p-6 glass-panel shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+              <BookOpen className="w-5 h-5" />
+            </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Day Book
             </h2>
-            <Badge variant="info" className="gap-1 text-[10px]">
-              <BookOpen className="w-3 h-3 text-amber-500" />
+            <Badge variant="info" className="gap-1 text-[10px] shadow-xs">
+              <Database className="w-3 h-3 text-amber-500" />
               Daily Cash Register
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
             Real-time daily cash inflow, outflow, and automated balance continuity register.
           </p>
         </div>
