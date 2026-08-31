@@ -20,6 +20,12 @@ export const navigationItems: NavItem[] = [
     translationKey: 'nav.investmentKhata',
   },
   {
+    title: 'Day Book',
+    href: '/day-book',
+    icon: 'BookOpen',
+    translationKey: 'nav.dayBook',
+  },
+  {
     title: 'Customers',
     href: '/customers',
     icon: 'Users',
