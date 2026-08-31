@@ -15,7 +15,7 @@ export default function DashboardLayout({
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#070707] text-white flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#070707] text-slate-900 dark:text-white flex flex-col transition-colors">
       {/* Desktop Sidebar */}
       <Sidebar
         isCollapsed={isSidebarCollapsed}

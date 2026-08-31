@@ -146,7 +146,7 @@ export function ChitPrizeModal({
         </div>
 
         {/* Business Rule Notice Callout */}
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#141414] dark:bg-[#111111] border border-[#262626] dark:border-[#262626] text-xs text-[#FF7A00] dark:text-[#FF7A00]">
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#141414] dark:bg-[#111111] border border-slate-200 dark:border-[#262626] text-xs text-[#FF7A00] dark:text-[#FF7A00]">
           <Info className="w-4 h-4 text-[#FF7A00] shrink-0 mt-0.5" />
           <p>
             <strong>Note:</strong> Receiving the prize money does <strong>NOT</strong> complete the chit subscription. Monthly installment payments continue until the full duration ends.

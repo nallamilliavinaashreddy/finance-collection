@@ -295,48 +295,48 @@ export default function DashboardPage() {
             <div className="text-2xl font-extrabold text-[#FF7A00] mt-2 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.totalInvestment ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-[#A3A3A3] mt-1">{t('dashboard.investmentKhataBalance', 'Investment Khata balance')}</p>
+            <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">{t('dashboard.investmentKhataBalance', 'Investment Khata balance')}</p>
           </div>
 
           {/* Card 2: Loan Interest */}
-          <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-900/60 flex flex-col justify-between">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 flex flex-col justify-between">
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
               Loan Interest
             </span>
-            <div className="text-2xl font-extrabold text-emerald-400 mt-2 truncate">
+            <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.loanInterest ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-[#A3A3A3] mt-1">Earned from active loans</p>
+            <p className="text-[11px] text-emerald-600/80 dark:text-[#A3A3A3] mt-1">Earned from active loans</p>
           </div>
 
           {/* Card 3: Investment Interest */}
-          <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-900/60 flex flex-col justify-between">
-            <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 flex flex-col justify-between">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
               Investment Interest
             </span>
-            <div className="text-2xl font-extrabold text-amber-400 mt-2 truncate">
+            <div className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-2 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.investmentInterest ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-[#A3A3A3] mt-1">Owner capital interest cost</p>
+            <p className="text-[11px] text-amber-600/80 dark:text-[#A3A3A3] mt-1">Owner capital interest cost</p>
           </div>
 
           {/* Card 4: Expenses */}
-          <div className="p-3.5 rounded-xl bg-[#111111] border border-[#262626] flex flex-col justify-between">
-            <span className="text-xs font-semibold text-[#A3A3A3] uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
+            <span className="text-xs font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
               Expenses
             </span>
-            <div className="text-2xl font-extrabold text-white mt-2 truncate">
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2 truncate">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.totalExpenses ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-[#A3A3A3] mt-1">Operating expenses</p>
+            <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">Operating expenses</p>
           </div>
 
           {/* Card 5: Net Profit / Loss */}
           <div
             className={`p-3.5 rounded-xl border flex flex-col justify-between ${
               (data?.profitLoss?.netProfit ?? 0) >= 0
-                ? 'bg-emerald-950/20 border-emerald-900/60 text-emerald-400'
-                : 'bg-rose-950/20 border-rose-900/60 text-rose-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400'
             }`}
           >
             <span className="text-xs font-semibold uppercase tracking-wider">
@@ -345,8 +345,8 @@ export default function DashboardPage() {
             <div
               className={`text-2xl font-black mt-2 truncate ${
                 (data?.profitLoss?.netProfit ?? 0) >= 0
-                  ? 'text-emerald-400'
-                  : 'text-rose-400'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-rose-600 dark:text-rose-400'
               }`}
             >
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.netProfit ?? 0} formatAsCurrency />}
@@ -361,11 +361,11 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       {/* OVERALL SUMMARY SECTION (TOP WITH ALL SUMMARY CARDS) */}
       {/* ================================================================ */}
-      <Card className="p-5 bg-[#111111] border border-[#262626] text-white flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-        <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+      <Card className="p-5 bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] text-slate-900 dark:text-white flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#262626] pb-3">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#FF7A00]" />
-            <h3 className="text-base font-bold text-white tracking-wide uppercase">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide uppercase">
               Overall Portfolio, Expenses, Stamps & Chits Summary
             </h3>
           </div>
@@ -376,25 +376,25 @@ export default function DashboardPage() {
 
         {/* Core Summary Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-          <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-[#A3A3A3] uppercase tracking-wider">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
+            <span className="text-[10px] font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
               Total Customers
             </span>
-            <div className="text-xl font-bold text-white mt-1">
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
               {isLoading ? '...' : overall?.totalCustomers ?? 0}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-[#A3A3A3] uppercase tracking-wider">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
+            <span className="text-[10px] font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
               Active Loans
             </span>
-            <div className="text-xl font-bold text-white mt-1">
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
               {isLoading ? '...' : overall?.activeLoansCount ?? 0}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
             <span className="text-[10px] font-semibold text-[#FF7A00] uppercase tracking-wider">
               Active Investment
             </span>
@@ -403,7 +403,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#141414] border border-[#262626] flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
             <span className="text-[10px] font-semibold text-[#FF7A00] uppercase tracking-wider">
               Portfolio Interest
             </span>
@@ -412,63 +412,63 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-slate-800/80 border border-rose-200 dark:border-slate-700/60 flex flex-col justify-between">
+            <span className="text-[10px] font-semibold text-rose-700 dark:text-slate-400 uppercase tracking-wider">
               Remaining Balance
             </span>
-            <div className="text-lg font-bold text-rose-400 mt-1 truncate">
+            <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1 truncate">
               {isLoading ? '...' : formatCurrency(overall?.remainingBalance ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-800/80 border border-emerald-900/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
+          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-slate-800/80 border border-emerald-200 dark:border-emerald-900/60 flex flex-col justify-between">
+            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
               Today&apos;s Collections
             </span>
-            <div className="text-lg font-bold text-emerald-400 mt-1 truncate">
+            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysCollections ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-gradient-to-br from-rose-950/60 to-slate-900 border border-rose-800/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-rose-300 uppercase tracking-wider">
+          <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-gradient-to-br dark:from-rose-950/60 dark:to-slate-900 border border-rose-200 dark:border-rose-800/60 flex flex-col justify-between">
+            <span className="text-[10px] font-semibold text-rose-700 dark:text-rose-300 uppercase tracking-wider">
               Today&apos;s Expenses
             </span>
-            <div className="text-lg font-bold text-rose-400 mt-1 truncate">
+            <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysExpenses ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-gradient-to-br from-violet-950/60 to-slate-900 border border-violet-800/60 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-violet-300 uppercase tracking-wider">
+          <div className="p-3 rounded-xl bg-violet-50/50 dark:bg-gradient-to-br dark:from-violet-950/60 dark:to-slate-900 border border-violet-200 dark:border-violet-800/60 flex flex-col justify-between">
+            <span className="text-[10px] font-semibold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
               Today&apos;s Stamp Cost
             </span>
-            <div className="text-lg font-bold text-violet-300 mt-1 truncate">
+            <div className="text-lg font-bold text-violet-600 dark:text-violet-300 mt-1 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysStampCost ?? 0)}
             </div>
           </div>
 
           {/* CHIT CARDS 1 & 2 */}
-          <div className="p-3 rounded-xl bg-gradient-to-br from-amber-950/60 to-slate-900 border border-amber-800/60 flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-gradient-to-br dark:from-amber-950/60 dark:to-slate-900 border border-amber-200 dark:border-amber-800/60 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                 Today&apos;s Chit Pay
               </span>
               <Badge variant="success" className="text-[9px] py-0 px-1">Today</Badge>
             </div>
-            <div className="text-lg font-bold text-amber-400 mt-1 truncate">
+            <div className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1 truncate">
               {isLoading ? '...' : formatCurrency(overall?.todaysChitPayments ?? 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-950/60 to-slate-900 border border-yellow-800/60 flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-yellow-50/50 dark:bg-gradient-to-br dark:from-yellow-950/60 dark:to-slate-900 border border-yellow-200 dark:border-yellow-800/60 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-yellow-300 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-yellow-700 dark:text-yellow-300 uppercase tracking-wider">
                 This Month Chit Pay
               </span>
               <Badge variant="warning" className="text-[9px] py-0 px-1">Month</Badge>
             </div>
-            <div className="text-lg font-bold text-yellow-300 mt-1 truncate">
+            <div className="text-lg font-bold text-yellow-600 dark:text-yellow-300 mt-1 truncate">
               {isLoading ? '...' : formatCurrency(overall?.thisMonthsChitPayments ?? 0)}
             </div>
           </div>
@@ -490,7 +490,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Investment (Active Daily Loans)
@@ -505,7 +505,7 @@ export default function DashboardPage() {
             <p className="text-[11px] text-slate-400 mt-1">SUM(amount_given) WHERE is_closed = false</p>
           </Card>
 
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Daily Interest
@@ -569,7 +569,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Investment (Active Weekly Loans)
@@ -584,7 +584,7 @@ export default function DashboardPage() {
             <p className="text-[11px] text-slate-400 mt-1">SUM(amount_given) WHERE is_closed = false</p>
           </Card>
 
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Weekly Interest
@@ -648,7 +648,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Investment (Active Monthly Loans)
@@ -663,7 +663,7 @@ export default function DashboardPage() {
             <p className="text-[11px] text-slate-400 mt-1">SUM(amount_given) WHERE is_closed = false</p>
           </Card>
 
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Monthly Interest
@@ -727,7 +727,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="p-5 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+          <Card className="p-5 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Investment (Active Adjustment Loans)

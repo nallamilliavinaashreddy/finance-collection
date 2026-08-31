@@ -662,7 +662,7 @@ export default function SettingsPage() {
               </div>
 
               {importFile && (
-                <div className="p-3 rounded-xl bg-[#111111] dark:bg-[#111111] border border-[#262626] dark:border-[#262626] text-xs text-[#FF7A00] dark:text-[#FF7A00]">
+                <div className="p-3 rounded-xl bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] text-xs text-[#FF7A00] dark:text-[#FF7A00]">
                   Selected file: <strong>{importFile.name}</strong> ({Math.round(importFile.size / 1024)} KB)
                 </div>
               )}

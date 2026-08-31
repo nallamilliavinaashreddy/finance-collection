@@ -829,7 +829,7 @@ export default function ReportsPage() {
       {activeTab === 'investment' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+            <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Current Investment
               </span>
@@ -913,7 +913,7 @@ export default function ReportsPage() {
               <p className="text-[11px] text-slate-400 mt-1">Vouchers recorded in period</p>
             </Card>
 
-            <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+            <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Top Expense Category
               </span>
@@ -971,7 +971,7 @@ export default function ReportsPage() {
               <p className="text-[11px] text-slate-400 mt-1">Stamp paper records in period</p>
             </Card>
 
-            <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+            <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Top Customer (Stamp Income)
               </span>
@@ -1020,7 +1020,7 @@ export default function ReportsPage() {
               <p className="text-[11px] text-slate-400 mt-1">Total chit installment payments in period</p>
             </Card>
 
-            <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+            <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Total Chit Pool Value
               </span>
@@ -1102,7 +1102,7 @@ export default function ReportsPage() {
       {activeTab === 'interest' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-            <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+            <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Daily Interest
               </span>
@@ -1132,7 +1132,7 @@ export default function ReportsPage() {
               <p className="text-[11px] text-slate-400 mt-1">Monthly loan interest collected</p>
             </Card>
 
-            <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+            <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
               <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
                 Adjustment Interest
               </span>

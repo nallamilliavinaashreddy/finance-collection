@@ -358,7 +358,7 @@ export default function DepositorsPage() {
         </Card>
 
         {/* Card 2: Active Depositors */}
-        <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+        <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
           <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
             Active Depositors
           </span>

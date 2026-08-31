@@ -273,7 +273,7 @@ export default function ExpensesPage() {
           <p className="text-[11px] text-slate-400 mt-1">Expenses in current calendar month</p>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-between border-[#262626] dark:border-[#262626] bg-[#111111] dark:bg-[#111111]">
+        <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#FF7A00] dark:text-[#FF7A00] uppercase tracking-wider">
               Total Expenses

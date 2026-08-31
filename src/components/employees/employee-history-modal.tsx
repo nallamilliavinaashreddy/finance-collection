@@ -132,7 +132,7 @@ export function EmployeeHistoryModal({
     >
       <div className="space-y-4">
         {/* Employee Summary Card */}
-        <div className="p-3.5 rounded-xl bg-[#111111] dark:bg-[#111111] border border-[#262626] dark:border-[#262626] flex flex-col gap-1.5">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <span className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
               <User className="w-4 h-4 text-[#FF7A00]" />

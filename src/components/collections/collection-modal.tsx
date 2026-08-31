@@ -220,7 +220,7 @@ export function CollectionModal({
 
         {/* Selected Loan Details & Progress Shell */}
         {selectedLoanObj && (
-          <div className="p-3.5 rounded-xl bg-[#111111] dark:bg-[#111111] border border-[#262626] dark:border-[#262626] flex flex-col gap-2">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Badge variant="info" className="uppercase text-[10px]">

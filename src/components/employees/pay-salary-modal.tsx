@@ -126,7 +126,7 @@ export function PaySalaryModal({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Info Banner */}
-        <div className="p-3.5 rounded-xl bg-[#111111] dark:bg-[#111111] border border-[#262626] dark:border-[#262626] flex items-center justify-between text-xs text-[#FF7A00] text-white">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex items-center justify-between text-xs text-[#FF7A00] text-white">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-[#FF7A00] shrink-0" />
             <span>
