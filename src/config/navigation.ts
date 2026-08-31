@@ -80,6 +80,12 @@ export const navigationItems: NavItem[] = [
     translationKey: 'nav.employees',
   },
   {
+    title: 'Balance Sheet',
+    href: '/balance-sheet',
+    icon: 'Scale',
+    translationKey: 'nav.balanceSheet',
+  },
+  {
     title: 'Reports',
     href: '/reports',
     icon: 'BarChart3',

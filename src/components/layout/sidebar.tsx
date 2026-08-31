@@ -24,6 +24,7 @@ import {
   Percent,
   Handshake,
   BookOpen,
+  Scale,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -39,6 +40,7 @@ const iconMap: Record<string, React.ElementType> = {
   Coins,
   Handshake,
   BarChart3,
+  Scale,
   Settings,
 };
 
