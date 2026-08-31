@@ -267,7 +267,7 @@ export default function DayBookPage() {
         </Card>
 
         {/* 4. Closing Balance */}
-        <Card className="p-4 flex flex-col justify-between border-[#FF7A00]/40 bg-gradient-to-br from-[#FF7A00]/10 via-[#111111] to-[#0D0D0D]">
+        <Card className="p-4 flex flex-col justify-between border-[#FF7A00]/40 bg-gradient-to-br from-[#FF7A00]/10 via-amber-50/50 to-white dark:via-[#111111] dark:to-[#0D0D0D]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#FF7A00] uppercase tracking-wider">
               Closing Balance
@@ -279,7 +279,7 @@ export default function DayBookPage() {
           <div className="text-2xl font-black text-[#FF7A00] mt-2 truncate">
             {isLoading ? '...' : formatCurrency(closingBal)}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Opening + Cash In - Cash Out
           </p>
         </Card>

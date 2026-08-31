@@ -73,7 +73,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-slate-950 text-slate-100 relative overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative overflow-hidden transition-colors">
       {/* Background Glow Accents */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -89,16 +89,16 @@ function LoginForm() {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-xl shadow-orange-500/20 mb-4 animate-in zoom-in duration-300">
             <TrendingUp className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             FinCollect Platform
           </h1>
-          <p className="text-xs text-slate-400 mt-1 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Single Admin Authentication Portal
           </p>
         </div>
 
         {/* Login Form Card */}
-        <Card className="shadow-xl border-slate-800 bg-slate-900/90">
+        <Card className="shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90">
           <CardHeader>
             <CardTitle className="text-xl">Admin Sign In</CardTitle>
             <CardDescription>

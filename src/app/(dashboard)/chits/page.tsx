@@ -390,7 +390,7 @@ export default function ChitsPage() {
           <p className="text-[11px] text-slate-400 mt-1">Chit installments paid in current month</p>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-between border-[#262626] bg-[#111111]">
+        <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#FF7A00] uppercase tracking-wider">
               Total Chit Pool Value
@@ -400,25 +400,25 @@ export default function ChitsPage() {
           <div className="text-2xl font-bold text-[#FF7A00] mt-2 truncate">
             {isLoading ? '...' : formatCurrency(totalChitValue)}
           </div>
-          <p className="text-[11px] text-[#A3A3A3] mt-1">Cumulative subscription pool value</p>
+          <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">Cumulative subscription pool value</p>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-between border-[#262626] bg-[#111111]">
+        <Card className="p-4 flex flex-col justify-between border-slate-200 dark:border-[#262626] bg-white dark:bg-[#111111]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#A3A3A3] uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-600 dark:text-[#A3A3A3] uppercase tracking-wider">
               Total Amount Paid
             </span>
             <Badge variant="outline" className="text-[10px]">All-Time Paid</Badge>
           </div>
-          <div className="text-2xl font-bold text-white mt-2 truncate">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white mt-2 truncate">
             {isLoading ? '...' : formatCurrency(totalPaidAmount)}
           </div>
-          <p className="text-[11px] text-[#A3A3A3] mt-1">Total installments paid to date</p>
+          <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">Total installments paid to date</p>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-between border-amber-900/60 bg-amber-950/20">
+        <Card className="p-4 flex flex-col justify-between border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
               Prize Received Total
             </span>
             <Badge variant="warning" className="text-[10px] gap-1">
@@ -426,10 +426,10 @@ export default function ChitsPage() {
               Prize Total
             </Badge>
           </div>
-          <div className="text-2xl font-bold text-amber-400 mt-2 truncate">
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2 truncate">
             {isLoading ? '...' : formatCurrency(totalPrizeReceived)}
           </div>
-          <p className="text-[11px] text-[#A3A3A3] mt-1">Total prize money received into business</p>
+          <p className="text-[11px] text-slate-500 dark:text-[#A3A3A3] mt-1">Total prize money received into business</p>
         </Card>
       </div>
 

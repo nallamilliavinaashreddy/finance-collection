@@ -246,7 +246,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-0">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               {t('dashboard.title', 'Executive Dashboard')}
             </h2>
             <Badge variant="success" className="gap-1 text-[10px]">
@@ -254,7 +254,7 @@ export default function DashboardPage() {
               Live Supabase Data
             </Badge>
           </div>
-          <p className="text-xs text-[#A3A3A3]">
+          <p className="text-xs text-slate-500 dark:text-[#A3A3A3]">
             {t('dashboard.description', 'Portfolio summary, active investments, expenses, stamp costs & chit payments followed by 4 isolated loan sections.')}
           </p>
         </div>
@@ -273,22 +273,22 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       {/* PROFIT & LOSS STATEMENT SECTION (5 MANDATORY CARDS) */}
       {/* ================================================================ */}
-      <Card className="p-5 bg-[#111111] border border-[#262626] shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
-        <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+      <Card className="p-5 bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#262626] shadow-xs flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#262626] pb-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-base font-bold text-white tracking-wide uppercase">
+            <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide uppercase">
               {t('dashboard.profitLossStatement', 'Profit & Loss Statement')}
             </h3>
           </div>
-          <Badge variant="outline" className="text-[11px] font-mono border-[#262626] text-[#A3A3A3]">
+          <Badge variant="outline" className="text-[11px] font-mono border-slate-300 dark:border-[#262626] text-slate-600 dark:text-[#A3A3A3]">
             {t('dashboard.netProfitFormula', 'Net Profit = Loan Interest - Investment Interest - Expenses')}
           </Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Card 1: Total Investment */}
-          <div className="p-3.5 rounded-xl bg-[#111111] border border-[#262626] flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#262626] flex flex-col justify-between">
             <span className="text-xs font-semibold text-[#FF7A00] uppercase tracking-wider">
               {t('dashboard.totalInvestment', 'Total Investment')}
             </span>

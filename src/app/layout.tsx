@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen bg-[#070707] text-white antialiased selection:bg-[#FF7A00] selection:text-white">
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-slate-50 dark:bg-[#070707] text-slate-900 dark:text-white antialiased selection:bg-[#FF7A00] selection:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
