@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { queryFinCollectAI, AIResponse } from '@/lib/actions/ai-assistant';
+import { FormattedAIResponse } from './formatted-ai-response';
 import { useToast } from '@/components/providers/toast-provider';
 import {
   Bot,
@@ -19,6 +21,7 @@ import {
   Scale,
   RefreshCw,
   Zap,
+  Compass,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -30,6 +33,7 @@ interface ChatMessage {
 }
 
 export function FinCollectAIDrawer() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -46,6 +50,11 @@ export function FinCollectAIDrawer() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  // Compute active page context tag
+  const pageSegment = pathname.split('/')[1] || 'dashboard';
+  const pageContextTitle =
+    pageSegment.charAt(0).toUpperCase() + pageSegment.slice(1).replace('-', ' ');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,7 +82,7 @@ export function FinCollectAIDrawer() {
     setIsLoading(true);
 
     try {
-      const res: AIResponse = await queryFinCollectAI(text);
+      const res: AIResponse = await queryFinCollectAI(text, pageSegment);
 
       const aiMsgId = `ai-${Date.now()}`;
       setMessages((prev) => [
@@ -103,8 +112,9 @@ export function FinCollectAIDrawer() {
 
   const quickPrompts = [
     { label: '📊 Analyze Dashboard', query: 'What is my current net profit and business overview?' },
-    { label: '💰 Today\'s Collections', query: 'What is today\'s total collection?' },
-    { label: '📅 Monthly Collections', query: 'Show my total collection for this month' },
+    { label: '💰 Today\'s Collection', query: 'What is today\'s total collection?' },
+    { label: '📅 Weekly Collection', query: 'Show my total collection for this week' },
+    { label: '🗓 Monthly Collection', query: 'Show my total collection for this month' },
     { label: '⚠️ Pending Loans', query: 'Which loans have the highest pending balance?' },
     { label: '📈 Investment Summary', query: 'What is my current investment balance and cash flow?' },
     { label: '💸 Expense Analysis', query: 'What are today\'s expenses?' },
@@ -132,7 +142,7 @@ export function FinCollectAIDrawer() {
       {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-md h-full bg-[#0B0F17]/95 dark:bg-[#070A0F]/95 text-white backdrop-blur-2xl border-l border-slate-800 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
+          <div className="w-full max-w-lg h-full bg-[#0B0F17]/95 dark:bg-[#070A0F]/95 text-white backdrop-blur-2xl border-l border-slate-800 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
             {/* Header Bar */}
             <div className="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/90 shrink-0">
               <div className="flex items-center gap-3">
@@ -160,7 +170,16 @@ export function FinCollectAIDrawer() {
               </button>
             </div>
 
-            {/* Quick Prompt Pills Bar */}
+            {/* Page Context Banner */}
+            <div className="px-4 py-2 border-b border-slate-800/60 bg-slate-950/60 flex items-center justify-between text-[11px] text-slate-400 font-medium shrink-0">
+              <div className="flex items-center gap-1.5">
+                <Compass className="w-3.5 h-3.5 text-[#F97316]" />
+                <span>Currently analyzing: <strong className="text-white font-bold">{pageContextTitle}</strong></span>
+              </div>
+              <span className="font-mono text-[9px] text-emerald-400">Read-Only Safety On</span>
+            </div>
+
+            {/* Quick Prompts Bar */}
             <div className="p-3 border-b border-slate-800/60 bg-slate-900/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
               {quickPrompts.map((qp) => (
                 <button
@@ -178,21 +197,28 @@ export function FinCollectAIDrawer() {
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex flex-col gap-1 max-w-[88%] ${
+                  className={`flex flex-col gap-1 max-w-[92%] ${
                     msg.sender === 'user' ? 'self-end items-end' : 'self-start items-start'
                   }`}
                 >
                   <div
-                    className={`p-3.5 rounded-2xl text-xs leading-relaxed shadow-md ${
+                    className={`p-4 rounded-3xl text-xs leading-relaxed shadow-lg ${
                       msg.sender === 'user'
                         ? 'bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white font-semibold rounded-tr-none'
-                        : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-tl-none'
+                        : 'bg-slate-900/90 border border-slate-800/90 text-slate-200 rounded-tl-none'
                     }`}
                   >
-                    <div className="whitespace-pre-wrap font-sans">{msg.text}</div>
+                    {msg.sender === 'user' ? (
+                      <div className="whitespace-pre-wrap font-sans">{msg.text}</div>
+                    ) : (
+                      <FormattedAIResponse
+                        content={msg.text}
+                        onSelectFollowUp={(suggestion) => handleSendQuery(suggestion)}
+                      />
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-2 px-1 text-[9px] text-slate-500 font-mono">
+                  <div className="flex items-center gap-2 px-2 text-[9px] text-slate-500 font-mono">
                     <span>{msg.timestamp}</span>
                     {msg.sender === 'ai' && (
                       <button
@@ -212,9 +238,9 @@ export function FinCollectAIDrawer() {
               ))}
 
               {isLoading && (
-                <div className="self-start flex items-center gap-2 p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 animate-pulse">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#F97316]" />
-                  <span>Analyzing business database...</span>
+                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 shadow-md">
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#F97316]" />
+                  <span className="font-semibold">🤖 FinCollect AI is analyzing your financial data...</span>
                 </div>
               )}
 
@@ -222,31 +248,37 @@ export function FinCollectAIDrawer() {
             </div>
 
             {/* Input Bar */}
-            <div className="p-3 border-t border-slate-800/80 bg-slate-900/90 shrink-0">
+            <div className="p-3.5 border-t border-slate-800/80 bg-slate-900/90 shrink-0 flex flex-col gap-2">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSendQuery();
                 }}
-                className="flex items-center gap-2"
+                className="flex items-end gap-2"
               >
-                <input
-                  type="text"
-                  placeholder="Ask anything about your business..."
+                <textarea
+                  rows={2}
+                  placeholder="Ask FinCollect AI about your business... (Press Enter to send, Shift+Enter for newline)"
                   value={inputQuery}
                   onChange={(e) => setInputQuery(e.target.value)}
-                  className="flex-1 h-10 px-3.5 text-xs rounded-xl bg-slate-800/90 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 focus:border-[#F97316]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendQuery();
+                    }
+                  }}
+                  className="flex-1 p-3 text-xs rounded-2xl bg-slate-800/90 border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 focus:border-[#F97316] resize-none"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isLoading || !inputQuery.trim()}
-                  className="h-10 px-3.5 rounded-xl bg-gradient-to-r from-[#F97316] to-purple-600 text-white font-bold"
+                  className="h-12 px-4 rounded-2xl bg-gradient-to-r from-[#F97316] to-purple-600 text-white font-bold shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
-              <span className="text-[9px] text-slate-500 block text-center mt-1.5 font-mono">
+              <span className="text-[9px] text-slate-500 block text-center font-mono">
                 FinCollect AI operates in Read-Only Safety Mode.
               </span>
             </div>
