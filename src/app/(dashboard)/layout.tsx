@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Navbar } from '@/components/layout/navbar';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { MoneyRainBackground } from '@/components/ui/money-rain-background';
+import { FinCollectAIDrawer } from '@/components/ai/fincollect-ai-drawer';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
@@ -47,6 +48,9 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      {/* Global FinCollect AI Floating Copilot Drawer */}
+      <FinCollectAIDrawer />
     </div>
   );
 }
