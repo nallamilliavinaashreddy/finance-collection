@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { getDashboardData } from './dashboard';
+import { getInvestmentMetrics } from './investment';
 
 export interface AIResponse {
   success: boolean;
@@ -138,10 +139,14 @@ export async function queryFinCollectAI(
       (query.includes('collection') || query.includes('collected') || query.includes('vasool') || query.includes('paatalu'))
     ) {
       const dbStart = performance.now();
-      const { data: todaysColls } = await supabase
+      const { data: todaysColls, error: collErr } = await supabase
         .from('collections')
         .select('amount_paid, remaining_balance_after_payment, loans(customers(customer_name, customer_id))')
         .eq('payment_date', todayISO);
+
+      if (collErr) {
+        console.error('[FinCollect AI DB Error - Today Collections]:', collErr);
+      }
 
       const dbTime = performance.now() - dbStart;
       const total = (todaysColls || []).reduce((acc, c) => acc + Number(c.amount_paid || 0), 0);
@@ -180,11 +185,15 @@ export async function queryFinCollectAI(
     // ----------------------------------------------------
     if (query.includes('week') || query.includes('weekly')) {
       const dbStart = performance.now();
-      const { data: weeklyColls } = await supabase
+      const { data: weeklyColls, error: wErr } = await supabase
         .from('collections')
         .select('amount_paid')
         .gte('payment_date', weekStartISO)
         .lte('payment_date', todayISO);
+
+      if (wErr) {
+        console.error('[FinCollect AI DB Error - Weekly Collections]:', wErr);
+      }
 
       const dbTime = performance.now() - dbStart;
       const total = (weeklyColls || []).reduce((acc, c) => acc + Number(c.amount_paid || 0), 0);
@@ -214,11 +223,15 @@ export async function queryFinCollectAI(
     // ----------------------------------------------------
     if (query.includes('month') || query.includes('monthly')) {
       const dbStart = performance.now();
-      const { data: monthlyColls } = await supabase
+      const { data: monthlyColls, error: mErr } = await supabase
         .from('collections')
         .select('amount_paid')
         .gte('payment_date', monthStartISO)
         .lte('payment_date', todayISO);
+
+      if (mErr) {
+        console.error('[FinCollect AI DB Error - Monthly Collections]:', mErr);
+      }
 
       const dbTime = performance.now() - dbStart;
       const total = (monthlyColls || []).reduce((acc, c) => acc + Number(c.amount_paid || 0), 0);
@@ -253,12 +266,16 @@ export async function queryFinCollectAI(
       (query.includes('loan') && (query.includes('balance') || query.includes('top')))
     ) {
       const dbStart = performance.now();
-      const { data: topLoans } = await supabase
+      const { data: topLoans, error: loanErr } = await supabase
         .from('loans')
         .select('id, balance_amount, total_collection, working_days, loan_type, customers(customer_name, customer_id)')
         .eq('is_closed', false)
         .order('balance_amount', { ascending: false })
         .limit(5);
+
+      if (loanErr) {
+        console.error('[FinCollect AI DB Error - Top Loans]:', loanErr);
+      }
 
       const dbTime = performance.now() - dbStart;
       const intro = isTelugu
@@ -304,6 +321,9 @@ export async function queryFinCollectAI(
         supabase.from('expenses').select('amount').gte('expense_date', monthStartISO).lte('expense_date', todayISO),
       ]);
 
+      if (todaysExpRes.error) console.error('[FinCollect AI DB Error - Today Expenses]:', todaysExpRes.error);
+      if (monthlyExpRes.error) console.error('[FinCollect AI DB Error - Monthly Expenses]:', monthlyExpRes.error);
+
       const dbTime = performance.now() - dbStart;
       const todaysExp = todaysExpRes.data || [];
       const monthlyExp = monthlyExpRes.data || [];
@@ -337,7 +357,7 @@ export async function queryFinCollectAI(
     }
 
     // ----------------------------------------------------
-    // INTENT F: INVESTMENT KHATA
+    // INTENT F: INVESTMENT KHATA (ACCURATE TRUSTED CALCULATIONS)
     // ----------------------------------------------------
     if (
       query.includes('investment') ||
@@ -347,31 +367,40 @@ export async function queryFinCollectAI(
       pageContext === 'investment-khata'
     ) {
       const dbStart = performance.now();
-      const { data: invData } = await supabase.from('investment_transactions').select('cash_in, cash_out');
+      const invMetrics = await getInvestmentMetrics();
       const dbTime = performance.now() - dbStart;
 
-      const totalCashIn = (invData || []).reduce((s, i) => s + Number(i.cash_in || 0), 0);
-      const totalCashOut = (invData || []).reduce((s, i) => s + Number(i.cash_out || 0), 0);
-      const workingBalance = totalCashIn - totalCashOut;
+      if (invMetrics.success && invMetrics.data) {
+        const d = invMetrics.data;
 
-      const markdown = `
+        const intro = isTelugu
+          ? `Mee Investment Khata ebhi central cash flow details ikkada unnai:`
+          : `Investment Khata central cash flow & capital summary:`;
+
+        const markdown = `
 ### 📈 Investment Khata & Cash Flow Analysis
 
-- **Total Capital / Cash In**: **${formatCurrency(totalCashIn)}**
-- **Total Disbursements / Cash Out**: **${formatCurrency(totalCashOut)}**
-- **Current Working Cash Balance**: **${formatCurrency(workingBalance)}**
+${intro}
 
-> 💡 *Investment Khata tracks central cash flow and owner capital deployment across disbursements and collections.*
+- **Total Capital Added**: **${formatCurrency(d.totalCapitalAdded ?? 0)}**
+- **Total Disbursements / Capital Withdrawn**: **${formatCurrency(d.totalCapitalWithdrawn ?? 0)}**
+- **Current Active Capital**: **${formatCurrency(d.currentCapital ?? 0)}**
+- **Current Working Cash Balance**: **${formatCurrency(d.currentBalance ?? 0)}**
+- **Accrued Interest**: **${formatCurrency(d.accruedInterest ?? 0)}**
+- **Total Investment Value**: **${formatCurrency(d.totalInvestmentValue ?? 0)}**
+
+> 💡 *Investment Khata tracks central cash flow, owner capital deployment, and accrued interest across disbursements and collections.*
 
 → Show active loan investment
 → Show today's collection
 → Show business net profit
-      `.trim();
+        `.trim();
 
-      const result: AIResponse = { success: true, message: markdown, category: 'investments', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 20000 };
-      console.log(`[AI Performance] Investment Query. DB: ${Math.round(dbTime)}ms | Total: ${Math.round(performance.now() - startTime)}ms`);
-      return result;
+        const result: AIResponse = { success: true, message: markdown, category: 'investments', timestamp };
+        responseCache[cacheKey] = { data: result, expiry: Date.now() + 20000 };
+        console.log(`[AI Performance] Investment Metrics Query. DB: ${Math.round(dbTime)}ms | Total: ${Math.round(performance.now() - startTime)}ms`);
+        return result;
+      }
     }
 
     // ----------------------------------------------------
