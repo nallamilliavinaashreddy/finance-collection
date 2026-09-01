@@ -19,7 +19,6 @@ import {
   EyeOff,
   ShieldCheck,
   TrendingUp,
-  Sparkles,
   ArrowRight,
 } from 'lucide-react';
 
@@ -36,7 +35,6 @@ function LoginForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -64,12 +62,6 @@ function LoginForm() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleFillDemoAdmin = () => {
-    setValue('email', 'admin@finance.com', { shouldValidate: true });
-    setValue('password', 'AdminSecurePassword123!', { shouldValidate: true });
-    showToast('Demo Single Admin credentials inserted.', 'info');
   };
 
   return (
@@ -111,7 +103,7 @@ function LoginForm() {
               <Input
                 label="Admin Email"
                 type="email"
-                placeholder="admin@finance.com"
+                placeholder="name@company.com"
                 leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
                 error={errors.email?.message}
                 {...register('email')}
@@ -163,22 +155,12 @@ function LoginForm() {
               </Button>
             </form>
 
-            {/* Quick Demo Fill Helper */}
-            <div className="mt-6 pt-4 border-t border-slate-800 flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="flex items-center gap-1 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5 text-orange-500" />
-                  Single Admin Mode
-                </span>
-                <button
-                  type="button"
-                  onClick={handleFillDemoAdmin}
-                  className="text-xs font-semibold text-orange-400 hover:underline flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3 text-amber-400" />
-                  Fill Demo Credentials
-                </button>
-              </div>
+            {/* Secure Admin Mode Badge */}
+            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-center">
+              <span className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                <ShieldCheck className="w-4 h-4 text-orange-500" />
+                Single Admin Authentication Mode
+              </span>
             </div>
           </CardContent>
         </Card>
