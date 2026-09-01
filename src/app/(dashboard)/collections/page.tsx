@@ -204,7 +204,7 @@ export default function CollectionsPage() {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Record daily collection entries for active loans, store historical post-payment balances, and enforce Sunday holiday rules.
+            Record collection entries for active loans, store historical post-payment balances, with support for multiple collections 7 days a week.
           </p>
         </div>
         <Button

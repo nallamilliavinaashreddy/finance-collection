@@ -489,7 +489,7 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   <p className="text-[11px] text-slate-400">
-                    Calculates tenure by excluding Sundays and blocks Sunday collections.
+                    Calculates default loan tenure duration while keeping 7-day collection entry enabled.
                   </p>
                 </div>
               </div>

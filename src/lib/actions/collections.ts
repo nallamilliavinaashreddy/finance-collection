@@ -132,70 +132,7 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
 
     const loanType: LoanType = decodeLoanType(loan.working_days, loan.loan_type);
 
-    // Step 2: Apply Loan-Type-Specific Rules
-    if (loanType === 'daily') {
-      // Rule 1: Sundays are holidays for Daily Loans
-      const pDate = new Date(`${formData.paymentDate}T00:00:00`);
-      if (pDate.getDay() === 0) {
-        return {
-          success: false,
-          error: 'Sundays are holidays. Collections are not allowed on Sundays for Daily loans.',
-        };
-      }
-
-      // Rule 2: Prevent duplicate daily collection for the same loan on the same date
-      const { data: existingDailyColl } = await supabase
-        .from('collections')
-        .select('id')
-        .eq('loan_id', formData.loanId)
-        .eq('payment_date', formData.paymentDate)
-        .maybeSingle();
-
-      if (existingDailyColl) {
-        return {
-          success: false,
-          error: `A collection for this loan has already been recorded for ${formData.paymentDate}. Duplicate daily collections on the same date are not allowed.`,
-        };
-      }
-    } else if (loanType === 'weekly') {
-      // Rule: Prevent more than one collection in the same calendar week (Monday to Sunday)
-      const { weekStart, weekEnd } = getWeekDateRange(formData.paymentDate);
-
-      const { data: existingWeeklyColl } = await supabase
-        .from('collections')
-        .select('id, payment_date')
-        .eq('loan_id', formData.loanId)
-        .gte('payment_date', weekStart)
-        .lte('payment_date', weekEnd)
-        .maybeSingle();
-
-      if (existingWeeklyColl) {
-        return {
-          success: false,
-          error: `A weekly collection has already been recorded for this loan during the week of ${weekStart} to ${weekEnd} (paid on ${existingWeeklyColl.payment_date}). Only one collection per week is allowed.`,
-        };
-      }
-    } else if (loanType === 'monthly') {
-      // Rule: Prevent more than one collection in the same calendar month
-      const { monthStart, monthEnd } = getMonthDateRange(formData.paymentDate);
-
-      const { data: existingMonthlyColl } = await supabase
-        .from('collections')
-        .select('id, payment_date')
-        .eq('loan_id', formData.loanId)
-        .gte('payment_date', monthStart)
-        .lte('payment_date', monthEnd)
-        .maybeSingle();
-
-      if (existingMonthlyColl) {
-        return {
-          success: false,
-          error: `A monthly collection has already been recorded for this loan during this calendar month (${monthStart} to ${monthEnd}, paid on ${existingMonthlyColl.payment_date}). Only one collection per month is allowed.`,
-        };
-      }
-    }
-
-    // Step 3: Calculate post-payment remaining balance
+    // Step 2: Calculate post-payment remaining balance (Multiple collections allowed anytime)
     const totalTarget = Number(loan.total_collection || 0);
     const currentCollected = Number(loan.collected_amount || 0);
     const currentBalance = loan.balance_amount !== undefined && loan.balance_amount !== null

@@ -290,29 +290,10 @@ export function CollectionModal({
 
         {/* Type-Specific Rule Notice Banner */}
         {selectedLoanObj && (
-          <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-800 flex items-start gap-2 text-slate-700 dark:text-slate-300 text-xs">
-            <Clock className="w-4 h-4 text-[#FF7A00] shrink-0 mt-0.5" />
+          <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 flex items-start gap-2 text-slate-700 dark:text-slate-300 text-xs">
+            <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             <span>
-              {selectedLoanObj.loanType === 'daily' && (
-                <>
-                  <strong className="font-semibold text-slate-900 dark:text-slate-100">Daily Loan Policy:</strong> Sundays are holidays. Only 1 collection allowed per date.
-                </>
-              )}
-              {selectedLoanObj.loanType === 'weekly' && (
-                <>
-                  <strong className="font-semibold text-slate-900 dark:text-slate-100">Weekly Loan Policy:</strong> 1 collection allowed per calendar week (Monday to Sunday) on any day.
-                </>
-              )}
-              {selectedLoanObj.loanType === 'monthly' && (
-                <>
-                  <strong className="font-semibold text-slate-900 dark:text-slate-100">Monthly Loan Policy:</strong> 1 collection allowed per calendar month on any day.
-                </>
-              )}
-              {selectedLoanObj.loanType === 'adjustment' && (
-                <>
-                  <strong className="font-semibold text-slate-900 dark:text-slate-100">Adjustment Loan Policy:</strong> Flexible collection schedule.
-                </>
-              )}
+              <strong className="font-semibold text-emerald-800 dark:text-emerald-300">Flexible Collection Policy:</strong> Multiple collections permitted anytime on any day (including Sundays & holidays).
             </span>
           </div>
         )}
