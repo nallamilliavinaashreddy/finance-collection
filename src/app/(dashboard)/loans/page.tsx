@@ -7,6 +7,7 @@ import { getLoans, createLoan, updateLoan, deleteLoan } from '@/lib/actions/loan
 import { LoanModal } from '@/components/loans/loan-modal';
 import { DeleteLoanModal } from '@/components/loans/delete-loan-modal';
 import { AdjustmentLedgerModal } from '@/components/loans/adjustment-ledger-modal';
+import { SettlementModal } from '@/components/loans/settlement-modal';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -30,6 +31,7 @@ import {
   MapPin,
   FileText,
   Percent,
+  Scale,
 } from 'lucide-react';
 
 export default function LoansPage() {
@@ -49,6 +51,9 @@ export default function LoansPage() {
 
   const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
   const [adjustmentLoanForLedger, setAdjustmentLoanForLedger] = useState<Loan | null>(null);
+
+  const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
+  const [settlementLoan, setSettlementLoan] = useState<Loan | null>(null);
 
   const { showToast } = useToast();
 
@@ -259,8 +264,8 @@ export default function LoansPage() {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <Badge variant={row.original.isClosed ? 'default' : 'success'}>
-          {row.original.isClosed ? 'Closed' : 'Active'}
+        <Badge variant={row.original.isClosed ? 'warning' : 'success'} className="font-semibold uppercase text-[10px]">
+          {row.original.isClosed ? 'Settled' : 'Active'}
         </Badge>
       ),
     },
@@ -269,8 +274,26 @@ export default function LoansPage() {
       header: 'Actions',
       cell: ({ row }) => {
         const isAdj = row.original.loanType === 'adjustment';
+        const isActive = !row.original.isClosed;
+
         return (
           <div className="flex items-center gap-1.5">
+            {isActive && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSettlementLoan(row.original);
+                  setIsSettlementModalOpen(true);
+                }}
+                className="h-8 px-2.5 text-[11px] font-bold border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 shadow-xs"
+                title="Settle Loan (Full or Custom)"
+              >
+                <Scale className="w-3.5 h-3.5 mr-1" />
+                Settlement
+              </Button>
+            )}
+
             {isAdj && (
               <Button
                 variant="outline"
@@ -509,7 +532,17 @@ export default function LoansPage() {
         loan={adjustmentLoanForLedger}
         onLoanUpdated={() => fetchLoans(searchQuery, statusFilter, typeFilter)}
       />
+
+      {/* Loan Settlement Modal */}
+      <SettlementModal
+        isOpen={isSettlementModalOpen}
+        onClose={() => {
+          setIsSettlementModalOpen(false);
+          setSettlementLoan(null);
+        }}
+        loan={settlementLoan}
+        onSettlementSuccess={() => fetchLoans(searchQuery, statusFilter, typeFilter)}
+      />
     </div>
   );
 }
-

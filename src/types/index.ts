@@ -13,7 +13,23 @@ export interface UserProfile {
 }
 
 export type LoanType = 'daily' | 'weekly' | 'monthly' | 'adjustment';
-export type LoanStatus = 'active' | 'closed';
+export type LoanStatus = 'active' | 'closed' | 'settled';
+
+export interface LoanSettlement {
+  id: string;
+  loanId: string;
+  customerId?: string;
+  settlementType: 'full' | 'custom';
+  settlementDate: string;
+  outstandingBeforeSettlement: number;
+  amountPaid: number;
+  waivedAmount: number;
+  paymentMethod?: string;
+  referenceNumber?: string;
+  remarks?: string;
+  settledBy?: string;
+  createdAt?: string;
+}
 
 export interface Customer {
   id: string;
