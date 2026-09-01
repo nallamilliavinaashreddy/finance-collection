@@ -29,8 +29,8 @@ export async function queryFinCollectAI(
   if (!rawQuery || !rawQuery.trim()) {
     return {
       success: true,
-      message: 'Please ask a question about your business (e.g. *"What is today\'s collection?"*, *"Which loan has the highest pending balance?"*).',
-      suggestedFollowUps: ['Today\'s collection entha?', 'Highest pending loan enti?', 'This month expense entha?'],
+      message: 'Please ask a question about your business (e.g. *"How many customers are there?"*, *"What is today\'s collection?"*).',
+      suggestedFollowUps: ['How many customers are there?', 'What is today\'s collection?', 'How many active loans?'],
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
     };
@@ -40,7 +40,7 @@ export async function queryFinCollectAI(
   const bounds = getAIDateBounds();
 
   // ----------------------------------------------------
-  // STEP 1: DETERMINISTIC GREETINGS & SIMPLE MESSAGES
+  // STEP 1: DETERMINISTIC GREETINGS & SIMPLE MESSAGES (0-2ms)
   // ----------------------------------------------------
   const greetingSet = new Set(['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good afternoon', 'hi there', 'hello ai']);
   const thanksSet = new Set(['thanks', 'thank you', 'thanks!', 'thank you!', 'dhanyavadagalu', 'thanks bro', 'thx']);
@@ -62,7 +62,7 @@ export async function queryFinCollectAI(
 
     return {
       success: true,
-      message: `Hello, Administrator 👋 How can I assist you with your FinCollect financial analytics today?\n\n→ Show today's collection\n→ Show highest pending loan\n→ Show business net profit`,
+      message: `Hello, Administrator 👋 How can I assist you with your FinCollect financial analytics today?\n\n→ How many customers are there?\n→ What is today's collection?\n→ How many active loans?`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
@@ -72,7 +72,7 @@ export async function queryFinCollectAI(
   if (thanksSet.has(query)) {
     return {
       success: true,
-      message: `You're very welcome! Let me know whenever you need more financial insights or reports.\n\n→ Show today's collection\n→ Analyze Dashboard`,
+      message: `You're very welcome! Let me know whenever you need more financial insights or reports.\n\n→ What is today's collection?\n→ How many customers are there?`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
@@ -82,7 +82,7 @@ export async function queryFinCollectAI(
   if (helpSet.has(query)) {
     return {
       success: true,
-      message: `I am **FinCollect AI**, your intelligent financial copilot. You can ask me:\n- **Collections**: *What is today's collection?*, *Show weekly collection*\n- **Loans**: *Which loan has the highest pending balance?*, *Show active loans*\n- **Expenses**: *What are today's expenses?*\n- **Investment**: *What is my investment balance?*\n\n→ Analyze Dashboard\n→ Today's collection entha?`,
+      message: `I am **FinCollect AI**, your intelligent financial copilot. You can ask me:\n- **Customers**: *How many customers are there in total?*\n- **Collections**: *What is today's collection?*, *Show weekly collection*\n- **Loans**: *How many active loans?*, *Which loan has highest pending balance?*\n- **Expenses**: *What are today's expenses?*\n- **Investment**: *What is my investment balance?*\n\n→ How many customers are there?\n→ What is today's collection?`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
@@ -100,7 +100,7 @@ export async function queryFinCollectAI(
   }
 
   // ----------------------------------------------------
-  // STEP 2: IN-MEMORY CACHE CHECK
+  // STEP 2: IN-MEMORY CACHE CHECK (15s TTL)
   // ----------------------------------------------------
   const cacheKey = `${query}_${pageContext}`;
   const cached = responseCache[cacheKey];
@@ -129,7 +129,72 @@ export async function queryFinCollectAI(
 
   try {
     // ----------------------------------------------------
-    // INTENT A: TODAY'S COLLECTION
+    // INTENT 1: CUSTOMERS (COUNT & LIST)
+    // ----------------------------------------------------
+    if (
+      query.includes('customer') ||
+      query.includes('customers') ||
+      query.includes('borrower') ||
+      query.includes('borrowers') ||
+      query.includes('client') ||
+      query.includes('clients') ||
+      (query.includes('how many') && (query.includes('people') || query.includes('person') || query.includes('user')))
+    ) {
+      const dbStart = performance.now();
+      const { count, error: dbErr } = await supabase
+        .from('customers')
+        .select('id', { count: 'exact', head: true });
+
+      const dbDurationMs = performance.now() - dbStart;
+
+      if (dbErr) {
+        console.error('[FinCollect AI DB Error - Customers Count]:', dbErr);
+        return {
+          success: false,
+          message: `⚠️ **Database Query Failure**: Failed to fetch customer count from Supabase. Error: ${dbErr.message}`,
+          error: dbErr.message,
+          timestamp,
+          performanceMs: Math.round(performance.now() - startTime),
+        };
+      }
+
+      const totalCust = count || 0;
+
+      logAIDebug({
+        rawQuery,
+        detectedIntent: 'GET_TOTAL_CUSTOMERS',
+        bounds,
+        tablesQueried: ['customers'],
+        queryResultCount: totalCust,
+        rawAggregateSum: `Count: ${totalCust}`,
+        finalFormattedValue: `${totalCust} customers`,
+        dbDurationMs,
+        totalDurationMs: performance.now() - startTime,
+      });
+
+      const intro = isTelugu
+        ? `Mee business lo total registered customers count ikkada undi:`
+        : `Here is the total registered customer count in your business:`;
+
+      const markdown = `
+### 👥 Customer Directory Summary
+
+${intro}
+
+- **Total Registered Customers**: **${totalCust} customers**
+
+→ How many active loans?
+→ What is today's collection?
+→ Show highest pending loan
+      `.trim();
+
+      const result: AIResponse = { success: true, message: markdown, category: 'general', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+      return result;
+    }
+
+    // ----------------------------------------------------
+    // INTENT 2: TODAY'S COLLECTION
     // ----------------------------------------------------
     if (
       (query.includes('today') || query.includes('ivala') || query.includes('ee roju') || query.includes('aaj')) &&
@@ -154,7 +219,6 @@ export async function queryFinCollectAI(
         };
       }
 
-      // Deduplicate transactions by unique ID
       const uniqueCollsMap = new Map();
       (rawColls || []).forEach((c: any) => uniqueCollsMap.set(c.id, c));
       const todaysColls = Array.from(uniqueCollsMap.values());
@@ -204,7 +268,7 @@ export async function queryFinCollectAI(
     }
 
     // ----------------------------------------------------
-    // INTENT B: WEEKLY COLLECTION
+    // INTENT 3: WEEKLY COLLECTION
     // ----------------------------------------------------
     if (query.includes('week') || query.includes('weekly')) {
       const dbStart = performance.now();
@@ -268,50 +332,53 @@ export async function queryFinCollectAI(
     }
 
     // ----------------------------------------------------
-    // INTENT C: MONTHLY COLLECTION
+    // INTENT 4: MONTHLY COLLECTION
     // ----------------------------------------------------
     if (query.includes('month') || query.includes('monthly')) {
-      const dbStart = performance.now();
-      const { data: rawColls, error: dbErr } = await supabase
-        .from('collections')
-        .select('id, amount_paid, payment_date')
-        .gte('payment_date', bounds.monthStartISO)
-        .lte('payment_date', bounds.todayISO);
+      if (query.includes('expense') || query.includes('kharchu')) {
+        // Skip to expense handler below
+      } else {
+        const dbStart = performance.now();
+        const { data: rawColls, error: dbErr } = await supabase
+          .from('collections')
+          .select('id, amount_paid, payment_date')
+          .gte('payment_date', bounds.monthStartISO)
+          .lte('payment_date', bounds.todayISO);
 
-      const dbDurationMs = performance.now() - dbStart;
+        const dbDurationMs = performance.now() - dbStart;
 
-      if (dbErr) {
-        console.error('[FinCollect AI DB Error - Monthly Collections]:', dbErr);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch monthly collection data from Supabase. Error: ${dbErr.message}`,
-          error: dbErr.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
-      }
+        if (dbErr) {
+          console.error('[FinCollect AI DB Error - Monthly Collections]:', dbErr);
+          return {
+            success: false,
+            message: `⚠️ **Database Query Failure**: Failed to fetch monthly collection data from Supabase. Error: ${dbErr.message}`,
+            error: dbErr.message,
+            timestamp,
+            performanceMs: Math.round(performance.now() - startTime),
+          };
+        }
 
-      const uniqueCollsMap = new Map();
-      (rawColls || []).forEach((c: any) => uniqueCollsMap.set(c.id, c));
-      const monthlyColls = Array.from(uniqueCollsMap.values());
+        const uniqueCollsMap = new Map();
+        (rawColls || []).forEach((c: any) => uniqueCollsMap.set(c.id, c));
+        const monthlyColls = Array.from(uniqueCollsMap.values());
 
-      const total = monthlyColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
-      const count = monthlyColls.length;
+        const total = monthlyColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
+        const count = monthlyColls.length;
 
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'MONTHLY_COLLECTION',
-        bounds,
-        selectedDateRange: `${bounds.monthStartISO} to ${bounds.todayISO}`,
-        tablesQueried: ['collections'],
-        queryResultCount: count,
-        rawAggregateSum: `₹${total}`,
-        finalFormattedValue: formatCurrency(total),
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
+        logAIDebug({
+          rawQuery,
+          detectedIntent: 'MONTHLY_COLLECTION',
+          bounds,
+          selectedDateRange: `${bounds.monthStartISO} to ${bounds.todayISO}`,
+          tablesQueried: ['collections'],
+          queryResultCount: count,
+          rawAggregateSum: `₹${total}`,
+          finalFormattedValue: formatCurrency(total),
+          dbDurationMs,
+          totalDurationMs: performance.now() - startTime,
+        });
 
-      const markdown = `
+        const markdown = `
 ### 🗓️ Current Month Collection Summary
 
 - **Calendar Month**: **${formatDate(bounds.monthStartISO)} – ${formatDate(bounds.monthEndISO)}**
@@ -324,22 +391,82 @@ export async function queryFinCollectAI(
 → Show today's collection
 → Show weekly collection
 → Show expense analysis
+        `.trim();
+
+        const result: AIResponse = { success: true, message: markdown, category: 'collections', timestamp };
+        responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+        return result;
+      }
+    }
+
+    // ----------------------------------------------------
+    // INTENT 5: ACTIVE LOANS COUNT
+    // ----------------------------------------------------
+    if (
+      (query.includes('how many') && query.includes('loan')) ||
+      query.includes('active loan count') ||
+      query.includes('active loans')
+    ) {
+      const dbStart = performance.now();
+      const { data: activeLoans, count, error: dbErr } = await supabase
+        .from('loans')
+        .select('id, amount_given, balance_amount', { count: 'exact' })
+        .eq('is_closed', false);
+
+      const dbDurationMs = performance.now() - dbStart;
+
+      if (dbErr) {
+        console.error('[FinCollect AI DB Error - Active Loans Count]:', dbErr);
+        return {
+          success: false,
+          message: `⚠️ **Database Query Failure**: Failed to fetch active loans count from Supabase. Error: ${dbErr.message}`,
+          error: dbErr.message,
+          timestamp,
+          performanceMs: Math.round(performance.now() - startTime),
+        };
+      }
+
+      const activeCount = count || 0;
+      const totalBalance = (activeLoans || []).reduce((s, l) => s + Number(l.balance_amount || 0), 0);
+      const totalDeployed = (activeLoans || []).reduce((s, l) => s + Number(l.amount_given || 0), 0);
+
+      logAIDebug({
+        rawQuery,
+        detectedIntent: 'ACTIVE_LOANS_COUNT',
+        bounds,
+        tablesQueried: ['loans'],
+        queryResultCount: activeCount,
+        rawAggregateSum: `Count: ${activeCount} | Balance: ₹${totalBalance}`,
+        finalFormattedValue: `${activeCount} active loans`,
+        dbDurationMs,
+        totalDurationMs: performance.now() - startTime,
+      });
+
+      const markdown = `
+### 🏦 Active Loans Portfolio Summary
+
+- **Total Active Loans**: **${activeCount} active loans**
+- **Active Investment Deployed**: **${formatCurrency(totalDeployed)}**
+- **Total Outstanding Customer Balance**: **${formatCurrency(totalBalance)}**
+
+→ Which loan has highest pending balance?
+→ Show today's collection
+→ Show how many customers
       `.trim();
 
-      const result: AIResponse = { success: true, message: markdown, category: 'collections', timestamp };
+      const result: AIResponse = { success: true, message: markdown, category: 'loans', timestamp };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT D: ACTIVE LOANS & PENDING BALANCES
+    // INTENT 6: HIGHEST PENDING LOANS
     // ----------------------------------------------------
     if (
       query.includes('pending') ||
       query.includes('highest') ||
       query.includes('overdue') ||
-      (query.includes('loan') && (query.includes('balance') || query.includes('top') || query.includes('active'))) ||
-      pageContext === 'loans'
+      (query.includes('loan') && (query.includes('balance') || query.includes('top')))
     ) {
       const dbStart = performance.now();
       const { data: topLoans, error: dbErr } = await supabase
@@ -364,7 +491,7 @@ export async function queryFinCollectAI(
 
       logAIDebug({
         rawQuery,
-        detectedIntent: 'ACTIVE_LOANS_PENDING',
+        detectedIntent: 'HIGHEST_PENDING_LOANS',
         bounds,
         tablesQueried: ['loans', 'customers'],
         queryResultCount: topLoans?.length || 0,
@@ -393,7 +520,7 @@ export async function queryFinCollectAI(
         markdown += `*No active loans found with pending balances.*\n`;
       }
 
-      markdown += `\n→ Show loans near settlement\n→ Show active loan count\n→ Show today's collection`;
+      markdown += `\n→ Show active loan count\n→ Show today's collection\n→ How many customers are there?`;
 
       const result: AIResponse = { success: true, message: markdown.trim(), category: 'loans', timestamp };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
@@ -401,7 +528,7 @@ export async function queryFinCollectAI(
     }
 
     // ----------------------------------------------------
-    // INTENT E: EXPENSES ANALYSIS
+    // INTENT 7: OPERATING EXPENSES ANALYSIS
     // ----------------------------------------------------
     if (
       query.includes('expense') ||
@@ -418,11 +545,9 @@ export async function queryFinCollectAI(
 
       const dbDurationMs = performance.now() - dbStart;
 
-      if (todaysExpRes.error) console.error('[FinCollect AI DB Error - Today Expenses]:', todaysExpRes.error);
-      if (monthlyExpRes.error) console.error('[FinCollect AI DB Error - Monthly Expenses]:', monthlyExpRes.error);
-
       if (todaysExpRes.error || monthlyExpRes.error) {
         const errObj = todaysExpRes.error || monthlyExpRes.error;
+        console.error('[FinCollect AI DB Error - Operating Expenses]:', errObj);
         return {
           success: false,
           message: `⚠️ **Database Query Failure**: Failed to fetch operating expenses data from Supabase. Error: ${errObj?.message}`,
@@ -476,7 +601,7 @@ export async function queryFinCollectAI(
     }
 
     // ----------------------------------------------------
-    // INTENT F: INVESTMENT KHATA (AUTHORITATIVE ENGINE)
+    // INTENT 8: INVESTMENT KHATA METRICS
     // ----------------------------------------------------
     if (
       query.includes('investment') ||
@@ -543,7 +668,7 @@ ${intro}
     }
 
     // ----------------------------------------------------
-    // INTENT G: DASHBOARD OVERVIEW & P&L
+    // INTENT 9: DASHBOARD & P&L OVERVIEW
     // ----------------------------------------------------
     if (
       query.includes('dashboard') ||
@@ -618,58 +743,36 @@ ${greeting}
     }
 
     // ----------------------------------------------------
-    // FALLBACK DETERMINISTIC SNAPSHOT
+    // FALLBACK CLARIFICATION BEHAVIOR (NO RANDOM DASHBOARD SUMMARY)
     // ----------------------------------------------------
-    const dbStart = performance.now();
-    const [todaysCollRes, activeLoansRes] = await Promise.all([
-      supabase.from('collections').select('amount_paid').eq('payment_date', bounds.todayISO),
-      supabase.from('loans').select('id, balance_amount', { count: 'exact' }).eq('is_closed', false),
-    ]);
-
-    const dbDurationMs = performance.now() - dbStart;
-
-    if (todaysCollRes.error || activeLoansRes.error) {
-      const errObj = todaysCollRes.error || activeLoansRes.error;
-      console.error('[FinCollect AI DB Error - Fallback Query]:', errObj);
-      return {
-        success: false,
-        message: `⚠️ **Database Query Failure**: Error retrieving financial metrics from Supabase: ${errObj?.message}`,
-        error: errObj?.message,
-        timestamp,
-        performanceMs: Math.round(performance.now() - startTime),
-      };
-    }
-
-    const todaysCollsTotal = (todaysCollRes.data || []).reduce((s, c) => s + Number(c.amount_paid || 0), 0);
-    const activeCount = activeLoansRes.count || 0;
-    const remainingBal = (activeLoansRes.data || []).reduce((s, l) => s + Number(l.balance_amount || 0), 0);
-
     logAIDebug({
       rawQuery,
-      detectedIntent: 'DETERMINISTIC_FALLBACK',
+      detectedIntent: 'CLARIFICATION_FALLBACK',
       bounds,
-      tablesQueried: ['collections', 'loans'],
-      queryResultCount: activeCount,
-      rawAggregateSum: `Today Coll: ₹${todaysCollsTotal} | Outstanding: ₹${remainingBal}`,
-      finalFormattedValue: formatCurrency(todaysCollsTotal),
-      dbDurationMs,
+      tablesQueried: [],
+      queryResultCount: 0,
+      rawAggregateSum: 'N/A',
+      finalFormattedValue: 'Clarification Prompt',
+      dbDurationMs: 0,
       totalDurationMs: performance.now() - startTime,
     });
 
     const fallbackMarkdown = `
-### 🤖 FinCollect AI Assistant Response
+### 🤖 FinCollect AI Assistant
 
-I analyzed your query: *"_${rawQuery}_"*
+I am here to help analyze your business data. Could you please specify which information you would like?
 
-Here is your live business financial snapshot today (${formatDate(bounds.todayISO)}):
+- 👥 **Total Customers**: Ask *"How many customers are there?"*
+- 💰 **Today's Collections**: Ask *"What is today's collection?"*
+- 📅 **Weekly Collections**: Ask *"What is this week's collection?"*
+- 🗓️ **Monthly Collections**: Ask *"What is this month's collection?"*
+- 🏦 **Active Loans**: Ask *"How many active loans?"* or *"Which loan has highest pending?"*
+- 💸 **Expenses**: Ask *"Show this month's expenses"*
+- 📈 **Investment Khata**: Ask *"What is my investment balance?"*
 
-- **Today's Collections**: **${formatCurrency(todaysCollsTotal)}**
-- **Active Loans Count**: **${activeCount} active loans**
-- **Total Outstanding Customer Balance**: **${formatCurrency(remainingBal)}**
-
+→ How many customers are there?
 → What is today's collection?
-→ Which loan has the highest pending balance?
-→ Show this month's expenses
+→ How many active loans?
     `.trim();
 
     const result: AIResponse = {
