@@ -79,10 +79,87 @@ export function FinCollectAIDrawer() {
     ]);
 
     if (!queryToSend) setInputQuery('');
+
+    const lower = text.toLowerCase().trim();
+
+    // ----------------------------------------------------
+    // CLIENT INSTANT INTERCEPT FOR GREETINGS & SIMPLE MESSAGES (< 2ms)
+    // ----------------------------------------------------
+    const greetingSet = new Set(['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good afternoon', 'hi there', 'hello ai']);
+    const thanksSet = new Set(['thanks', 'thank you', 'thanks!', 'thank you!', 'dhanyavadagalu', 'thanks bro', 'thx']);
+    const helpSet = new Set(['help', 'help me', 'what can you do', 'options', 'menu']);
+    const byeSet = new Set(['bye', 'goodbye', 'ok', 'okay', 'cya']);
+
+    if (greetingSet.has(lower)) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: `Hello, Administrator 👋 How can I assist you with your FinCollect financial analytics today?\n\n→ Show today's collection\n→ Show highest pending loan\n→ Show business net profit`,
+          category: 'general',
+          timestamp: userTimestamp,
+        },
+      ]);
+      return;
+    }
+
+    if (thanksSet.has(lower)) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: `You're very welcome! Let me know whenever you need more financial insights or reports.\n\n→ Show today's collection\n→ Analyze Dashboard`,
+          category: 'general',
+          timestamp: userTimestamp,
+        },
+      ]);
+      return;
+    }
+
+    if (helpSet.has(lower)) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: `I am **FinCollect AI**, your intelligent financial copilot. You can ask me:\n- **Collections**: *What is today's collection?*, *Show weekly collection*\n- **Loans**: *Which loan has the highest pending balance?*, *Show active loans*\n- **Expenses**: *What are today's expenses?*\n- **Investment**: *What is my investment balance?*\n\n→ Analyze Dashboard\n→ Today's collection entha?`,
+          category: 'general',
+          timestamp: userTimestamp,
+        },
+      ]);
+      return;
+    }
+
+    if (byeSet.has(lower)) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: `Goodbye, Administrator! I am here whenever you need real-time business insights.`,
+          category: 'general',
+          timestamp: userTimestamp,
+        },
+      ]);
+      return;
+    }
+
+    // ----------------------------------------------------
+    // FINANCIAL DATA QUERIES (WITH 6-SECOND TIMEOUT RACE)
+    // ----------------------------------------------------
     setIsLoading(true);
 
     try {
-      const res: AIResponse = await queryFinCollectAI(text, pageSegment);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), 6000)
+      );
+
+      const res = await Promise.race([
+        queryFinCollectAI(text, pageSegment),
+        timeoutPromise,
+      ]) as AIResponse;
 
       const aiMsgId = `ai-${Date.now()}`;
       setMessages((prev) => [
@@ -95,9 +172,24 @@ export function FinCollectAIDrawer() {
           timestamp: res.timestamp,
         },
       ]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('AI drawer query error:', err);
-      showToast('Failed to query AI Assistant.', 'error');
+
+      const errorText =
+        err.message === 'REQUEST_TIMEOUT'
+          ? `⚠️ I'm having trouble processing that request right now due to a network timeout. Please click below to try again.\n\n→ ${text}`
+          : `⚠️ An error occurred while retrieving your financial data. Please click below to retry.\n\n→ ${text}`;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-err-${Date.now()}`,
+          sender: 'ai',
+          text: errorText,
+          category: 'general',
+          timestamp: userTimestamp,
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
