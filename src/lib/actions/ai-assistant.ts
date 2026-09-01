@@ -117,17 +117,36 @@ export async function queryFinCollectAI(
   const supabase = await createClient();
 
   try {
-    const todayISO = new Date().toISOString().split('T')[0];
+    // ----------------------------------------------------
+    // CONSISTENT LOCAL BUSINESS DATE RANGE CALCULATIONS
+    // ----------------------------------------------------
+    const getLocalDateISO = (d: Date) => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
 
     const now = new Date();
+    const todayISO = getLocalDateISO(now);
+
+    // Week Boundaries (Monday to Sunday)
     const dayOfWeek = now.getDay();
     const distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - distanceToMonday);
-    const weekStartISO = weekStart.toISOString().split('T')[0];
+    const weekStartISO = getLocalDateISO(weekStart);
 
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const weekEndISO = getLocalDateISO(weekEnd);
+
+    // Month Boundaries (1st to Last Day of Month)
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthStartISO = monthStart.toISOString().split('T')[0];
+    const monthStartISO = getLocalDateISO(monthStart);
+
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const monthEndISO = getLocalDateISO(monthEnd);
 
     const intentStart = performance.now();
 
@@ -157,6 +176,7 @@ export async function queryFinCollectAI(
         : `Today's (**${formatDate(todayISO)}**) collection performance snapshot:`;
 
       let markdown = `### 💰 Today's Collection Report\n\n${intro}\n\n`;
+      markdown += `- **Business Date**: **${formatDate(todayISO)}**\n`;
       markdown += `- **Total Amount Collected Today**: **${formatCurrency(total)}**\n`;
       markdown += `- **Total Collection Entries**: **${count} payments**\n\n`;
 
@@ -169,7 +189,7 @@ export async function queryFinCollectAI(
           markdown += `| **${custName}** | \`${code}\` | **${formatCurrency(c.amount_paid)}** | ${formatCurrency(c.remaining_balance_after_payment)} |\n`;
         });
       } else {
-        markdown += `*No collection payments recorded yet for today (${todayISO}).*\n`;
+        markdown += `*No collection payments recorded yet for today (${formatDate(todayISO)}).*\n`;
       }
 
       markdown += `\n→ Compare with weekly collection\n→ Show today's expenses\n→ Which loan has highest pending?`;
@@ -201,11 +221,12 @@ export async function queryFinCollectAI(
       const markdown = `
 ### 📅 Current Week Collection Summary
 
-- **Week Date Range**: ${formatDate(weekStartISO)} to ${formatDate(todayISO)}
+- **Current Week**: **${formatDate(weekStartISO)} – ${formatDate(weekEndISO)}**
+- **Data Available Through**: **${formatDate(todayISO)}**
 - **Total Weekly Collection**: **${formatCurrency(total)}**
 - **Transaction Count**: **${weeklyColls?.length || 0} collections**
 
-> ℹ️ *Note: Weekly collections count transactions recorded strictly during the current calendar week.*
+> ℹ️ *Note: Weekly collections include valid transactions recorded during the current calendar week up to today.*
 
 → Compare with monthly collection
 → Show today's collection
@@ -239,11 +260,12 @@ export async function queryFinCollectAI(
       const markdown = `
 ### 🗓️ Current Month Collection Summary
 
-- **Month Date Range**: ${formatDate(monthStartISO)} to ${formatDate(todayISO)}
+- **Calendar Month**: **${formatDate(monthStartISO)} – ${formatDate(monthEndISO)}**
+- **Data Available Through**: **${formatDate(todayISO)}**
 - **Total Monthly Collection**: **${formatCurrency(total)}**
 - **Transaction Count**: **${monthlyColls?.length || 0} collections**
 
-> ℹ️ *Note: Monthly collections count transactions recorded strictly during the current calendar month.*
+> ℹ️ *Note: Monthly collections include valid transactions recorded during the selected calendar month up to today.*
 
 → Show today's collection
 → Show weekly collection
@@ -337,7 +359,7 @@ export async function queryFinCollectAI(
 
       let markdown = `### 💸 Operating Expenses Analysis\n\n${intro}\n\n`;
       markdown += `- **Today's Total Expenses**: **${formatCurrency(todayTotal)}**\n`;
-      markdown += `- **This Month's Total Expenses**: **${formatCurrency(monthTotal)}**\n\n`;
+      markdown += `- **This Month's Total Expenses**: **${formatCurrency(monthTotal)}** (${formatDate(monthStartISO)} – ${formatDate(monthEndISO)})\n\n`;
 
       if (todaysExp.length > 0) {
         markdown += `#### Today's Expense Items:\n`;
@@ -345,7 +367,7 @@ export async function queryFinCollectAI(
           markdown += `- **${e.category || 'General'}**: **${formatCurrency(e.amount)}** (${e.remarks || 'No remarks'})\n`;
         });
       } else {
-        markdown += `*No operating expenses logged yet for today (${todayISO}).*\n`;
+        markdown += `*No operating expenses logged yet for today (${formatDate(todayISO)}).*\n`;
       }
 
       markdown += `\n→ Show today's collection\n→ Show net profit\n→ Show investment summary`;
