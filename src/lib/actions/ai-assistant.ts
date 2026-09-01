@@ -203,7 +203,7 @@ ${intro}
       const dbStart = performance.now();
       const { data: rawColls, error: dbErr } = await supabase
         .from('collections')
-        .select('id, amount_paid, remaining_balance_after_payment, payment_date, loans(customers(customer_name, customer_id))')
+        .select('id, amount_paid, payment_date, loans(balance_amount, customers(customer_name, customer_id))')
         .eq('payment_date', bounds.todayISO);
 
       const dbDurationMs = performance.now() - dbStart;
@@ -212,7 +212,7 @@ ${intro}
         console.error('[FinCollect AI DB Error - Today Collections]:', dbErr);
         return {
           success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch today's collection data from Supabase. Error: ${dbErr.message}`,
+          message: `Unable to retrieve today's collection right now. Please try again.`,
           error: dbErr.message,
           timestamp,
           performanceMs: Math.round(performance.now() - startTime),
@@ -254,7 +254,8 @@ ${intro}
         todaysColls.slice(0, 5).forEach((c: any) => {
           const custName = c.loans?.customers?.customer_name || 'Customer';
           const code = c.loans?.customers?.customer_id || 'N/A';
-          markdown += `| **${custName}** | \`${code}\` | **${formatCurrency(c.amount_paid)}** | ${formatCurrency(c.remaining_balance_after_payment)} |\n`;
+          const remBal = c.loans?.balance_amount ? Number(c.loans.balance_amount) : 0;
+          markdown += `| **${custName}** | \`${code}\` | **${formatCurrency(c.amount_paid)}** | ${formatCurrency(remBal)} |\n`;
         });
       } else {
         markdown += `*No collection payments recorded yet for today (${formatDate(bounds.todayISO)}).*\n`;
