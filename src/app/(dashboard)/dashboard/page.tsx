@@ -38,6 +38,11 @@ import {
 } from 'lucide-react';
 
 import { AnimatedNumber } from '@/components/ui/animated-number';
+import { CashFlowChart } from '@/components/dashboard/cash-flow-chart';
+import { MonthlyInsightsChart } from '@/components/dashboard/monthly-insights-chart';
+import { QuickActionsBar } from '@/components/dashboard/quick-actions-bar';
+import { SmartInsightsCard } from '@/components/dashboard/smart-insights-card';
+import { RecentActivityTimeline } from '@/components/dashboard/recent-activity-timeline';
 
 export default function DashboardPage() {
   const { t } = useLanguage();
@@ -251,13 +256,13 @@ export default function DashboardPage() {
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Welcome back, Administrator! 👋
             </h2>
-            <Badge variant="success" className="gap-1 text-[11px] py-0.5 shadow-xs">
+            <Badge variant="success" className="gap-1 text-[11px] py-0.5 shadow-xs font-mono">
               <Database className="w-3.5 h-3.5 text-emerald-500" />
               Live Supabase Engine
             </Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-[#A3A3A3] font-medium max-w-2xl">
-            {t('dashboard.description', 'Portfolio summary, active investments, expenses, stamp costs & chit payments followed by 4 isolated loan sections.')}
+            {t('dashboard.description', "Here's your complete financial business operating overview for today.")}
           </p>
         </div>
 
@@ -396,8 +401,33 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* QUICK ACTIONS BAR */}
+      <QuickActionsBar />
+
       {/* ================================================================ */}
-      {/* OVERALL SUMMARY SECTION (TOP WITH ALL SUMMARY CARDS) */}
+      {/* CASH FLOW INTELLIGENCE & MONTHLY INSIGHTS CHARTS GRID */}
+      {/* ================================================================ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <CashFlowChart
+            collections={daily?.recentCollections}
+            todaysExpenses={overall?.todaysExpenses}
+            thisMonthsExpenses={overall?.thisMonthsExpenses}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <MonthlyInsightsChart
+            todaysCollections={overall?.todaysCollections}
+            thisMonthsExpenses={overall?.thisMonthsExpenses}
+            loanInterest={data?.profitLoss?.loanInterest}
+            todaysStampCost={overall?.todaysStampCost}
+            thisMonthsChitPayments={overall?.thisMonthsChitPayments}
+          />
+        </div>
+      </div>
+
+      {/* ================================================================ */}
+      {/* FINANCIAL COMMAND CENTER (PORTFOLIO OVERVIEW GRID) */}
       {/* ================================================================ */}
       <Card className="p-6 glass-card border-slate-200/80 dark:border-[#262626]/80 text-slate-900 dark:text-white flex flex-col gap-5 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#262626]/80 pb-3.5">
@@ -406,7 +436,7 @@ export default function DashboardPage() {
               <BarChart3 className="w-4 h-4" />
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide uppercase">
-              Overall Portfolio, Expenses, Stamps & Chits Summary
+              Financial Command Center
             </h3>
           </div>
           <Badge variant="info" className="text-[11px] py-0.5 font-mono shadow-xs">
@@ -514,6 +544,23 @@ export default function DashboardPage() {
           </div>
         </div>
       </Card>
+
+      {/* ================================================================ */}
+      {/* SMART FINANCIAL INSIGHTS & RECENT ACTIVITY TIMELINE */}
+      {/* ================================================================ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SmartInsightsCard
+          todaysCollections={overall?.todaysCollections}
+          todaysExpenses={overall?.todaysExpenses}
+          activeLoansCount={overall?.activeLoansCount}
+          remainingBalance={overall?.remainingBalance}
+          netProfit={data?.profitLoss?.netProfit}
+        />
+        <RecentActivityTimeline
+          collections={daily?.recentCollections}
+          activeLoans={daily?.activeLoans}
+        />
+      </div>
 
       {/* ================================================================ */}
       {/* SECTION 1: DAILY LOANS */}
