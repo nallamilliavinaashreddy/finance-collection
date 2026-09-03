@@ -68,6 +68,7 @@ export async function getCollections(
       const loan = item.loans || {};
       const cust = loan.customers || {};
       const storedBal = item.remaining_balance_after_payment;
+      const lType: LoanType = decodeLoanType(loan.working_days, loan.loan_type);
 
       const remainingBalAfter = storedBal !== undefined && storedBal !== null
         ? Number(storedBal)
@@ -79,6 +80,7 @@ export async function getCollections(
         customerId: loan.customer_id || '',
         customerCode: cust.customer_id || 'N/A',
         customerName: cust.customer_name || 'Customer',
+        loanType: lType,
         amountPaid: Number(item.amount_paid || 0),
         paymentDate: item.payment_date,
         remarks: item.remarks || undefined,

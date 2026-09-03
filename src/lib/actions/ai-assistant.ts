@@ -203,7 +203,7 @@ ${intro}
       const dbStart = performance.now();
       const { data: rawColls, error: dbErr } = await supabase
         .from('collections')
-        .select('id, amount_paid, payment_date, loans(balance_amount, customers(customer_name, customer_id))')
+        .select('id, amount_paid, payment_date, loans(loan_type, working_days, balance_amount, customers(customer_name, customer_id))')
         .eq('payment_date', bounds.todayISO);
 
       const dbDurationMs = performance.now() - dbStart;
@@ -226,18 +226,20 @@ ${intro}
       const total = todaysColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
       const count = todaysColls.length;
 
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'TODAY_COLLECTION',
-        bounds,
-        selectedDateRange: bounds.todayISO,
-        tablesQueried: ['collections', 'loans', 'customers'],
-        queryResultCount: count,
-        rawAggregateSum: `₹${total}`,
-        finalFormattedValue: formatCurrency(total),
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
+      // Group collections by explicit collection type
+      const dailyColls = todaysColls.filter((c: any) => {
+        const type = c.loans?.loan_type;
+        const days = c.loans?.working_days;
+        return (!type && days === 100) || type === 'daily' || (days && days !== 0 && days !== 10 && days !== 6);
       });
+      const weeklyColls = todaysColls.filter((c: any) => c.loans?.loan_type === 'weekly' || c.loans?.working_days === 10);
+      const monthlyColls = todaysColls.filter((c: any) => c.loans?.loan_type === 'monthly' || c.loans?.working_days === 6);
+      const adjustmentColls = todaysColls.filter((c: any) => c.loans?.loan_type === 'adjustment' || c.loans?.working_days === 0);
+
+      const dailySum = dailyColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
+      const weeklySum = weeklyColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
+      const monthlySum = monthlyColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
+      const adjustmentSum = adjustmentColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
 
       const intro = isTelugu
         ? `Ivala (**${formatDate(bounds.todayISO)}**) jarigina total collection snapshot:`
@@ -245,17 +247,25 @@ ${intro}
 
       let markdown = `### 💰 Today's Collection Report\n\n${intro}\n\n`;
       markdown += `- **Business Date**: **${formatDate(bounds.todayISO)}**\n`;
-      markdown += `- **Total Amount Collected Today**: **${formatCurrency(total)}**\n`;
-      markdown += `- **Total Collection Entries**: **${count} payments**\n\n`;
+      markdown += `- **Total Amount Collected Today**: **${formatCurrency(total)}** (${count} payments)\n\n`;
+
+      markdown += `#### 📊 Breakdown by Collection Type:\n`;
+      markdown += `| Collection Type | Total Collected Today | Payments |\n`;
+      markdown += `| :--- | :--- | :--- |\n`;
+      markdown += `| 📅 **Daily Collections** | **${formatCurrency(dailySum)}** | ${dailyColls.length} |\n`;
+      markdown += `| 🗓️ **Weekly Collections** | **${formatCurrency(weeklySum)}** | ${weeklyColls.length} |\n`;
+      markdown += `| 📆 **Monthly Collections** | **${formatCurrency(monthlySum)}** | ${monthlyColls.length} |\n`;
+      markdown += `| ⚙️ **Adjustment Collections** | **${formatCurrency(adjustmentSum)}** | ${adjustmentColls.length} |\n\n`;
 
       if (todaysColls.length > 0) {
-        markdown += `| Customer Name | Code | Amount Paid | Remaining |\n`;
+        markdown += `#### 📜 Recent Today Transactions:\n`;
+        markdown += `| Customer Name | Code | Type | Amount Paid |\n`;
         markdown += `| :--- | :--- | :--- | :--- |\n`;
         todaysColls.slice(0, 5).forEach((c: any) => {
           const custName = c.loans?.customers?.customer_name || 'Customer';
           const code = c.loans?.customers?.customer_id || 'N/A';
-          const remBal = c.loans?.balance_amount ? Number(c.loans.balance_amount) : 0;
-          markdown += `| **${custName}** | \`${code}\` | **${formatCurrency(c.amount_paid)}** | ${formatCurrency(remBal)} |\n`;
+          const lType = c.loans?.loan_type || 'daily';
+          markdown += `| **${custName}** | \`${code}\` | \`[${lType.toUpperCase()}]\` | **${formatCurrency(c.amount_paid)}** |\n`;
         });
       } else {
         markdown += `*No collection payments recorded yet for today (${formatDate(bounds.todayISO)}).*\n`;

@@ -22,16 +22,13 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
-  Calendar,
-  Clock,
-  IndianRupee,
-  Database,
   TrendingUp,
   CheckCircle2,
   MapPin,
   FileText,
   Percent,
   Scale,
+  Database,
 } from 'lucide-react';
 
 export default function LoansPage() {
@@ -154,35 +151,36 @@ export default function LoansPage() {
     {
       accessorKey: 'customerName',
       header: 'Customer Name & Type',
-      cell: ({ row }) => (
-        <div className="flex flex-col leading-none">
-          <span className="font-semibold text-slate-900 dark:text-slate-100">
-            {row.original.customerName}
-          </span>
-          <div className="flex items-center gap-1.5 mt-1">
-            <Badge
-              variant={
-                row.original.loanType === 'daily'
-                  ? 'info'
-                  : row.original.loanType === 'weekly'
-                  ? 'success'
-                  : row.original.loanType === 'monthly'
-                  ? 'default'
-                  : 'outline'
-              }
-              className="text-[10px] uppercase font-semibold tracking-wide py-0"
-            >
-              {row.original.loanType || 'daily'}
-            </Badge>
-            {row.original.city && (
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-0.5">
-                <MapPin className="w-3 h-3 text-slate-400" />
-                {row.original.city}
-              </span>
-            )}
+      cell: ({ row }) => {
+        const type = row.original.loanType || 'daily';
+        const typeVariants: Record<string, 'info' | 'success' | 'warning' | 'default'> = {
+          daily: 'info',
+          weekly: 'default',
+          monthly: 'success',
+          adjustment: 'warning',
+        };
+        return (
+          <div className="flex flex-col leading-none">
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {row.original.customerName}
+            </span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Badge
+                variant={typeVariants[type] || 'info'}
+                className="text-[10px] uppercase font-semibold tracking-wide py-0"
+              >
+                [{type}]
+              </Badge>
+              {row.original.city && (
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-0.5">
+                  <MapPin className="w-3 h-3 text-slate-400" />
+                  {row.original.city}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       accessorKey: 'amountGiven',
@@ -355,7 +353,7 @@ export default function LoansPage() {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Disburse loans across 4 loan types (Daily, Weekly, Monthly, Adjustment) with dedicated rules and live Supabase queries.
+            Disburse loans across 4 collection types (Daily, Weekly, Monthly, Adjustment) with dedicated rules and live Supabase queries.
           </p>
         </div>
         <Button
@@ -366,7 +364,7 @@ export default function LoansPage() {
             setIsFormModalOpen(true);
           }}
           leftIcon={<Plus className="w-4 h-4" />}
-          className="shadow-md shadow-[#FF7A00]/20 shrink-0"
+          className="shadow-md shrink-0"
         >
           Disburse New Loan
         </Button>
@@ -384,7 +382,7 @@ export default function LoansPage() {
                 {formatCurrency(totalAmountGiven)}
               </span>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#FF7A00]/10 text-[#FF7A00] dark:text-[#FF7A00] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
               <Landmark className="w-5 h-5" />
             </div>
           </CardContent>
@@ -396,11 +394,11 @@ export default function LoansPage() {
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Target Collection Amount
               </span>
-              <span className="text-2xl font-bold text-[#FF7A00] dark:text-[#FF7A00] mt-0.5">
+              <span className="text-2xl font-bold text-emerald-400 mt-0.5">
                 {formatCurrency(totalTargetCollection)}
               </span>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
               <TrendingUp className="w-5 h-5" />
             </div>
           </CardContent>
@@ -416,7 +414,7 @@ export default function LoansPage() {
                 {activeLoansCount} / {loans.length}
               </span>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#FF7A00]/10 text-[#FF7A00] dark:text-[#FF7A00] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </CardContent>
@@ -425,60 +423,102 @@ export default function LoansPage() {
 
       {/* Main Loans Table Card */}
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <CardTitle>Loans Stream</CardTitle>
-            <CardDescription>
-              Filter by Loan Type, Status, or Search Customer ID, Name, City
-            </CardDescription>
-          </div>
-
-          {/* Search, Type Filter & Status Filter Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Loan Type Filter */}
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20"
-            >
-              <option value="all">All Loan Types</option>
-              <option value="daily">Daily Loans</option>
-              <option value="weekly">Weekly Loans</option>
-              <option value="monthly">Monthly Loans</option>
-              <option value="adjustment">Adjustment Loans</option>
-            </select>
-
-            {/* Loan Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="closed">Closed Only</option>
-            </select>
-
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ID, Name, City..."
-                className="w-full h-10 pl-9 pr-4 text-xs rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20 focus:border-[#FF7A00] transition-colors"
-              />
+        <CardHeader className="flex flex-col gap-4 pb-4 border-b border-slate-100 dark:border-[#252C40]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle>Loans Portfolio Stream</CardTitle>
+              <CardDescription>
+                Separated by Daily, Weekly, Monthly, and Adjustment loan types
+              </CardDescription>
             </div>
 
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => fetchLoans(searchQuery, statusFilter, typeFilter)}
-              className="px-3"
-              title="Refresh from Supabase"
+            {/* Search & Status Filter Controls */}
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-[#252C40] bg-white dark:bg-[#161B2C] text-slate-900 dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active Only</option>
+                <option value="closed">Closed Only</option>
+              </select>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search ID, Name, City..."
+                  className="w-full h-10 pl-9 pr-4 text-xs rounded-xl border border-slate-300 dark:border-[#252C40] bg-white dark:bg-[#161B2C] text-slate-900 dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-[#A855F7] transition-colors"
+                />
+              </div>
+
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => fetchLoans(searchQuery, statusFilter, typeFilter)}
+                className="px-3"
+                title="Refresh from Supabase"
+              >
+                <RefreshCw className="w-4 h-4 text-slate-500" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Loan Type Separation Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-[#252C40]/50 pt-3">
+            <button
+              onClick={() => setTypeFilter('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                typeFilter === 'all'
+                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
+                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+              }`}
             >
-              <RefreshCw className="w-4 h-4 text-slate-500" />
-            </Button>
+              All Loans ({loans.length})
+            </button>
+            <button
+              onClick={() => setTypeFilter('daily')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                typeFilter === 'daily'
+                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
+                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+              }`}
+            >
+              Daily Loans ({loans.filter(l => (l.loanType || 'daily') === 'daily').length})
+            </button>
+            <button
+              onClick={() => setTypeFilter('weekly')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                typeFilter === 'weekly'
+                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
+                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+              }`}
+            >
+              Weekly Loans ({loans.filter(l => l.loanType === 'weekly').length})
+            </button>
+            <button
+              onClick={() => setTypeFilter('monthly')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                typeFilter === 'monthly'
+                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
+                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+              }`}
+            >
+              Monthly Loans ({loans.filter(l => l.loanType === 'monthly').length})
+            </button>
+            <button
+              onClick={() => setTypeFilter('adjustment')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                typeFilter === 'adjustment'
+                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
+                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+              }`}
+            >
+              Adjustment Loans ({loans.filter(l => l.loanType === 'adjustment').length})
+            </button>
           </div>
         </CardHeader>
 

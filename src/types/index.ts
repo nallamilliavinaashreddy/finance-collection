@@ -78,6 +78,7 @@ export interface Collection {
   customerId: string;
   customerCode: string;
   customerName: string;
+  loanType?: LoanType;
   amountPaid: number;
   paymentDate: string;
   remarks?: string;
