@@ -132,15 +132,17 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
 
     const loanType: LoanType = decodeLoanType(loan.working_days, loan.loan_type);
 
-    // Step 2: Calculate post-payment remaining balance (Multiple collections allowed anytime)
+    // Step 2: Calculate post-payment remaining balance based on exact sum of valid collections
+    const { data: existingColls } = await supabase
+      .from('collections')
+      .select('amount_paid')
+      .eq('loan_id', formData.loanId);
+
+    const currentCollected = (existingColls || []).reduce((sum: number, c: any) => sum + Number(c.amount_paid || 0), 0);
     const totalTarget = Number(loan.total_collection || 0);
-    const currentCollected = Number(loan.collected_amount || 0);
-    const currentBalance = loan.balance_amount !== undefined && loan.balance_amount !== null
-      ? Number(loan.balance_amount)
-      : Math.max(0, totalTarget - currentCollected);
 
     const newCollected = currentCollected + formData.amountPaid;
-    const newBalanceAfterPayment = Math.max(0, currentBalance - formData.amountPaid);
+    const newBalanceAfterPayment = Math.max(0, totalTarget - newCollected);
     const isClosedNow = newBalanceAfterPayment <= 0;
 
     // Step 4: Update loans table
@@ -150,6 +152,7 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
         collected_amount: newCollected,
         balance_amount: newBalanceAfterPayment,
         is_closed: isClosedNow,
+        status: isClosedNow ? 'closed' : 'active',
       })
       .eq('id', formData.loanId);
 
@@ -286,12 +289,14 @@ export async function deleteCollection(id: string): Promise<{ success: boolean; 
     }
 
     if (coll.loans) {
-      const loan = coll.loans;
-      const amountReverted = Number(coll.amount_paid || 0);
-      const currentCollected = Number(loan.collected_amount || 0);
-      const totalTarget = Number(loan.total_collection || 0);
-      const newCollected = Math.max(0, currentCollected - amountReverted);
-      const newBalance = totalTarget - newCollected;
+      const { data: remainingColls } = await supabase
+        .from('collections')
+        .select('amount_paid')
+        .eq('loan_id', coll.loan_id);
+
+      const newCollected = (remainingColls || []).reduce((sum: number, c: any) => sum + Number(c.amount_paid || 0), 0);
+      const totalTarget = Number(coll.loans.total_collection || 0);
+      const newBalance = Math.max(0, totalTarget - newCollected);
       const isClosedNow = newBalance <= 0;
 
       await supabase
@@ -300,6 +305,7 @@ export async function deleteCollection(id: string): Promise<{ success: boolean; 
           collected_amount: newCollected,
           balance_amount: newBalance,
           is_closed: isClosedNow,
+          status: isClosedNow ? 'closed' : 'active',
         })
         .eq('id', coll.loan_id);
     }

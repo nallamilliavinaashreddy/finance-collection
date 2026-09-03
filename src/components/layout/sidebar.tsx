@@ -45,6 +45,9 @@ const iconMap: Record<string, React.ElementType> = {
   Settings,
 };
 
+import { useAuth } from '@/components/providers/auth-provider';
+import { getInitials } from '@/lib/utils';
+
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
@@ -53,6 +56,16 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { user } = useAuth();
+
+  const userRole = user?.role || 'admin';
+  const visibleNavItems = navigationItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(userRole)
+  );
+
+  const displayName = user?.fullName || (userRole === 'admin' ? 'Administrator' : 'Employee Staff');
+  const userInitials = getInitials(displayName);
+  const roleBadge = userRole === 'admin' ? 'Administrator' : userRole.toUpperCase();
 
   return (
     <aside
@@ -99,7 +112,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           <Sparkles className="w-3 h-3 text-[#F97316]" />
           <span>{t('nav.navigationMenu', 'Main Command Menu')}</span>
         </div>
-        {navigationItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = iconMap[item.icon] || LayoutDashboard;
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const translatedTitle = t(item.translationKey, item.title);
@@ -150,17 +163,17 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           )}
         >
           <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-[#F97316] to-amber-500 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-md">
-            AD
+            {userInitials}
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#0B0F17] rounded-full" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0 flex-1 leading-tight">
               <span className="text-xs font-black text-white truncate">
-                Administrator
+                {displayName}
               </span>
               <span className="text-[10px] text-emerald-400 font-bold truncate flex items-center gap-1 mt-0.5 font-mono">
                 <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                Live PostgreSQL
+                {roleBadge}
               </span>
             </div>
           )}

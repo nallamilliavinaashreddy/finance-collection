@@ -205,11 +205,14 @@ export function CollectionModal({
                 className="w-full h-10 px-3.5 text-sm rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20 focus:border-[#FF7A00]"
               >
                 <option value="">-- Choose Active Loan --</option>
-                {customerActiveLoans.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    [{l.loanType.toUpperCase()}] {l.city ? `City: ${l.city} | ` : ''}Target: {formatCurrency(l.totalCollectionAmount)} | Bal: {formatCurrency(l.balanceAmount || (l.totalCollectionAmount - (l.collectedAmount || 0)))}
-                  </option>
-                ))}
+                {customerActiveLoans.map((l) => {
+                  const remBal = Math.max(0, l.totalCollectionAmount - (l.collectedAmount || 0));
+                  return (
+                    <option key={l.id} value={l.id}>
+                      [{l.loanType.toUpperCase()}] {l.city ? `City: ${l.city} | ` : ''}Target: {formatCurrency(l.totalCollectionAmount)} | Bal: {formatCurrency(remBal)}
+                    </option>
+                  );
+                })}
               </select>
             )}
             {errors.loanId && (
@@ -255,9 +258,7 @@ export function CollectionModal({
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">Remaining Balance</span>
                 <span className="text-xs font-bold text-[#FF7A00] dark:text-[#FF7A00]">
                   {formatCurrency(
-                    selectedLoanObj.balanceAmount !== undefined
-                      ? selectedLoanObj.balanceAmount
-                      : selectedLoanObj.totalCollectionAmount - (selectedLoanObj.collectedAmount || 0)
+                    Math.max(0, selectedLoanObj.totalCollectionAmount - (selectedLoanObj.collectedAmount || 0))
                   )}
                 </span>
               </div>

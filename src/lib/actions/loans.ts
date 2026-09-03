@@ -71,7 +71,7 @@ export async function getLoans(
 
     const { data, error } = await supabase
       .from('loans')
-      .select('*, customers(id, customer_id, customer_name, mobile_number)')
+      .select('*, customers(id, customer_id, customer_name, mobile_number), collections(id, amount_paid)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -81,11 +81,12 @@ export async function getLoans(
 
     let formatted: Loan[] = (data || []).map((item: any) => {
       const cust = item.customers || {};
-      const collected = Number(item.collected_amount || 0);
+      const actualCollected = (item.collections || []).reduce(
+        (sum: number, c: any) => sum + Number(c.amount_paid || 0),
+        0
+      );
       const totalTarget = Number(item.total_collection || item.total_collection_amount || 0);
-      const balance = item.balance_amount !== undefined && item.balance_amount !== null
-        ? Number(item.balance_amount)
-        : Math.max(0, totalTarget - collected);
+      const balance = Math.max(0, totalTarget - actualCollected);
 
       const isClosedVal = item.is_closed !== undefined && item.is_closed !== null
         ? Boolean(item.is_closed)
@@ -121,7 +122,7 @@ export async function getLoans(
         dailyAmount: item.daily_amount ? Number(item.daily_amount) : Math.round((totalTarget / daysCount) * 100) / 100,
         weeklyAmount: item.weekly_amount ? Number(item.weekly_amount) : Math.round((totalTarget / Math.max(1, totalWks)) * 100) / 100,
         monthlyAmount: item.monthly_amount ? Number(item.monthly_amount) : Math.round((totalTarget / Math.max(1, totalMths)) * 100) / 100,
-        collectedAmount: collected,
+        collectedAmount: actualCollected,
         balanceAmount: balance,
         isClosed: isClosedVal,
         startDate: item.start_date,

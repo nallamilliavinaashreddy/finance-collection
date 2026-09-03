@@ -43,6 +43,8 @@ const iconMap: Record<string, React.ElementType> = {
   Settings,
 };
 
+import { useAuth } from '@/components/providers/auth-provider';
+
 interface MobileNavProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,8 +53,14 @@ interface MobileNavProps {
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   if (!isOpen) return null;
+
+  const userRole = user?.role || 'admin';
+  const visibleNavItems = navigationItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(userRole)
+  );
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
@@ -89,7 +97,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
         {/* Links */}
         <div className="flex-1 py-4 px-3 flex flex-col gap-1.5 overflow-y-auto">
-          {navigationItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = iconMap[item.icon] || LayoutDashboard;
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const translatedTitle = t(item.translationKey, item.title);
