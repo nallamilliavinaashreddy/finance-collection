@@ -39,10 +39,10 @@ export function MoneyRainBackground() {
 
     const noteSymbols = ['₹', '₹500', '₹2000', '₹100', '₹200', '₹'];
     const noteColors = [
-      'rgba(255, 122, 0, ',   // Brand Orange
-      'rgba(245, 158, 11, ',  // Gold
-      'rgba(16, 185, 129, ',  // Emerald Green
-      'rgba(234, 179, 8, ',   // Yellow Gold
+      'rgba(168, 85, 247, ',  // Purple
+      'rgba(236, 72, 153, ',  // Pink
+      'rgba(99, 102, 241, ',  // Indigo
+      'rgba(52, 211, 153, ',  // Emerald Green
     ];
 
     const particleCount = Math.min(Math.floor(width / 35), 45);
@@ -128,10 +128,10 @@ export function MoneyRainBackground() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-70 dark:opacity-85" />
       
       {/* Dark Translucent Glass Overlay for Crisp Text Readability */}
-      <div className="absolute inset-0 bg-slate-900/10 dark:bg-[#070707]/80 backdrop-blur-[1px] transition-colors" />
+      <div className="absolute inset-0 bg-slate-900/10 dark:bg-[#0B0F19]/80 backdrop-blur-[1px] transition-colors" />
 
-      {/* Radial Ambient Gold/Orange Glow Center Accent */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#FF7A00]/5 rounded-full blur-[140px] pointer-events-none" />
+      {/* Radial Ambient Purple Glow Center Accent */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
     </div>
   );
 }

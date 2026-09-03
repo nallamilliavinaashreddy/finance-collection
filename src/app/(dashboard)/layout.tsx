@@ -17,7 +17,7 @@ export default function DashboardLayout({
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#070707] text-slate-900 dark:text-white flex flex-col transition-colors relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-[#F3F4F6] flex flex-col transition-colors relative overflow-x-hidden">
       {/* Cinematic Falling Money Background Engine */}
       <MoneyRainBackground />
 

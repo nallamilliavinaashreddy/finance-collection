@@ -140,7 +140,7 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
     // Blockquotes >
     if (trimmed.startsWith('> ')) {
       renderedElements.push(
-        <div key={idx} className="my-2.5 p-3 rounded-xl bg-amber-500/10 border-l-3 border-[#F97316] text-xs text-amber-200 font-medium">
+        <div key={idx} className="my-2.5 p-3 rounded-xl bg-purple-500/10 border-l-3 border-[#A855F7] text-xs text-purple-200 font-medium">
           {parseInlineFormatting(trimmed.slice(2))}
         </div>
       );
@@ -167,8 +167,8 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
 
       {/* Suggested Follow-Ups Pills */}
       {followUps.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-col gap-2">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="mt-4 pt-3 border-t border-[#252C40] flex flex-col gap-2">
+          <span className="text-[10px] font-bold text-[#A7B0C0] uppercase tracking-wider">
             Suggested Follow-Up Queries:
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -176,10 +176,10 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
               <button
                 key={i}
                 onClick={() => onSelectFollowUp?.(f)}
-                className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-[#F97316]/20 border border-slate-700 hover:border-[#F97316]/40 text-[11px] font-semibold text-slate-200 hover:text-[#F97316] transition-all flex items-center gap-1"
+                className="px-2.5 py-1 rounded-xl bg-[#161B2C] hover:bg-[#A855F7]/20 border border-[#252C40] hover:border-[#A855F7]/40 text-[11px] font-semibold text-[#A7B0C0] hover:text-[#EC4899] transition-all flex items-center gap-1"
               >
                 <span>{f}</span>
-                <ArrowRight className="w-3 h-3 text-[#F97316]" />
+                <ArrowRight className="w-3 h-3 text-[#EC4899]" />
               </button>
             ))}
           </div>
