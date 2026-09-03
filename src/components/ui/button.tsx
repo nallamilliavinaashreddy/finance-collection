@@ -26,14 +26,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 ease-in-out rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#0B0F19] disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
+    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 ease-in-out rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#080B14] disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
 
     const variants = {
-      primary: 'bg-gradient-to-r from-[#A855F7] via-[#EC4899] to-[#6366F1] hover:opacity-95 text-white focus:ring-purple-500 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 border-0',
-      secondary: 'bg-[#161B2C] hover:bg-[#1E2538] text-slate-100 border border-[#252C40] focus:ring-purple-500',
-      outline: 'border border-[#252C40] hover:border-[#A855F7]/50 hover:bg-[#161B2C] text-[#A7B0C0] hover:text-white focus:ring-purple-500',
-      ghost: 'hover:bg-[#161B2C] hover:text-[#A855F7] text-[#A7B0C0] focus:ring-purple-500',
-      danger: 'bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-500 shadow-md shadow-rose-600/20 hover:shadow-lg hover:shadow-rose-600/30',
+      primary: 'bg-gradient-to-r from-[#A855F7] via-[#6366F1] to-[#4F8CFF] hover:opacity-95 text-[#F8FAFC] focus:ring-[#8B5CF6] shadow-sm border-0',
+      secondary: 'bg-[#182237] hover:bg-[#1E293B] text-[#F8FAFC] border border-[#26344D] focus:ring-[#8B5CF6]',
+      outline: 'border border-[#26344D] bg-[#121A2B] hover:bg-[#182237] hover:border-[#8B5CF6]/50 text-[#94A3B8] hover:text-[#F8FAFC] focus:ring-[#8B5CF6]',
+      ghost: 'hover:bg-[#182237] hover:text-[#F8FAFC] text-[#94A3B8] focus:ring-[#8B5CF6]',
+      danger: 'bg-[#EF4444] hover:bg-[#DC2626] text-[#F8FAFC] focus:ring-[#EF4444] shadow-sm',
     };
 
     const sizes = {

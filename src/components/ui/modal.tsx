@@ -51,37 +51,37 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* Overlay - rgba(0,0,0,0.65) */}
       <div
-        className="fixed inset-0 bg-slate-950/70 dark:bg-[#0B0F19]/90 backdrop-blur-md transition-opacity animate-in fade-in"
+        className="fixed inset-0 bg-black/65 backdrop-blur-sm transition-opacity animate-in fade-in"
         onClick={onClose}
       />
 
-      {/* Modal Dialog */}
+      {/* Modal Dialog Container - #182237 */}
       <div
         className={cn(
-          'relative w-full bg-white/95 dark:bg-[#161B2C]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/90 dark:border-[#252C40] p-6 z-10 animate-in zoom-in-95 duration-200 flex flex-col gap-4 text-slate-900 dark:text-[#F3F4F6]',
+          'relative w-full bg-white dark:bg-[#182237] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#26344D] p-6 z-10 animate-in zoom-in-95 duration-200 flex flex-col gap-4 text-slate-900 dark:text-[#F8FAFC]',
           maxWidthClasses[maxWidth]
         )}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 dark:text-[#A7B0C0] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#252C40]/50 transition-colors"
+          className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {(title || description) && (
-          <div className="flex flex-col gap-1 pr-6 border-b border-slate-200/80 dark:border-[#252C40] pb-3">
-            {title && <h3 className="text-lg font-semibold text-slate-900 dark:text-[#F3F4F6]">{title}</h3>}
-            {description && <p className="text-xs text-slate-500 dark:text-[#A7B0C0]">{description}</p>}
+          <div className="flex flex-col gap-1 pr-6 border-b border-slate-200 dark:border-[#26344D] pb-3">
+            {title && <h3 className="text-lg font-semibold text-slate-900 dark:text-[#F8FAFC]">{title}</h3>}
+            {description && <p className="text-xs text-slate-500 dark:text-[#94A3B8]">{description}</p>}
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto">{children}</div>
 
-        {footer && <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200/80 dark:border-[#252C40]">{footer}</div>}
+        {footer && <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200 dark:border-[#26344D]">{footer}</div>}
       </div>
     </div>
   );

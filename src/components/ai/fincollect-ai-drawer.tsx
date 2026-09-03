@@ -218,37 +218,37 @@ export function FinCollectAIDrawer() {
       {/* FLOATING ACTION BUTTON (FAB) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-[#A855F7] via-[#EC4899] to-[#6366F1] text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-[#A855F7]/20"
+        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-[#8B5CF6]/20"
         title="Open FinCollect AI Copilot"
       >
         <div className="relative flex items-center justify-center">
           <Bot className="w-5 h-5 text-white group-hover:rotate-12 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full animate-ping" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#22C55E] border-2 border-white rounded-full animate-ping" />
         </div>
         <span className="text-xs font-black tracking-wide uppercase font-sans">
           FinCollect AI
         </span>
-        <Sparkles className="w-3.5 h-3.5 text-pink-300 animate-pulse" />
+        <Sparkles className="w-3.5 h-3.5 text-[#C084FC] animate-pulse" />
       </button>
 
       {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-lg h-full bg-[#0B0F19]/98 dark:bg-[#0B0F19]/98 text-white backdrop-blur-2xl border-l border-[#252C40] shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+          <div className="w-full max-w-lg h-full bg-[#121A2B] text-[#F8FAFC] backdrop-blur-2xl border-l border-[#2A3652] shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
             {/* Header Bar */}
-            <div className="p-4 border-b border-[#252C40] flex items-center justify-between bg-[#161B2C]/90 shrink-0">
+            <div className="p-4 border-b border-[#2A3652] flex items-center justify-between bg-[#182237] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#A855F7] to-[#EC4899] flex items-center justify-center text-white shadow-md">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] flex items-center justify-center text-white shadow-md">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col leading-tight">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black tracking-tight">FinCollect AI</h3>
+                    <h3 className="text-base font-black tracking-tight text-[#F8FAFC]">FinCollect AI</h3>
                     <Badge variant="success" className="text-[9px] py-0 px-1.5 font-mono">
                       ● AI READY
                     </Badge>
                   </div>
-                  <span className="text-[10px] text-[#A7B0C0] font-medium">
+                  <span className="text-[10px] text-[#94A3B8] font-medium">
                     Your Intelligent Financial Assistant
                   </span>
                 </div>
@@ -256,28 +256,28 @@ export function FinCollectAIDrawer() {
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-xl text-[#A7B0C0] hover:text-white hover:bg-[#252C40]/50 transition-colors"
+                className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#2A3652]/50 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Page Context Banner */}
-            <div className="px-4 py-2 border-b border-[#252C40] bg-[#111827] flex items-center justify-between text-[11px] text-[#A7B0C0] font-medium shrink-0">
+            <div className="px-4 py-2 border-b border-[#2A3652] bg-[#182237]/60 flex items-center justify-between text-[11px] text-[#94A3B8] font-medium shrink-0">
               <div className="flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-[#EC4899]" />
-                <span>Currently analyzing: <strong className="text-white font-bold">{pageContextTitle}</strong></span>
+                <Compass className="w-3.5 h-3.5 text-[#C084FC]" />
+                <span>Currently analyzing: <strong className="text-[#F8FAFC] font-bold">{pageContextTitle}</strong></span>
               </div>
-              <span className="font-mono text-[9px] text-emerald-400">Read-Only Safety On</span>
+              <span className="font-mono text-[9px] text-[#22C55E]">Read-Only Safety On</span>
             </div>
 
             {/* Quick Prompts Bar */}
-            <div className="p-3 border-b border-[#252C40] bg-[#161B2C]/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
+            <div className="p-3 border-b border-[#2A3652] bg-[#182237]/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
               {quickPrompts.map((qp) => (
                 <button
                   key={qp.label}
                   onClick={() => handleSendQuery(qp.query)}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#161B2C] hover:bg-[#A855F7]/20 border border-[#252C40] hover:border-[#A855F7]/40 text-[10px] font-bold text-[#A7B0C0] hover:text-[#EC4899] whitespace-nowrap transition-all shrink-0"
+                  className="px-2.5 py-1.5 rounded-xl bg-[#182237] hover:bg-[#8B5CF6]/20 border border-[#2A3652] hover:border-[#8B5CF6]/40 text-[10px] font-bold text-[#94A3B8] hover:text-[#C084FC] whitespace-nowrap transition-all shrink-0"
                 >
                   {qp.label}
                 </button>
@@ -294,10 +294,10 @@ export function FinCollectAIDrawer() {
                   }`}
                 >
                   <div
-                    className={`p-4 rounded-3xl text-xs leading-relaxed shadow-lg ${
+                    className={`p-4 rounded-3xl text-xs leading-relaxed shadow-md ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-r from-[#A855F7] via-[#EC4899] to-[#6366F1] text-white font-semibold rounded-tr-none'
-                        : 'bg-[#161B2C] border border-[#252C40] text-[#F3F4F6] rounded-tl-none'
+                        ? 'bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-semibold rounded-tr-none'
+                        : 'bg-[#182237] border border-[#2A3652] text-[#F8FAFC] rounded-tl-none'
                     }`}
                   >
                     {msg.sender === 'user' ? (
@@ -310,7 +310,7 @@ export function FinCollectAIDrawer() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 px-2 text-[9px] text-slate-500 font-mono">
+                  <div className="flex items-center gap-2 px-2 text-[9px] text-[#64748B] font-mono">
                     <span>{msg.timestamp}</span>
                     {msg.sender === 'ai' && (
                       <button
@@ -319,7 +319,7 @@ export function FinCollectAIDrawer() {
                         title="Copy Response"
                       >
                         {copiedId === msg.id ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3 h-3 text-[#22C55E]" />
                         ) : (
                           <Copy className="w-3 h-3" />
                         )}
@@ -330,9 +330,9 @@ export function FinCollectAIDrawer() {
               ))}
 
               {isLoading && (
-                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 shadow-md">
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#F97316]" />
-                  <span className="font-semibold">🤖 FinCollect AI is analyzing your financial data...</span>
+                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-[#182237] border border-[#2A3652] text-xs text-[#94A3B8] shadow-md">
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#8B5CF6]" />
+                  <span className="font-semibold text-[#F8FAFC]">🤖 FinCollect AI is analyzing your financial data...</span>
                 </div>
               )}
 
@@ -340,7 +340,7 @@ export function FinCollectAIDrawer() {
             </div>
 
             {/* Input Bar */}
-            <div className="p-3.5 border-t border-[#252C40] bg-[#161B2C]/90 shrink-0 flex flex-col gap-2">
+            <div className="p-3.5 border-t border-[#2A3652] bg-[#182237] shrink-0 flex flex-col gap-2">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -359,18 +359,18 @@ export function FinCollectAIDrawer() {
                       handleSendQuery();
                     }
                   }}
-                  className="flex-1 p-3 text-xs rounded-2xl bg-[#111827] border border-[#252C40] text-white placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-[#A855F7] resize-none"
+                  className="flex-1 p-3 text-xs rounded-2xl bg-[#121A2B] border border-[#2A3652] text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40 focus:border-[#8B5CF6] resize-none"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isLoading || !inputQuery.trim()}
-                  className="h-12 px-4 rounded-2xl bg-gradient-to-r from-[#A855F7] via-[#EC4899] to-[#6366F1] text-white font-bold shrink-0"
+                  className="h-12 px-4 rounded-2xl bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-bold shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
-              <span className="text-[9px] text-[#A7B0C0] block text-center font-mono">
+              <span className="text-[9px] text-[#94A3B8] block text-center font-mono">
                 FinCollect AI operates in Read-Only Safety Mode.
               </span>
             </div>

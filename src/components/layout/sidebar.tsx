@@ -70,28 +70,28 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 bg-[#0B0F19]/98 dark:bg-[#0B0F19]/98 backdrop-blur-2xl border-r border-[#252C40] text-white transition-all duration-300 ease-in-out shadow-2xl',
+        'hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 bg-[#0D1220] backdrop-blur-2xl border-r border-[#26344D] text-[#F8FAFC] transition-all duration-300 ease-in-out shadow-lg',
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
       {/* Brand Header */}
-      <div className="h-18 flex items-center justify-between px-4 border-b border-[#252C40] shrink-0">
+      <div className="h-18 flex items-center justify-between px-4 border-b border-[#26344D] shrink-0">
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#A855F7] via-[#EC4899] to-[#6366F1] flex items-center justify-center text-white shadow-lg shadow-[#A855F7]/30 shrink-0 ring-2 ring-[#A855F7]/30">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#A855F7] via-[#6366F1] to-[#4F8CFF] flex items-center justify-center text-white shadow-md shrink-0">
             <TrendingUp className="w-5 h-5 text-white" />
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-[#0B0F19] rounded-full animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#22C55E] border-2 border-[#0D1220] rounded-full animate-pulse" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-lg text-white tracking-tight font-sans">
+                <span className="font-black text-lg text-[#F8FAFC] tracking-tight font-sans">
                   FinCollect
                 </span>
-                <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-[#A855F7]/20 text-[#A855F7] border border-[#A855F7]/40 rounded-md uppercase">
+                <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/30 rounded-md uppercase">
                   PRO
                 </span>
               </div>
-              <span className="text-[10px] text-[#A7B0C0] font-bold tracking-wider uppercase">
+              <span className="text-[10px] text-[#94A3B8] font-bold tracking-wider uppercase">
                 Financial SaaS OS
               </span>
             </div>
@@ -99,7 +99,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         </Link>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-xl text-[#A7B0C0] hover:text-white hover:bg-[#161B2C] transition-colors"
+          className="p-1.5 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237] transition-colors"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -108,8 +108,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
       {/* Navigation Links */}
       <div className="flex-1 py-5 px-3 flex flex-col gap-1 overflow-y-auto">
-        <div className={cn('px-3 mb-2 text-[10px] font-extrabold text-[#A7B0C0] uppercase tracking-widest flex items-center gap-1.5', isCollapsed && 'sr-only')}>
-          <Sparkles className="w-3 h-3 text-[#EC4899]" />
+        <div className={cn('px-3 mb-2 text-[10px] font-extrabold text-[#64748B] uppercase tracking-widest flex items-center gap-1.5', isCollapsed && 'sr-only')}>
+          <Sparkles className="w-3 h-3 text-[#8B5CF6]" />
           <span>{t('nav.navigationMenu', 'Main Command Menu')}</span>
         </div>
         {visibleNavItems.map((item) => {
@@ -122,30 +122,25 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group relative',
+                'flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group relative border-l-2',
                 isActive
-                  ? 'bg-gradient-to-r from-[#A855F7] via-[#EC4899] to-[#6366F1] text-white shadow-lg shadow-purple-500/30 scale-[1.02]'
-                  : 'text-[#A7B0C0] hover:text-white hover:bg-[#161B2C]'
+                  ? 'bg-[#8B5CF6]/12 border-[#8B5CF6] text-[#F8FAFC]'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237]'
               )}
             >
               <Icon
                 className={cn(
-                  'w-5 h-5 shrink-0 transition-transform group-hover:scale-110',
-                  isActive ? 'text-white' : 'text-[#A7B0C0] group-hover:text-[#EC4899]'
+                  'w-5 h-5 shrink-0 transition-transform group-hover:scale-105',
+                  isActive ? 'text-[#8B5CF6]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'
                 )}
               />
               {!isCollapsed && (
                 <span className="truncate tracking-wide">{translatedTitle}</span>
               )}
 
-              {/* Active Indicator Glow Pill */}
-              {isActive && !isCollapsed && (
-                <div className="w-1.5 h-4 rounded-full bg-white ml-auto shadow-xs" />
-              )}
-
               {/* Tooltip for collapsed sidebar */}
               {isCollapsed && (
-                <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#161B2C] text-white text-xs font-bold rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-2xl border border-[#252C40]">
+                <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#182237] text-[#F8FAFC] text-xs font-bold rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-[#26344D]">
                   {translatedTitle}
                 </div>
               )}
@@ -155,24 +150,24 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </div>
 
       {/* Footer Profile Card */}
-      <div className="p-3 border-t border-[#252C40] shrink-0">
+      <div className="p-3 border-t border-[#26344D] shrink-0">
         <div
           className={cn(
-            'flex items-center gap-3 p-2.5 rounded-2xl bg-[#161B2C]/90 border border-[#252C40] backdrop-blur-xl',
+            'flex items-center gap-3 p-2.5 rounded-2xl bg-[#121A2B] border border-[#26344D]',
             isCollapsed && 'justify-center p-2'
           )}
         >
-          <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-[#A855F7] to-[#EC4899] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-md">
+          <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-[#A855F7] to-[#6366F1] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
             {userInitials}
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#0B0F19] rounded-full" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#22C55E] border-2 border-[#0D1220] rounded-full" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0 flex-1 leading-tight">
-              <span className="text-xs font-black text-white truncate">
+              <span className="text-xs font-black text-[#F8FAFC] truncate">
                 {displayName}
               </span>
-              <span className="text-[10px] text-emerald-400 font-bold truncate flex items-center gap-1 mt-0.5 font-mono">
-                <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span className="text-[10px] text-[#22C55E] font-bold truncate flex items-center gap-1 mt-0.5 font-mono">
+                <ShieldCheck className="w-3 h-3 text-[#22C55E] shrink-0" />
                 {roleBadge}
               </span>
             </div>

@@ -140,7 +140,7 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
     // Blockquotes >
     if (trimmed.startsWith('> ')) {
       renderedElements.push(
-        <div key={idx} className="my-2.5 p-3 rounded-xl bg-purple-500/10 border-l-3 border-[#A855F7] text-xs text-purple-200 font-medium">
+        <div key={idx} className="my-2.5 p-3 rounded-xl bg-[#8B5CF6]/10 border-l-3 border-[#8B5CF6] text-xs text-purple-200 font-medium">
           {parseInlineFormatting(trimmed.slice(2))}
         </div>
       );
@@ -150,7 +150,7 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
     // Regular paragraphs
     if (trimmed) {
       renderedElements.push(
-        <p key={idx} className="text-xs leading-relaxed text-slate-300 my-1">
+        <p key={idx} className="text-xs leading-relaxed text-[#F8FAFC] my-1">
           {parseInlineFormatting(trimmed)}
         </p>
       );
@@ -167,8 +167,8 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
 
       {/* Suggested Follow-Ups Pills */}
       {followUps.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-[#252C40] flex flex-col gap-2">
-          <span className="text-[10px] font-bold text-[#A7B0C0] uppercase tracking-wider">
+        <div className="mt-4 pt-3 border-t border-[#2A3652] flex flex-col gap-2">
+          <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider">
             Suggested Follow-Up Queries:
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -176,10 +176,10 @@ export function FormattedAIResponse({ content, onSelectFollowUp }: FormattedAIRe
               <button
                 key={i}
                 onClick={() => onSelectFollowUp?.(f)}
-                className="px-2.5 py-1 rounded-xl bg-[#161B2C] hover:bg-[#A855F7]/20 border border-[#252C40] hover:border-[#A855F7]/40 text-[11px] font-semibold text-[#A7B0C0] hover:text-[#EC4899] transition-all flex items-center gap-1"
+                className="px-2.5 py-1 rounded-xl bg-[#182237] hover:bg-[#8B5CF6]/20 border border-[#2A3652] hover:border-[#8B5CF6]/40 text-[11px] font-semibold text-[#94A3B8] hover:text-[#C084FC] transition-all flex items-center gap-1"
               >
                 <span>{f}</span>
-                <ArrowRight className="w-3 h-3 text-[#EC4899]" />
+                <ArrowRight className="w-3 h-3 text-[#C084FC]" />
               </button>
             ))}
           </div>

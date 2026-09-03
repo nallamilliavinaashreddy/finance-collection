@@ -226,44 +226,42 @@ export default function LoansPage() {
         } else if (type === 'monthly') {
           return (
             <div className="flex flex-col">
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(row.original.monthlyAmount || 0)}/mo
+              <span className="font-bold text-[#22C55E]">
+                {formatCurrency(row.original.monthlyAmount || 0)} + {row.original.interestRate || 0}%
               </span>
-              <span className="text-[10px] text-slate-400">{row.original.totalMonths || 6} months</span>
+              <span className="text-[10px] text-[#94A3B8]">{row.original.totalMonths || 12} mos</span>
             </div>
           );
         } else {
           return (
             <div className="flex flex-col">
-              <span className="font-bold text-violet-600 dark:text-violet-400 flex items-center gap-0.5">
-                <Percent className="w-3 h-3" /> {row.original.interestRate || 0}% / mo
+              <span className="font-bold text-[#22C55E]">
+                Custom ({row.original.interestRate || 0}%)
               </span>
-              <span className="text-[10px] text-slate-400">Adjustment Ledger</span>
+              <span className="text-[10px] text-[#94A3B8]">Adjustment</span>
             </div>
           );
         }
       },
     },
     {
-      accessorKey: 'startDate',
-      header: 'Tenure',
+      accessorKey: 'balanceAmount',
+      header: 'Remaining Balance',
       cell: ({ row }) => (
-        <div className="flex flex-col text-xs leading-tight">
-          <span className="text-slate-700 dark:text-slate-300">
-            Start: {formatDate(row.original.startDate)}
-          </span>
-          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-            End: {formatDate(row.original.endDate)}
-          </span>
-        </div>
+        <span className="font-bold text-[#EF4444]">
+          {formatCurrency(row.original.balanceAmount)}
+        </span>
       ),
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <Badge variant={row.original.isClosed ? 'warning' : 'success'} className="font-semibold uppercase text-[10px]">
-          {row.original.isClosed ? 'Settled' : 'Active'}
+        <Badge
+          variant={!row.original.isClosed ? 'success' : 'outline'}
+          className="uppercase text-[10px] font-bold"
+        >
+          {row.original.isClosed ? 'Closed' : 'Active'}
         </Badge>
       ),
     },
@@ -344,16 +342,16 @@ export default function LoansPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
               Loans Portfolio Management
             </h2>
             <Badge variant="success" className="gap-1 text-[10px]">
-              <Database className="w-3 h-3 text-emerald-500" />
+              <Database className="w-3 h-3 text-[#22C55E]" />
               Supabase Connected
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Disburse loans across 4 collection types (Daily, Weekly, Monthly, Adjustment) with dedicated rules and live Supabase queries.
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+            Manage, record, and track all active & closed loans across Daily, Weekly, Monthly, and Adjustment types.
           </p>
         </div>
         <Button
@@ -375,10 +373,10 @@ export default function LoansPage() {
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Total Disbursed Capital
               </span>
-              <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+              <span className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-0.5">
                 {formatCurrency(totalAmountGiven)}
               </span>
             </div>
@@ -391,14 +389,14 @@ export default function LoansPage() {
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Target Collection Amount
               </span>
-              <span className="text-2xl font-bold text-emerald-400 mt-0.5">
+              <span className="text-2xl font-bold text-[#F59E0B] mt-0.5">
                 {formatCurrency(totalTargetCollection)}
               </span>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 text-[#F59E0B] flex items-center justify-center">
               <TrendingUp className="w-5 h-5" />
             </div>
           </CardContent>
@@ -407,10 +405,10 @@ export default function LoansPage() {
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Active Loans Ratio
               </span>
-              <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+              <span className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] mt-0.5">
                 {activeLoansCount} / {loans.length}
               </span>
             </div>
@@ -423,10 +421,10 @@ export default function LoansPage() {
 
       {/* Main Loans Table Card */}
       <Card>
-        <CardHeader className="flex flex-col gap-4 pb-4 border-b border-slate-100 dark:border-[#252C40]">
+        <CardHeader className="flex flex-col gap-4 pb-4 border-b border-slate-100 dark:border-[#26344D]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle>Loans Portfolio Stream</CardTitle>
+              <CardTitle>Active & Closed Loans Directory</CardTitle>
               <CardDescription>
                 Separated by Daily, Weekly, Monthly, and Adjustment loan types
               </CardDescription>
@@ -437,7 +435,7 @@ export default function LoansPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-[#252C40] bg-white dark:bg-[#161B2C] text-slate-900 dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-[#26344D] bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active Only</option>
@@ -445,13 +443,13 @@ export default function LoansPage() {
               </select>
 
               <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-[#94A3B8] pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search ID, Name, City..."
-                  className="w-full h-10 pl-9 pr-4 text-xs rounded-xl border border-slate-300 dark:border-[#252C40] bg-white dark:bg-[#161B2C] text-slate-900 dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-[#A855F7] transition-colors"
+                  className="w-full h-10 pl-9 pr-4 text-xs rounded-xl border border-slate-300 dark:border-[#26344D] bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 focus:border-[#8B5CF6] transition-colors"
                 />
               </div>
 
@@ -462,19 +460,19 @@ export default function LoansPage() {
                 className="px-3"
                 title="Refresh from Supabase"
               >
-                <RefreshCw className="w-4 h-4 text-slate-500" />
+                <RefreshCw className="w-4 h-4 text-slate-500 dark:text-[#94A3B8]" />
               </Button>
             </div>
           </div>
 
           {/* Loan Type Separation Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-[#252C40]/50 pt-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-[#26344D]/50 pt-3">
             <button
               onClick={() => setTypeFilter('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'all'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-gradient-to-r from-[#A855F7] via-[#6366F1] to-[#4F8CFF] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#26344D]'
               }`}
             >
               All Loans ({loans.length})
@@ -483,8 +481,8 @@ export default function LoansPage() {
               onClick={() => setTypeFilter('daily')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'daily'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#F97316] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#F97316] border border-[#26344D]'
               }`}
             >
               Daily Loans ({loans.filter(l => (l.loanType || 'daily') === 'daily').length})
@@ -493,8 +491,8 @@ export default function LoansPage() {
               onClick={() => setTypeFilter('weekly')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'weekly'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#8B5CF6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#8B5CF6] border border-[#26344D]'
               }`}
             >
               Weekly Loans ({loans.filter(l => l.loanType === 'weekly').length})
@@ -503,8 +501,8 @@ export default function LoansPage() {
               onClick={() => setTypeFilter('monthly')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'monthly'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#3B82F6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#3B82F6] border border-[#26344D]'
               }`}
             >
               Monthly Loans ({loans.filter(l => l.loanType === 'monthly').length})
@@ -513,8 +511,8 @@ export default function LoansPage() {
               onClick={() => setTypeFilter('adjustment')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'adjustment'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#14B8A6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#14B8A6] border border-[#26344D]'
               }`}
             >
               Adjustment Loans ({loans.filter(l => l.loanType === 'adjustment').length})

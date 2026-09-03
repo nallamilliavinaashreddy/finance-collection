@@ -128,10 +128,10 @@ export function MoneyRainBackground() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-70 dark:opacity-85" />
       
       {/* Dark Translucent Glass Overlay for Crisp Text Readability */}
-      <div className="absolute inset-0 bg-slate-900/10 dark:bg-[#0B0F19]/80 backdrop-blur-[1px] transition-colors" />
+      <div className="absolute inset-0 bg-slate-900/10 dark:bg-[#080B14]/80 backdrop-blur-[1px] transition-colors" />
 
       {/* Radial Ambient Purple Glow Center Accent */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#8B5CF6]/10 rounded-full blur-[140px] pointer-events-none" />
     </div>
   );
 }

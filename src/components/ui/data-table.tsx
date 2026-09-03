@@ -47,20 +47,20 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="rounded-xl border border-slate-200 dark:border-[#252C40] overflow-hidden bg-white dark:bg-[#161B2C] shadow-lg">
+      <div className="rounded-xl border border-slate-200 dark:border-[#26344D] overflow-hidden bg-white dark:bg-[#121A2B] shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr
                   key={headerGroup.id}
-                  className="border-b border-slate-200 dark:border-[#252C40] bg-slate-50 dark:bg-[#111827]"
+                  className="border-b border-slate-200 dark:border-[#26344D] bg-slate-50 dark:bg-[#182237]"
                 >
                   {headerGroup.headers.map((header) => {
                     return (
                       <th
                         key={header.id}
-                        className="px-4 py-3.5 text-xs font-semibold text-slate-600 dark:text-[#A7B0C0] tracking-wider uppercase"
+                        className="px-4 py-3.5 text-xs font-semibold text-slate-600 dark:text-[#94A3B8] tracking-wider uppercase"
                       >
                         {header.isPlaceholder
                           ? null
@@ -74,15 +74,15 @@ export function DataTable<TData, TValue>({
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-[#252C40]">
+            <tbody className="divide-y divide-slate-200 dark:divide-[#26344D]">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-slate-50 dark:hover:bg-[#1E2538] transition-colors"
+                    className="hover:bg-slate-50 dark:hover:bg-[#182237] transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3.5 text-slate-800 dark:text-[#F3F4F6] whitespace-nowrap">
+                      <td key={cell.id} className="px-4 py-3.5 text-slate-800 dark:text-[#F8FAFC] whitespace-nowrap">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -95,11 +95,11 @@ export function DataTable<TData, TValue>({
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="h-36 text-center text-slate-400 dark:text-[#6B7280]"
+                    className="h-36 text-center text-slate-400 dark:text-[#64748B]"
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Inbox className="w-8 h-8 opacity-40 text-[#EC4899]" />
-                      <p className="text-sm font-medium text-slate-500 dark:text-[#A7B0C0]">{emptyText}</p>
+                      <Inbox className="w-8 h-8 opacity-40 text-[#8B5CF6]" />
+                      <p className="text-sm font-medium text-slate-500 dark:text-[#94A3B8]">{emptyText}</p>
                     </div>
                   </td>
                 </tr>
@@ -109,7 +109,7 @@ export function DataTable<TData, TValue>({
         </div>
 
         {/* Pagination Bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-[#252C40] bg-slate-50 dark:bg-[#111827] text-xs text-slate-600 dark:text-[#A7B0C0]">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-[#26344D] bg-slate-50 dark:bg-[#182237] text-xs text-slate-600 dark:text-[#94A3B8]">
           <div>
             Showing Page {table.getState().pagination.pageIndex + 1} of{' '}
             {table.getPageCount() || 1}
@@ -120,7 +120,7 @@ export function DataTable<TData, TValue>({
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="h-8 px-2 border-slate-200 dark:border-[#252C40]"
+              className="h-8 px-2 border-slate-200 dark:border-[#26344D]"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -129,7 +129,7 @@ export function DataTable<TData, TValue>({
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="h-8 px-2 border-slate-200 dark:border-[#252C40]"
+              className="h-8 px-2 border-slate-200 dark:border-[#26344D]"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

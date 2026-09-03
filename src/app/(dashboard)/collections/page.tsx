@@ -130,7 +130,7 @@ export default function CollectionsPage() {
       accessorKey: 'paymentDate',
       header: 'Collection Date',
       cell: ({ row }) => (
-        <span className="font-medium text-slate-800 dark:text-slate-200">
+        <span className="font-medium text-slate-800 dark:text-[#F8FAFC]">
           {formatDate(row.original.paymentDate)}
         </span>
       ),
@@ -140,14 +140,14 @@ export default function CollectionsPage() {
       header: 'Type',
       cell: ({ row }) => {
         const type = row.original.loanType || 'daily';
-        const badgeVariants: Record<string, 'info' | 'success' | 'warning' | 'default'> = {
-          daily: 'info',
-          weekly: 'default',
-          monthly: 'success',
-          adjustment: 'warning',
+        const badgeVariants: Record<string, 'daily' | 'weekly' | 'monthly' | 'adjustment'> = {
+          daily: 'daily',
+          weekly: 'weekly',
+          monthly: 'monthly',
+          adjustment: 'adjustment',
         };
         return (
-          <Badge variant={badgeVariants[type] || 'info'} className="uppercase text-[10px] font-bold">
+          <Badge variant={badgeVariants[type] || 'daily'} className="uppercase text-[10px] font-bold">
             [{type}]
           </Badge>
         );
@@ -166,7 +166,7 @@ export default function CollectionsPage() {
       accessorKey: 'customerName',
       header: 'Customer Name',
       cell: ({ row }) => (
-        <span className="font-semibold text-slate-900 dark:text-slate-100">
+        <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">
           {row.original.customerName}
         </span>
       ),
@@ -175,7 +175,7 @@ export default function CollectionsPage() {
       accessorKey: 'amountPaid',
       header: 'Amount Collected',
       cell: ({ row }) => (
-        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+        <span className="font-bold text-[#22C55E]">
           {formatCurrency(row.original.amountPaid)}
         </span>
       ),
@@ -184,7 +184,7 @@ export default function CollectionsPage() {
       accessorKey: 'remainingBalanceAfterPayment',
       header: 'Remaining Balance (Post-Payment)',
       cell: ({ row }) => (
-        <span className="font-bold text-[#FF7A00] dark:text-[#FF7A00]">
+        <span className="font-bold text-[#F59E0B]">
           {formatCurrency(row.original.remainingBalanceAfterPayment)}
         </span>
       ),
@@ -193,7 +193,7 @@ export default function CollectionsPage() {
       accessorKey: 'remarks',
       header: 'Remarks',
       cell: ({ row }) => (
-        <span className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px] truncate block">
+        <span className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-[200px] truncate block">
           {row.original.remarks || 'Collection recovery'}
         </span>
       ),
@@ -209,7 +209,7 @@ export default function CollectionsPage() {
             setCollectionToDelete(row.original);
             setIsDeleteModalOpen(true);
           }}
-          className="h-8 w-8 p-0 text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400"
+          className="h-8 w-8 p-0 text-slate-600 hover:text-[#EF4444] dark:text-[#94A3B8] dark:hover:text-[#EF4444]"
           title="Delete Collection"
         >
           <Trash2 className="w-4 h-4" />
@@ -224,15 +224,15 @@ export default function CollectionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
               Collections Stream
             </h2>
             <Badge variant="success" className="gap-1 text-[10px]">
-              <Database className="w-3 h-3 text-emerald-500" />
+              <Database className="w-3 h-3 text-[#22C55E]" />
               Supabase Connected
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
             Record and view collections clearly separated by type (Daily, Weekly, Monthly, Adjustment).
           </p>
         </div>
@@ -241,7 +241,7 @@ export default function CollectionsPage() {
           size="md"
           onClick={() => setIsFormModalOpen(true)}
           leftIcon={<Plus className="w-4 h-4" />}
-          className="shadow-md shrink-0"
+          className="shrink-0"
         >
           Record Collection
         </Button>
@@ -249,78 +249,78 @@ export default function CollectionsPage() {
 
       {/* Metric Aggregate Summary Cards - Separated by Collection Type */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className={activeTab === 'daily' ? 'ring-2 ring-purple-500' : ''}>
+        <Card className={activeTab === 'daily' ? 'ring-2 ring-[#F97316]' : ''}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Daily Collections
               </span>
-              <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <span className="text-xl font-bold text-[#F97316] mt-0.5">
                 {formatCurrency(dailyTotal)}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[#64748B] mt-0.5">
                 {collections.filter(c => (c.loanType || 'daily') === 'daily').length} payments
               </span>
             </div>
-            <Badge variant="info" className="uppercase text-[10px]">Daily</Badge>
+            <Badge variant="daily" className="uppercase text-[10px]">Daily</Badge>
           </CardContent>
         </Card>
 
-        <Card className={activeTab === 'weekly' ? 'ring-2 ring-purple-500' : ''}>
+        <Card className={activeTab === 'weekly' ? 'ring-2 ring-[#8B5CF6]' : ''}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Weekly Collections
               </span>
-              <span className="text-xl font-bold text-purple-400 mt-0.5">
+              <span className="text-xl font-bold text-[#8B5CF6] mt-0.5">
                 {formatCurrency(weeklyTotal)}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[#64748B] mt-0.5">
                 {collections.filter(c => c.loanType === 'weekly').length} payments
               </span>
             </div>
-            <Badge variant="default" className="uppercase text-[10px]">Weekly</Badge>
+            <Badge variant="weekly" className="uppercase text-[10px]">Weekly</Badge>
           </CardContent>
         </Card>
 
-        <Card className={activeTab === 'monthly' ? 'ring-2 ring-purple-500' : ''}>
+        <Card className={activeTab === 'monthly' ? 'ring-2 ring-[#3B82F6]' : ''}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Monthly Collections
               </span>
-              <span className="text-xl font-bold text-indigo-400 mt-0.5">
+              <span className="text-xl font-bold text-[#3B82F6] mt-0.5">
                 {formatCurrency(monthlyTotal)}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[#64748B] mt-0.5">
                 {collections.filter(c => c.loanType === 'monthly').length} payments
               </span>
             </div>
-            <Badge variant="success" className="uppercase text-[10px]">Monthly</Badge>
+            <Badge variant="monthly" className="uppercase text-[10px]">Monthly</Badge>
           </CardContent>
         </Card>
 
-        <Card className={activeTab === 'adjustment' ? 'ring-2 ring-purple-500' : ''}>
+        <Card className={activeTab === 'adjustment' ? 'ring-2 ring-[#14B8A6]' : ''}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
                 Adjustment Collections
               </span>
-              <span className="text-xl font-bold text-amber-400 mt-0.5">
+              <span className="text-xl font-bold text-[#14B8A6] mt-0.5">
                 {formatCurrency(adjustmentTotal)}
               </span>
-              <span className="text-[11px] text-slate-400 mt-0.5">
+              <span className="text-[11px] text-[#64748B] mt-0.5">
                 {collections.filter(c => c.loanType === 'adjustment').length} payments
               </span>
             </div>
-            <Badge variant="warning" className="uppercase text-[10px]">Adjustment</Badge>
+            <Badge variant="adjustment" className="uppercase text-[10px]">Adjustment</Badge>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Collections Table Card */}
       <Card>
-        <CardHeader className="flex flex-col gap-4 pb-4 border-b border-slate-100 dark:border-[#252C40]">
+        <CardHeader className="flex flex-col gap-4 pb-4 border-b border-slate-100 dark:border-[#26344D]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Collections History Log</CardTitle>
@@ -337,19 +337,19 @@ export default function CollectionsPage() {
                   type="date"
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-[#252C40] bg-white dark:bg-[#161B2C] text-slate-900 dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                  className="h-10 px-3 text-xs rounded-xl border border-slate-300 dark:border-[#26344D] bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 focus:border-[#8B5CF6]"
                 />
               </div>
 
               {/* Search Input */}
               <div className="relative w-full sm:w-60">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-[#94A3B8] pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search Customer ID or Name..."
-                  className="w-full h-10 pl-9 pr-4 text-xs rounded-xl border border-slate-300 dark:border-[#252C40] bg-white dark:bg-[#161B2C] text-slate-900 dark:text-[#F3F4F6] focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-[#A855F7] transition-colors"
+                  className="w-full h-10 pl-9 pr-4 text-xs rounded-xl border border-slate-300 dark:border-[#26344D] bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 focus:border-[#8B5CF6] transition-colors"
                 />
               </div>
 
@@ -360,19 +360,19 @@ export default function CollectionsPage() {
                 className="px-3"
                 title="Refresh from Supabase"
               >
-                <RefreshCw className="w-4 h-4 text-slate-500" />
+                <RefreshCw className="w-4 h-4 text-slate-500 dark:text-[#94A3B8]" />
               </Button>
             </div>
           </div>
 
           {/* Collection Type Separation Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-[#252C40]/50 pt-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-[#26344D]/50 pt-3">
             <button
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'all'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-gradient-to-r from-[#A855F7] via-[#6366F1] to-[#4F8CFF] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#26344D]'
               }`}
             >
               All ({collections.length})
@@ -381,8 +381,8 @@ export default function CollectionsPage() {
               onClick={() => setActiveTab('daily')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'daily'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#F97316] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#F97316] border border-[#26344D]'
               }`}
             >
               Daily ({collections.filter(c => (c.loanType || 'daily') === 'daily').length})
@@ -391,8 +391,8 @@ export default function CollectionsPage() {
               onClick={() => setActiveTab('weekly')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'weekly'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#8B5CF6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#8B5CF6] border border-[#26344D]'
               }`}
             >
               Weekly ({collections.filter(c => c.loanType === 'weekly').length})
@@ -401,8 +401,8 @@ export default function CollectionsPage() {
               onClick={() => setActiveTab('monthly')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'monthly'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#3B82F6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#3B82F6] border border-[#26344D]'
               }`}
             >
               Monthly ({collections.filter(c => c.loanType === 'monthly').length})
@@ -411,8 +411,8 @@ export default function CollectionsPage() {
               onClick={() => setActiveTab('adjustment')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'adjustment'
-                  ? 'bg-gradient-to-r from-[#A855F7] to-[#EC4899] text-white shadow-md'
-                  : 'bg-[#161B2C] text-[#A7B0C0] hover:text-white border border-[#252C40]'
+                  ? 'bg-[#14B8A6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#14B8A6] border border-[#26344D]'
               }`}
             >
               Adjustment ({collections.filter(c => c.loanType === 'adjustment').length})
