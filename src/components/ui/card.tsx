@@ -10,7 +10,6 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
       )}
       style={{
         transformStyle: 'preserve-3d',
-        backfaceVisibility: 'hidden',
       }}
       {...props}
     >
