@@ -145,19 +145,54 @@ export async function getAdjustmentLedger(
       return { success: false, data: [], error: error.message };
     }
 
-    const formatted: AdjustmentLedgerItem[] = (data || []).map((item: any) => ({
-      id: item.id || `ledger-${Math.random()}`,
-      loanId: item.loan_id,
-      transactionDate: item.transaction_date,
-      transactionType: (item.transaction_type as any) || 'payment',
-      openingBalance: Number(item.opening_balance || 0),
-      interestRate: Number(item.monthly_interest_rate ?? item.interest_rate ?? 0),
-      interestAdded: Number(item.interest_added || 0),
-      paymentReceived: Number(item.payment_received || 0),
-      closingBalance: item.transaction_type === 'interest' ? Number(item.opening_balance || item.closing_balance || 0) : Number(item.closing_balance || 0),
-      remarks: item.remarks || undefined,
-      createdAt: item.created_at || new Date().toISOString(),
-    }));
+    const { data: loanData } = await supabase
+      .from('loans')
+      .select('amount_given, total_collection')
+      .eq('id', loanId)
+      .single();
+    const principal = Number(loanData?.amount_given || loanData?.total_collection || 0);
+
+    let cumulativePayments = 0;
+    const formatted: AdjustmentLedgerItem[] = (data || []).map((item: any) => {
+      const type = (item.transaction_type as any) || 'payment';
+      const interestAdded = Number(item.interest_added || 0);
+      const paymentReceived = Number(item.payment_received || 0);
+
+      let opening = 0;
+      let closing = 0;
+
+      if (type === 'disbursement') {
+        opening = 0;
+        closing = principal || Number(item.closing_balance || 0);
+      } else if (type === 'interest') {
+        const currentPrincipalBal = Math.max(0, principal - cumulativePayments);
+        opening = currentPrincipalBal;
+        closing = currentPrincipalBal;
+      } else if (type === 'payment') {
+        const openingPrincipalBal = Math.max(0, principal - cumulativePayments);
+        cumulativePayments += paymentReceived;
+        const closingPrincipalBal = Math.max(0, principal - cumulativePayments);
+        opening = openingPrincipalBal;
+        closing = closingPrincipalBal;
+      } else {
+        opening = Number(item.opening_balance || 0);
+        closing = Number(item.closing_balance || 0);
+      }
+
+      return {
+        id: item.id || `ledger-${Math.random()}`,
+        loanId: item.loan_id,
+        transactionDate: item.transaction_date,
+        transactionType: type,
+        openingBalance: opening,
+        interestRate: Number(item.monthly_interest_rate ?? item.interest_rate ?? 0),
+        interestAdded: interestAdded,
+        paymentReceived: paymentReceived,
+        closingBalance: closing,
+        remarks: item.remarks || undefined,
+        createdAt: item.created_at || new Date().toISOString(),
+      };
+    });
 
     return { success: true, data: formatted };
   } catch (err: any) {
