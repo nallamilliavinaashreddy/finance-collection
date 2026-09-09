@@ -218,17 +218,17 @@ export function FinCollectAIDrawer() {
       {/* FLOATING ACTION BUTTON (FAB) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-[#8B5CF6]/20"
+        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full fab-3d-ai animate-float-slow text-white flex items-center gap-2.5 group ring-4 ring-[#8B5CF6]/30 cursor-pointer"
         title="Open FinCollect AI Copilot"
       >
         <div className="relative flex items-center justify-center">
-          <Bot className="w-5 h-5 text-white group-hover:rotate-12 transition-transform" />
+          <Bot className="w-5 h-5 text-white group-hover:rotate-12 transition-transform drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]" />
           <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#22C55E] border-2 border-white rounded-full animate-ping" />
         </div>
-        <span className="text-xs font-black tracking-wide uppercase font-sans">
+        <span className="text-xs font-black tracking-wide uppercase font-sans drop-shadow-xs">
           FinCollect AI
         </span>
-        <Sparkles className="w-3.5 h-3.5 text-[#C084FC] animate-pulse" />
+        <Sparkles className="w-3.5 h-3.5 text-[#E9D5FF] animate-pulse" />
       </button>
 
       {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}

@@ -26,14 +26,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 ease-in-out rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#080B14] disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
+    const baseStyles = 'inline-flex items-center justify-center font-bold transition-all duration-200 ease-in-out rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#080B14] disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] active:translate-y-0.5';
 
     const variants = {
-      primary: 'bg-gradient-to-r from-[#A855F7] via-[#6366F1] to-[#4F8CFF] hover:opacity-95 text-[#F8FAFC] focus:ring-[#8B5CF6] shadow-sm border-0',
-      secondary: 'bg-[#182237] hover:bg-[#1E293B] text-[#F8FAFC] border border-[#26344D] focus:ring-[#8B5CF6]',
-      outline: 'border border-[#26344D] bg-[#121A2B] hover:bg-[#182237] hover:border-[#8B5CF6]/50 text-[#94A3B8] hover:text-[#F8FAFC] focus:ring-[#8B5CF6]',
+      primary: 'button-3d-primary text-[#F8FAFC] focus:ring-[#8B5CF6]',
+      secondary: 'bg-[#182237] hover:bg-[#1E293B] text-[#F8FAFC] border-t border-slate-700/40 border-b border-[#121A2B] border-x border-[#26344D] shadow-md focus:ring-[#8B5CF6] hover:-translate-y-0.5',
+      outline: 'border-t border-slate-700/30 border border-[#26344D] bg-[#121A2B] hover:bg-[#182237] hover:border-[#8B5CF6]/50 text-[#94A3B8] hover:text-[#F8FAFC] shadow-sm focus:ring-[#8B5CF6] hover:-translate-y-0.5',
       ghost: 'hover:bg-[#182237] hover:text-[#F8FAFC] text-[#94A3B8] focus:ring-[#8B5CF6]',
-      danger: 'bg-[#EF4444] hover:bg-[#DC2626] text-[#F8FAFC] focus:ring-[#EF4444] shadow-sm',
+      danger: 'bg-gradient-to-b from-[#EF4444] to-[#DC2626] border-t border-red-300/30 text-[#F8FAFC] focus:ring-[#EF4444] shadow-md shadow-red-500/20 hover:-translate-y-0.5',
     };
 
     const sizes = {

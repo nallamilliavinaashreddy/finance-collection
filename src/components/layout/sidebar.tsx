@@ -70,14 +70,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 bg-[#0D1220] backdrop-blur-2xl border-r border-[#26344D] text-[#F8FAFC] transition-all duration-300 ease-in-out shadow-lg',
+        'hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 bg-[#0D1220] backdrop-blur-2xl border-r border-[#26344D] text-[#F8FAFC] transition-all duration-300 ease-in-out shadow-[14px_0_40px_-5px_rgba(0,0,0,0.65)]',
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
       {/* Brand Header */}
       <div className="h-18 flex items-center justify-between px-4 border-b border-[#26344D] shrink-0">
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
-          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#A855F7] via-[#6366F1] to-[#4F8CFF] flex items-center justify-center text-white shadow-md shrink-0">
+          <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#A855F7] via-[#6366F1] to-[#4F8CFF] flex items-center justify-center text-white shadow-lg border-t border-white/20 shrink-0">
             <TrendingUp className="w-5 h-5 text-white" />
             <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#22C55E] border-2 border-[#0D1220] rounded-full animate-pulse" />
           </div>
@@ -87,7 +87,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 <span className="font-black text-lg text-[#F8FAFC] tracking-tight font-sans">
                   FinCollect
                 </span>
-                <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/30 rounded-md uppercase">
+                <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/40 rounded-md uppercase shadow-xs">
                   PRO
                 </span>
               </div>
@@ -99,7 +99,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         </Link>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237] transition-colors"
+          className="p-1.5 rounded-xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237] transition-colors border border-transparent hover:border-[#26344D]"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -107,7 +107,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 py-5 px-3 flex flex-col gap-1 overflow-y-auto">
+      <div className="flex-1 py-5 px-3 flex flex-col gap-1.5 overflow-y-auto">
         <div className={cn('px-3 mb-2 text-[10px] font-extrabold text-[#64748B] uppercase tracking-widest flex items-center gap-1.5', isCollapsed && 'sr-only')}>
           <Sparkles className="w-3 h-3 text-[#8B5CF6]" />
           <span>{t('nav.navigationMenu', 'Main Command Menu')}</span>
@@ -124,14 +124,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group relative border-l-2',
                 isActive
-                  ? 'bg-[#8B5CF6]/12 border-[#8B5CF6] text-[#F8FAFC]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237]'
+                  ? 'bg-gradient-to-r from-[#8B5CF6]/20 via-[#6366F1]/10 to-transparent border-[#8B5CF6] text-[#F8FAFC] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_4px_14px_rgba(139,92,246,0.25)] border-t border-t-white/10'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237]/80 hover:translate-x-0.5'
               )}
             >
               <Icon
                 className={cn(
                   'w-5 h-5 shrink-0 transition-transform group-hover:scale-105',
-                  isActive ? 'text-[#8B5CF6]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'
+                  isActive ? 'text-[#8B5CF6] drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'
                 )}
               />
               {!isCollapsed && (
@@ -140,7 +140,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
               {/* Tooltip for collapsed sidebar */}
               {isCollapsed && (
-                <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#182237] text-[#F8FAFC] text-xs font-bold rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-[#26344D]">
+                <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#182237] text-[#F8FAFC] text-xs font-bold rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-2xl border border-[#26344D]">
                   {translatedTitle}
                 </div>
               )}

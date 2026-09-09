@@ -250,9 +250,13 @@ export default function DashboardPage() {
   const adj = data?.adjustmentSection;
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <div className="flex flex-col gap-8 pb-12 relative">
+      {/* Floating 3D Ambient Background Accents */}
+      <div className="fixed top-20 right-1/4 w-[500px] h-[500px] bg-[#8B5CF6]/6 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="fixed bottom-32 left-1/3 w-[500px] h-[500px] bg-[#3B82F6]/5 rounded-full blur-[140px] pointer-events-none z-0" />
+
       {/* PREMIUM HERO PANEL */}
-      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-amber-500/10 via-white/95 to-indigo-500/10 dark:from-[#F97316]/20 dark:via-[#0F172A]/95 dark:to-[#0B0F17] backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800/80 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-amber-500/10 via-white/95 to-indigo-500/10 dark:from-[#F97316]/20 dark:via-[#0F172A]/95 dark:to-[#0B0F17] backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800/80 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300 card-3d">
         {/* Subtle Background Glow Orbs */}
         <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#F97316]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
