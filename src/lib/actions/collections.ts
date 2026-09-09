@@ -224,6 +224,28 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
       createdAt: newCollData.created_at,
     };
 
+    // If Adjustment loan, sync payment into adjustment_ledger table
+    if (loanType === 'adjustment') {
+      try {
+        const rawRate = Number(loan.monthly_interest_rate ?? loan.interest_rate ?? 6);
+        await supabase.from('adjustment_ledger').insert([
+          {
+            loan_id: formData.loanId,
+            transaction_date: formData.paymentDate,
+            transaction_type: 'payment',
+            opening_balance: Math.max(0, totalTarget - currentCollected),
+            interest_rate: rawRate,
+            interest_added: 0,
+            payment_received: formData.amountPaid,
+            closing_balance: newBalanceAfterPayment,
+            remarks: formData.remarks?.trim() || 'Adjustment Collection Received',
+          },
+        ]);
+      } catch (adjErr) {
+        console.warn('Notice inserting collection to adjustment_ledger:', adjErr);
+      }
+    }
+
     // Automatically record collection in Investment Khata
     try {
       await recordInvestmentTransaction(

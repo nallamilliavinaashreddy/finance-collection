@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { AdjustmentLedgerItem } from '@/types';
 import { decodeLoanType, decodeInterestRate } from '@/lib/actions/loans';
+import { recordInvestmentTransaction } from '@/lib/actions/investment';
 
 export interface AdjustmentMetricsData {
   totalAdjustmentLoans: number;
@@ -25,8 +26,8 @@ function addDaysToDateStr(dateStr: string, days: number): string {
  * Auto Accrue Daily Interest on Current Outstanding Balance for Adjustment Loans
  * Runs automatically per day up to today's date
  * Catches up all missing days from loan start_date (or last interest date) to today
- * Formula: Daily Interest = (Current Outstanding Balance * Monthly Rate / 100) / 30
- * Prevents duplicate accruals on the same date for the same loan
+ * Formula: Daily Interest = (Principal * Monthly Rate / 100) / 30
+ * Daily interest accrual MUST NOT increase Outstanding Principal Balance!
  */
 export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promise<{ success: boolean; accruedCount: number }> {
   const supabase = createClient();
@@ -58,51 +59,45 @@ export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promi
         .order('transaction_date', { ascending: true });
 
       const existingInterestDates = new Set<string>();
-      let lastRecordedBalance = Number(loan.amount_given || loan.total_collection || 0);
 
       (ledgerRows || []).forEach((row: any) => {
         if (row.transaction_type === 'interest') {
           existingInterestDates.add(row.transaction_date);
         }
-        if (row.closing_balance !== undefined && row.closing_balance !== null) {
-          lastRecordedBalance = Number(row.closing_balance);
-        }
       });
+
+      const principal = Number(loan.amount_given || loan.total_collection || 0);
+      const collected = Number(loan.collected_amount || 0);
+      const principalBalance = Math.max(0, principal - collected);
+
+      // Ensure loans table balance_amount in Supabase matches Outstanding Principal Balance
+      if (Number(loan.balance_amount) !== principalBalance) {
+        await supabase.from('loans').update({ balance_amount: principalBalance }).eq('id', loan.id);
+      }
+
+      const monthlyInterestAmt = principal * (monthlyRate / 100);
+      const dailyInterestAmt = Math.round((monthlyInterestAmt / 30) * 100) / 100;
 
       const startDateStr = loan.start_date || todayStr;
       let currDateStr = startDateStr;
-      let currentBalance = (ledgerRows && ledgerRows.length > 0)
-        ? lastRecordedBalance
-        : (loan.balance_amount !== undefined && loan.balance_amount !== null
-            ? Number(loan.balance_amount)
-            : Number(loan.total_collection || loan.amount_given || 0));
-
-      const principal = Number(loan.amount_given || loan.total_collection || 0);
-      const monthlyInterestAmt = principal * (monthlyRate / 100);
-      const dailyInterestAmt = Math.round((monthlyInterestAmt / 30) * 100) / 100;
 
       while (currDateStr <= todayStr) {
         if (!existingInterestDates.has(currDateStr)) {
           if (dailyInterestAmt > 0) {
-            const openingBalance = currentBalance;
-            const closingBalance = Math.round((openingBalance + dailyInterestAmt) * 100) / 100;
-            currentBalance = closingBalance;
-
             const payload = {
               loan_id: loan.id,
               transaction_date: currDateStr,
               transaction_type: 'interest',
-              opening_balance: openingBalance,
+              opening_balance: principalBalance,
               interest_rate: monthlyRate,
               interest_added: dailyInterestAmt,
               payment_received: 0,
-              closing_balance: closingBalance,
+              closing_balance: principalBalance, // Daily interest does NOT increase principal balance!
               remarks: `Simple Interest @ ₹${dailyInterestAmt}/day (₹${principal} × ${monthlyRate}% / 30)`,
             };
 
             const { error: insErr } = await supabase.from('adjustment_ledger').insert([payload]);
             if (!insErr) {
-              await supabase.from('loans').update({ balance_amount: closingBalance }).eq('id', loan.id);
               existingInterestDates.add(currDateStr);
               accruedCount++;
             } else {
@@ -142,7 +137,6 @@ export async function getAdjustmentLedger(
       .order('created_at', { ascending: true });
 
     if (error) {
-      // If table is missing from schema cache (PGRST205 or PGRST204 or 404), return empty array gracefully
       if (error.code === 'PGRST205' || error.code === 'PGRST204' || error.message?.includes('schema cache')) {
         console.warn('Notice: adjustment_ledger table missing in schema cache, returning empty ledger history.');
         return { success: true, data: [] };
@@ -160,7 +154,7 @@ export async function getAdjustmentLedger(
       interestRate: Number(item.monthly_interest_rate ?? item.interest_rate ?? 0),
       interestAdded: Number(item.interest_added || 0),
       paymentReceived: Number(item.payment_received || 0),
-      closingBalance: Number(item.closing_balance || 0),
+      closingBalance: item.transaction_type === 'interest' ? Number(item.opening_balance || item.closing_balance || 0) : Number(item.closing_balance || 0),
       remarks: item.remarks || undefined,
       createdAt: item.created_at || new Date().toISOString(),
     }));
@@ -173,8 +167,8 @@ export async function getAdjustmentLedger(
 }
 
 /**
- * 2. Calculate and Add Simple Daily Interest on Current Outstanding Balance
- * Updates loans table balance in Supabase and inserts into adjustment_ledger (handling missing table gracefully)
+ * 2. Calculate and Add Simple Daily Interest
+ * Keeps loan principal balance unchanged in loans table and inserts entry into adjustment_ledger
  */
 export async function addDailyInterest(
   loanId: string,
@@ -195,9 +189,9 @@ export async function addDailyInterest(
       return { success: false, error: 'Target loan not found.' };
     }
 
-    const openingBalance = loan.balance_amount !== undefined && loan.balance_amount !== null
-      ? Number(loan.balance_amount)
-      : Number(loan.total_collection || loan.amount_given || 0);
+    const principal = Number(loan.amount_given || loan.total_collection || 0);
+    const collected = Number(loan.collected_amount || 0);
+    const principalBalance = Math.max(0, principal - collected);
 
     const monthlyRate = decodeInterestRate(loan.working_days, loan.monthly_interest_rate || loan.interest_rate);
 
@@ -205,18 +199,18 @@ export async function addDailyInterest(
       return { success: false, error: 'Invalid interest rate. Interest rate must be greater than 0%.' };
     }
 
-    // Simple Interest: Daily Interest is always calculated on the original Principal Amount (amount_given)
-    const principal = Number(loan.amount_given || loan.total_collection || 0);
+    // Simple Interest: Daily Interest is calculated on original Principal Amount
     const monthlyInterestAmount = principal * (monthlyRate / 100);
     const dailyRateAmount = Math.round((monthlyInterestAmount / 30) * 100) / 100;
     const dailyInterestAdded = Math.round((dailyRateAmount * daysCount) * 100) / 100;
 
-    const closingBalance = openingBalance + dailyInterestAdded;
+    const openingBalance = principalBalance;
+    const closingBalance = principalBalance; // Interest accrual does not increase principal balance!
 
-    // PRIMARY UPDATE: Update loan balance in loans table
+    // Keep loan balance_amount in loans table as principalBalance
     const { error: updateErr } = await supabase
       .from('loans')
-      .update({ balance_amount: closingBalance, is_closed: false })
+      .update({ balance_amount: principalBalance, is_closed: false })
       .eq('id', loanId);
 
     if (updateErr) {
@@ -281,8 +275,8 @@ export async function addDailyInterest(
 }
 
 /**
- * 3. Record Payment for Adjustment Loan & Reduce Outstanding Balance Immediately
- * Updates loans table balance in Supabase and inserts into adjustment_ledger (handling missing table gracefully)
+ * 3. Record Payment for Adjustment Loan & Reduce Outstanding Principal Balance Immediately
+ * Updates loans table balance in Supabase, inserts into adjustment_ledger and collections tables
  */
 export async function recordAdjustmentPayment(
   loanId: string,
@@ -295,7 +289,7 @@ export async function recordAdjustmentPayment(
   try {
     const { data: loan, error: loanErr } = await supabase
       .from('loans')
-      .select('*')
+      .select('*, customers(id, customer_id, customer_name, mobile_number)')
       .eq('id', loanId)
       .single();
 
@@ -303,9 +297,9 @@ export async function recordAdjustmentPayment(
       return { success: false, error: 'Target loan not found.' };
     }
 
-    const openingBalance = loan.balance_amount !== undefined && loan.balance_amount !== null
-      ? Number(loan.balance_amount)
-      : Number(loan.total_collection || loan.amount_given || 0);
+    const principal = Number(loan.amount_given || loan.total_collection || 0);
+    const currentCollected = Number(loan.collected_amount || 0);
+    const openingBalance = Math.max(0, principal - currentCollected);
 
     if (amountPaid <= 0) {
       return { success: false, error: 'Payment amount must be greater than ₹0.' };
@@ -318,8 +312,8 @@ export async function recordAdjustmentPayment(
       };
     }
 
-    const closingBalance = Math.max(0, openingBalance - amountPaid);
-    const newCollected = Number(loan.collected_amount || 0) + amountPaid;
+    const newCollected = currentCollected + amountPaid;
+    const closingBalance = Math.max(0, principal - newCollected);
     const isClosedNow = closingBalance <= 0;
 
     // PRIMARY UPDATE: Update loan balance & status in loans table
@@ -329,6 +323,7 @@ export async function recordAdjustmentPayment(
         collected_amount: newCollected,
         balance_amount: closingBalance,
         is_closed: isClosedNow,
+        status: isClosedNow ? 'closed' : 'active',
       })
       .eq('id', loanId);
 
@@ -370,6 +365,37 @@ export async function recordAdjustmentPayment(
     } else if (inserted) {
       insertedId = inserted.id;
       insertedCreatedAt = inserted.created_at;
+    }
+
+    // ALSO insert into collections table so payment is consistent across Collections stream, Day Book, Reports, etc.
+    try {
+      await supabase.from('collections').insert([
+        {
+          loan_id: loanId,
+          amount_paid: amountPaid,
+          payment_date: paymentDate,
+          remarks: remarks?.trim() || 'Adjustment Payment Received',
+          remaining_balance_after_payment: closingBalance,
+        },
+      ]);
+    } catch (collErr) {
+      console.warn('Collection insert notice from adjustment payment:', collErr);
+    }
+
+    const custName = loan.customers?.customer_name || 'Customer';
+    const custId = loan.customers?.customer_id || 'ID';
+    try {
+      await recordInvestmentTransaction(
+        'Collection Received',
+        amountPaid,
+        0,
+        'collection',
+        insertedId,
+        `Adjustment Collection Received from ${custName} (${custId})`,
+        paymentDate
+      );
+    } catch (invErr) {
+      console.warn('Investment Khata notice from adjustment payment:', invErr);
     }
 
     const item: AdjustmentLedgerItem = {
@@ -414,16 +440,16 @@ export async function getAdjustmentMetrics(): Promise<{
 
     const totalAdjustmentLoans = adjLoans.length;
     const totalAdjustmentBalance = adjLoans.reduce(
-      (sum: number, l: any) => sum + (l.is_closed ? 0 : Number(l.balance_amount || 0)),
+      (sum: number, l: any) => sum + (l.is_closed ? 0 : Math.max(0, Number(l.amount_given || l.total_collection || 0) - Number(l.collected_amount || 0))),
       0
     );
 
     let totalInterestEarned = 0;
     let totalPaymentsReceived = 0;
 
-    const { data: ledgerData, error: ledgerErr } = await supabase.from('adjustment_ledger').select('*');
+    const { data: ledgerData } = await supabase.from('adjustment_ledger').select('*');
 
-    if (!ledgerErr && ledgerData) {
+    if (ledgerData) {
       totalInterestEarned = ledgerData
         .filter((r: any) => r.transaction_type === 'interest')
         .reduce((sum: number, r: any) => sum + Number(r.interest_added || 0), 0);
