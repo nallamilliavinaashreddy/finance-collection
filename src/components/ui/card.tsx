@@ -5,9 +5,13 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200/80 dark:border-[#1F2C42] bg-white/95 dark:bg-[#0E1626] text-slate-900 dark:text-[#F8FAFC] shadow-lg card-3d card-3d-hover transition-all duration-250 ease-out transform-gpu',
+        'rounded-2xl border border-slate-200/80 dark:border-[#1F2C42] bg-white/95 dark:bg-[#0E1626] text-slate-900 dark:text-[#F8FAFC] shadow-lg card-3d card-3d-hover transition-all duration-250 ease-out transform-gpu preserve-3d',
         className
       )}
+      style={{
+        transformStyle: 'preserve-3d',
+        backfaceVisibility: 'hidden',
+      }}
       {...props}
     >
       {children}
