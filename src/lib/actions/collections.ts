@@ -5,6 +5,7 @@ import { getWeekDateRange, getMonthDateRange } from '@/lib/utils';
 import { decodeLoanType } from '@/lib/actions/loans';
 import { recordInvestmentTransaction } from '@/lib/actions/investment';
 import { recordInterestTransaction, deleteInterestTransactionByCollectionId } from '@/lib/actions/interest';
+import { recordAdjustmentPayment } from '@/lib/actions/adjustment-ledger';
 
 // 1. Get Collections from Supabase (Joined with loans & customers)
 export async function getCollections(
@@ -107,7 +108,6 @@ export async function getCollections(
     return { success: false, data: [], error: err?.message || 'Failed to fetch collections' };
   }
 }
-
 // 2. Create Collection in Supabase
 // Enforces Type-Specific Business Rules (Daily, Weekly, Monthly, Adjustment)
 export async function createCollection(formData: CollectionFormData): Promise<{ success: boolean; data?: Collection; error?: string }> {
@@ -117,7 +117,7 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
     // Step 1: Query selected loan
     const { data: loan, error: loanErr } = await supabase
       .from('loans')
-      .select('*')
+      .select('*, customers(id, customer_id, customer_name, mobile_number)')
       .eq('id', formData.loanId)
       .single();
 
@@ -133,6 +133,35 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
     }
 
     const loanType: LoanType = decodeLoanType(loan.working_days, loan.loan_type);
+
+    if (loanType === 'adjustment') {
+      const adjRes = await recordAdjustmentPayment(
+        formData.loanId,
+        formData.paymentDate,
+        formData.amountPaid,
+        formData.remarks
+      );
+      if (!adjRes.success) {
+        return { success: false, error: adjRes.error || 'Failed to record adjustment collection' };
+      }
+      const custInfo = loan.customers || {};
+      return {
+        success: true,
+        data: {
+          id: adjRes.data?.id || `adj-${Date.now()}`,
+          loanId: formData.loanId,
+          customerId: loan.customer_id || '',
+          customerCode: custInfo.customer_id || 'N/A',
+          customerName: custInfo.customer_name || 'Customer',
+          loanType: 'adjustment',
+          amountPaid: formData.amountPaid,
+          paymentDate: formData.paymentDate,
+          remarks: formData.remarks || undefined,
+          remainingBalanceAfterPayment: adjRes.data?.closingBalance || 0,
+          createdAt: new Date().toISOString(),
+        },
+      };
+    }
 
     // Step 2: Calculate post-payment remaining balance based on exact sum of valid collections
     const { data: existingColls } = await supabase
@@ -220,31 +249,8 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
       paymentDate: newCollData.payment_date,
       remarks: newCollData.remarks || undefined,
       remainingBalanceAfterPayment: newBalanceAfterPayment,
-      weekStartDate: weekStart,
       createdAt: newCollData.created_at,
     };
-
-    // If Adjustment loan, sync payment into adjustment_ledger table
-    if (loanType === 'adjustment') {
-      try {
-        const rawRate = Number(loan.monthly_interest_rate ?? loan.interest_rate ?? 6);
-        await supabase.from('adjustment_ledger').insert([
-          {
-            loan_id: formData.loanId,
-            transaction_date: formData.paymentDate,
-            transaction_type: 'payment',
-            opening_balance: Math.max(0, totalTarget - currentCollected),
-            interest_rate: rawRate,
-            interest_added: 0,
-            payment_received: formData.amountPaid,
-            closing_balance: newBalanceAfterPayment,
-            remarks: formData.remarks?.trim() || 'Adjustment Collection Received',
-          },
-        ]);
-      } catch (adjErr) {
-        console.warn('Notice inserting collection to adjustment_ledger:', adjErr);
-      }
-    }
 
     // Automatically record collection in Investment Khata
     try {

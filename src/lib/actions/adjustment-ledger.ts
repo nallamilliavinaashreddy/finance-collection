@@ -2,12 +2,24 @@ import { createClient } from '@/lib/supabase/client';
 import { AdjustmentLedgerItem } from '@/types';
 import { decodeLoanType, decodeInterestRate } from '@/lib/actions/loans';
 import { recordInvestmentTransaction } from '@/lib/actions/investment';
+import { recordInterestTransaction } from '@/lib/actions/interest';
 
 export interface AdjustmentMetricsData {
   totalAdjustmentLoans: number;
   totalAdjustmentBalance: number;
   totalInterestEarned: number;
   totalPaymentsReceived: number;
+}
+
+export interface AdjustmentLoanBalances {
+  originalPrincipal: number;
+  principalOutstanding: number;
+  accruedInterest: number;
+  totalPayable: number;
+  totalPrincipalPaid: number;
+  totalInterestPaid: number;
+  totalPaymentsReceived: number;
+  totalInterestAccrued: number;
 }
 
 /**
@@ -23,9 +35,58 @@ function addDaysToDateStr(dateStr: string, days: number): string {
 }
 
 /**
+ * Source of Truth Accounting Calculator for Adjustment Loans
+ */
+export async function getAdjustmentLoanBalances(
+  loanId: string,
+  supabaseClient?: any
+): Promise<AdjustmentLoanBalances> {
+  const supabase = supabaseClient || createClient();
+
+  const { data: loan } = await supabase
+    .from('loans')
+    .select('amount_given, total_collection')
+    .eq('id', loanId)
+    .single();
+
+  const originalPrincipal = Number(loan?.amount_given || loan?.total_collection || 0);
+
+  const { data: ledger } = await supabase
+    .from('adjustment_ledger')
+    .select('transaction_type, interest_added, payment_received')
+    .eq('loan_id', loanId);
+
+  let totalInterestAccrued = 0;
+  let totalPaymentsReceived = 0;
+
+  (ledger || []).forEach((row: any) => {
+    if (row.transaction_type === 'interest') {
+      totalInterestAccrued += Number(row.interest_added || 0);
+    } else if (row.transaction_type === 'payment') {
+      totalPaymentsReceived += Number(row.payment_received || 0);
+    }
+  });
+
+  const totalInterestPaid = Math.min(totalPaymentsReceived, totalInterestAccrued);
+  const totalPrincipalPaid = Math.max(0, totalPaymentsReceived - totalInterestPaid);
+  const accruedInterest = Math.max(0, totalInterestAccrued - totalInterestPaid);
+  const principalOutstanding = Math.max(0, originalPrincipal - totalPrincipalPaid);
+  const totalPayable = principalOutstanding + accruedInterest;
+
+  return {
+    originalPrincipal,
+    principalOutstanding,
+    accruedInterest,
+    totalPayable,
+    totalPrincipalPaid,
+    totalInterestPaid,
+    totalPaymentsReceived,
+    totalInterestAccrued,
+  };
+}
+
+/**
  * Auto Accrue Daily Interest on Current Outstanding Balance for Adjustment Loans
- * Runs automatically per day up to today's date
- * Catches up all missing days from loan start_date (or last interest date) to today
  * Formula: Daily Interest = (Principal * Monthly Rate / 100) / 30
  * Daily interest accrual MUST NOT increase Outstanding Principal Balance!
  */
@@ -51,31 +112,34 @@ export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promi
 
       const monthlyRate = decodeInterestRate(loan.working_days, loan.monthly_interest_rate || loan.interest_rate);
 
-      // Fetch all existing ledger records for this loan
+      // Fetch existing interest dates
       const { data: ledgerRows } = await supabase
         .from('adjustment_ledger')
-        .select('transaction_date, transaction_type, closing_balance')
+        .select('transaction_date, transaction_type')
         .eq('loan_id', loan.id)
         .order('transaction_date', { ascending: true });
 
       const existingInterestDates = new Set<string>();
-
       (ledgerRows || []).forEach((row: any) => {
         if (row.transaction_type === 'interest') {
           existingInterestDates.add(row.transaction_date);
         }
       });
 
-      const principal = Number(loan.amount_given || loan.total_collection || 0);
-      const collected = Number(loan.collected_amount || 0);
-      const principalBalance = Math.max(0, principal - collected);
+      const balances = await getAdjustmentLoanBalances(loan.id, supabase);
 
-      // Ensure loans table balance_amount in Supabase matches Outstanding Principal Balance
-      if (Number(loan.balance_amount) !== principalBalance) {
-        await supabase.from('loans').update({ balance_amount: principalBalance }).eq('id', loan.id);
+      // Sync loans table in Supabase so balance_amount matches Principal Outstanding
+      if (Number(loan.balance_amount) !== balances.principalOutstanding || Number(loan.collected_amount) !== balances.totalPrincipalPaid) {
+        await supabase
+          .from('loans')
+          .update({
+            balance_amount: balances.principalOutstanding,
+            collected_amount: balances.totalPrincipalPaid,
+          })
+          .eq('id', loan.id);
       }
 
-      const monthlyInterestAmt = principal * (monthlyRate / 100);
+      const monthlyInterestAmt = balances.originalPrincipal * (monthlyRate / 100);
       const dailyInterestAmt = Math.round((monthlyInterestAmt / 30) * 100) / 100;
 
       const startDateStr = loan.start_date || todayStr;
@@ -88,12 +152,12 @@ export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promi
               loan_id: loan.id,
               transaction_date: currDateStr,
               transaction_type: 'interest',
-              opening_balance: principalBalance,
+              opening_balance: balances.principalOutstanding,
               interest_rate: monthlyRate,
               interest_added: dailyInterestAmt,
               payment_received: 0,
-              closing_balance: principalBalance, // Daily interest does NOT increase principal balance!
-              remarks: `Simple Interest @ ₹${dailyInterestAmt}/day (₹${principal} × ${monthlyRate}% / 30)`,
+              closing_balance: balances.principalOutstanding, // Principal Outstanding is UNCHANGED by daily interest!
+              remarks: `Simple Interest @ ₹${dailyInterestAmt}/day (₹${balances.originalPrincipal} × ${monthlyRate}% / 30)`,
             };
 
             const { error: insErr } = await supabase.from('adjustment_ledger').insert([payload]);
@@ -119,7 +183,7 @@ export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promi
 
 /**
  * 1. Get chronological ledger history for a specific Adjustment Loan
- * Automatically triggers daily interest auto-accrual up to today before fetching
+ * Accurately tracks principal outstanding, accrued interest, and total payable per item
  */
 export async function getAdjustmentLedger(
   loanId: string
@@ -127,8 +191,8 @@ export async function getAdjustmentLedger(
   const supabase = createClient();
 
   try {
-    // Run auto accrual check first
     await autoAccrueAdjustmentInterest(loanId);
+
     const { data, error } = await supabase
       .from('adjustment_ledger')
       .select('*')
@@ -138,19 +202,13 @@ export async function getAdjustmentLedger(
 
     if (error) {
       if (error.code === 'PGRST205' || error.code === 'PGRST204' || error.message?.includes('schema cache')) {
-        console.warn('Notice: adjustment_ledger table missing in schema cache, returning empty ledger history.');
         return { success: true, data: [] };
       }
-      console.error('Supabase getAdjustmentLedger error:', error);
       return { success: false, data: [], error: error.message };
     }
 
-    const { data: loanData } = await supabase
-      .from('loans')
-      .select('amount_given, total_collection')
-      .eq('id', loanId)
-      .single();
-    const principal = Number(loanData?.amount_given || loanData?.total_collection || 0);
+    const balances = await getAdjustmentLoanBalances(loanId, supabase);
+    const principal = balances.originalPrincipal;
 
     let cumulativePayments = 0;
     const formatted: AdjustmentLedgerItem[] = (data || []).map((item: any) => {
@@ -163,8 +221,9 @@ export async function getAdjustmentLedger(
 
       if (type === 'disbursement') {
         opening = 0;
-        closing = principal || Number(item.closing_balance || 0);
+        closing = principal;
       } else if (type === 'interest') {
+        // Daily interest accrual leaves Principal Outstanding untouched!
         const currentPrincipalBal = Math.max(0, principal - cumulativePayments);
         opening = currentPrincipalBal;
         closing = currentPrincipalBal;
@@ -203,7 +262,6 @@ export async function getAdjustmentLedger(
 
 /**
  * 2. Calculate and Add Simple Daily Interest
- * Keeps loan principal balance unchanged in loans table and inserts entry into adjustment_ledger
  */
 export async function addDailyInterest(
   loanId: string,
@@ -224,36 +282,20 @@ export async function addDailyInterest(
       return { success: false, error: 'Target loan not found.' };
     }
 
-    const principal = Number(loan.amount_given || loan.total_collection || 0);
-    const collected = Number(loan.collected_amount || 0);
-    const principalBalance = Math.max(0, principal - collected);
-
+    const balances = await getAdjustmentLoanBalances(loanId, supabase);
     const monthlyRate = decodeInterestRate(loan.working_days, loan.monthly_interest_rate || loan.interest_rate);
 
     if (monthlyRate <= 0) {
       return { success: false, error: 'Invalid interest rate. Interest rate must be greater than 0%.' };
     }
 
-    // Simple Interest: Daily Interest is calculated on original Principal Amount
-    const monthlyInterestAmount = principal * (monthlyRate / 100);
+    const monthlyInterestAmount = balances.originalPrincipal * (monthlyRate / 100);
     const dailyRateAmount = Math.round((monthlyInterestAmount / 30) * 100) / 100;
     const dailyInterestAdded = Math.round((dailyRateAmount * daysCount) * 100) / 100;
 
-    const openingBalance = principalBalance;
-    const closingBalance = principalBalance; // Interest accrual does not increase principal balance!
+    const openingBalance = balances.principalOutstanding;
+    const closingBalance = balances.principalOutstanding;
 
-    // Keep loan balance_amount in loans table as principalBalance
-    const { error: updateErr } = await supabase
-      .from('loans')
-      .update({ balance_amount: principalBalance, is_closed: false })
-      .eq('id', loanId);
-
-    if (updateErr) {
-      console.error('Error updating loan balance for daily interest:', updateErr);
-      return { success: false, error: updateErr.message };
-    }
-
-    // SECONDARY INSERT: Insert into adjustment_ledger table
     const payload = {
       loan_id: loanId,
       transaction_date: interestDate,
@@ -277,13 +319,7 @@ export async function addDailyInterest(
       .select('*')
       .single();
 
-    if (insertErr) {
-      if (insertErr.code === 'PGRST205' || insertErr.code === 'PGRST204' || insertErr.message?.includes('schema cache')) {
-        console.warn('Notice: adjustment_ledger missing in schema cache. Loan balance updated successfully in Supabase.');
-      } else {
-        console.error('Error inserting daily interest into adjustment_ledger:', insertErr);
-      }
-    } else if (inserted) {
+    if (!insertErr && inserted) {
       insertedId = inserted.id;
       insertedCreatedAt = inserted.created_at;
     }
@@ -310,8 +346,7 @@ export async function addDailyInterest(
 }
 
 /**
- * 3. Record Payment for Adjustment Loan & Reduce Outstanding Principal Balance Immediately
- * Updates loans table balance in Supabase, inserts into adjustment_ledger and collections tables
+ * 3. Record Payment for Adjustment Loan & Allocate Payment to Accrued Interest then Outstanding Principal
  */
 export async function recordAdjustmentPayment(
   loanId: string,
@@ -332,31 +367,34 @@ export async function recordAdjustmentPayment(
       return { success: false, error: 'Target loan not found.' };
     }
 
-    const principal = Number(loan.amount_given || loan.total_collection || 0);
-    const currentCollected = Number(loan.collected_amount || 0);
-    const openingBalance = Math.max(0, principal - currentCollected);
-
     if (amountPaid <= 0) {
       return { success: false, error: 'Payment amount must be greater than ₹0.' };
     }
 
-    if (amountPaid > openingBalance) {
+    const prevBalances = await getAdjustmentLoanBalances(loanId, supabase);
+
+    if (amountPaid > prevBalances.totalPayable && prevBalances.totalPayable > 0) {
       return {
         success: false,
-        error: `Payment amount (${amountPaid}) cannot exceed current outstanding balance (${openingBalance}).`,
+        error: `Payment amount (${amountPaid}) cannot exceed total payable amount (${prevBalances.totalPayable}).`,
       };
     }
 
-    const newCollected = currentCollected + amountPaid;
-    const closingBalance = Math.max(0, principal - newCollected);
-    const isClosedNow = closingBalance <= 0;
+    // Payment Allocation: Satisfy Accrued Interest first, remainder reduces Principal
+    const interestPaidThisPayment = Math.min(amountPaid, prevBalances.accruedInterest);
+    const principalPaidThisPayment = amountPaid - interestPaidThisPayment;
 
-    // PRIMARY UPDATE: Update loan balance & status in loans table
+    const newTotalPrincipalPaid = prevBalances.totalPrincipalPaid + principalPaidThisPayment;
+    const newPrincipalOutstanding = Math.max(0, prevBalances.originalPrincipal - newTotalPrincipalPaid);
+    const newAccruedInterest = Math.max(0, prevBalances.accruedInterest - interestPaidThisPayment);
+    const isClosedNow = newPrincipalOutstanding <= 0 && newAccruedInterest <= 0;
+
+    // PRIMARY UPDATE: Update loan principal balance & status in loans table
     const { error: updateErr } = await supabase
       .from('loans')
       .update({
-        collected_amount: newCollected,
-        balance_amount: closingBalance,
+        collected_amount: newTotalPrincipalPaid,
+        balance_amount: newPrincipalOutstanding,
         is_closed: isClosedNow,
         status: isClosedNow ? 'closed' : 'active',
       })
@@ -368,18 +406,19 @@ export async function recordAdjustmentPayment(
     }
 
     const rawRate = Number(loan.monthly_interest_rate ?? loan.interest_rate ?? 0);
+    const splitRemark = remarks?.trim() || `Payment Received (Interest: ₹${interestPaidThisPayment}, Principal: ₹${principalPaidThisPayment})`;
 
     // SECONDARY INSERT: Insert payment record into adjustment_ledger table
     const payload = {
       loan_id: loanId,
       transaction_date: paymentDate,
       transaction_type: 'payment',
-      opening_balance: openingBalance,
+      opening_balance: prevBalances.principalOutstanding,
       interest_rate: rawRate,
       interest_added: 0,
       payment_received: amountPaid,
-      closing_balance: closingBalance,
-      remarks: remarks?.trim() || 'Adjustment Payment Received',
+      closing_balance: newPrincipalOutstanding,
+      remarks: splitRemark,
     };
 
     let insertedId = `adj-pay-${Date.now()}`;
@@ -391,30 +430,43 @@ export async function recordAdjustmentPayment(
       .select('*')
       .single();
 
-    if (insertErr) {
-      if (insertErr.code === 'PGRST205' || insertErr.code === 'PGRST204' || insertErr.message?.includes('schema cache')) {
-        console.warn('Notice: adjustment_ledger missing in schema cache. Loan payment updated successfully in Supabase.');
-      } else {
-        console.error('Error inserting payment into adjustment_ledger:', insertErr);
-      }
-    } else if (inserted) {
+    if (!insertErr && inserted) {
       insertedId = inserted.id;
       insertedCreatedAt = inserted.created_at;
     }
 
-    // ALSO insert into collections table so payment is consistent across Collections stream, Day Book, Reports, etc.
+    // Insert into collections table so payment is registered across Collections stream, Day Book, etc.
+    let collectionId = insertedId;
     try {
-      await supabase.from('collections').insert([
+      const { data: collData } = await supabase.from('collections').insert([
         {
           loan_id: loanId,
           amount_paid: amountPaid,
           payment_date: paymentDate,
-          remarks: remarks?.trim() || 'Adjustment Payment Received',
-          remaining_balance_after_payment: closingBalance,
+          remarks: splitRemark,
+          remaining_balance_after_payment: newPrincipalOutstanding,
         },
-      ]);
+      ]).select('id').single();
+      if (collData?.id) collectionId = collData.id;
     } catch (collErr) {
       console.warn('Collection insert notice from adjustment payment:', collErr);
+    }
+
+    // If interest was paid in this payment, record in Interest Module
+    if (interestPaidThisPayment > 0) {
+      try {
+        await recordInterestTransaction({
+          collectionId,
+          loanId,
+          customerId: loan.customer_id,
+          transactionDate: paymentDate,
+          interestType: 'adjustment',
+          interestAmount: interestPaidThisPayment,
+          remarks: `Adjustment Interest Paid: ${loan.customers?.customer_name || 'Customer'}`,
+        });
+      } catch (intErr) {
+        console.warn('Notice: Interest transaction record error:', intErr);
+      }
     }
 
     const custName = loan.customers?.customer_name || 'Customer';
@@ -438,11 +490,11 @@ export async function recordAdjustmentPayment(
       loanId,
       transactionDate: paymentDate,
       transactionType: 'payment',
-      openingBalance,
+      openingBalance: prevBalances.principalOutstanding,
       interestRate: rawRate,
       interestAdded: 0,
       paymentReceived: amountPaid,
-      closingBalance,
+      closingBalance: newPrincipalOutstanding,
       remarks: payload.remarks,
       createdAt: insertedCreatedAt,
     };
@@ -456,7 +508,6 @@ export async function recordAdjustmentPayment(
 
 /**
  * 4. Get Dashboard Metrics specifically for Adjustment Loans
- * Gracefully handles missing adjustment_ledger table
  */
 export async function getAdjustmentMetrics(): Promise<{
   success: boolean;
@@ -474,10 +525,14 @@ export async function getAdjustmentMetrics(): Promise<{
     );
 
     const totalAdjustmentLoans = adjLoans.length;
-    const totalAdjustmentBalance = adjLoans.reduce(
-      (sum: number, l: any) => sum + (l.is_closed ? 0 : Math.max(0, Number(l.amount_given || l.total_collection || 0) - Number(l.collected_amount || 0))),
-      0
-    );
+    let totalAdjustmentBalance = 0;
+
+    for (const l of adjLoans) {
+      if (!l.is_closed) {
+        const b = await getAdjustmentLoanBalances(l.id, supabase);
+        totalAdjustmentBalance += b.principalOutstanding;
+      }
+    }
 
     let totalInterestEarned = 0;
     let totalPaymentsReceived = 0;

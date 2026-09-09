@@ -97,6 +97,13 @@ export function AdjustmentLedgerModal({
   // Daily Interest = Monthly Interest Amount / 30
   const dailyInterestRateAmt = Math.round((monthlyInterestAmt / 30) * 100) / 100;
 
+  // Accrued interest and total payable calculated from ledger history
+  const totalInterestAccrued = ledger.filter((r) => r.transactionType === 'interest').reduce((s, r) => s + (r.interestAdded || 0), 0);
+  const totalPaymentsReceived = ledger.filter((r) => r.transactionType === 'payment').reduce((s, r) => s + (r.paymentReceived || 0), 0);
+  const totalInterestPaid = Math.min(totalPaymentsReceived, totalInterestAccrued);
+  const accruedInterest = Math.max(0, totalInterestAccrued - totalInterestPaid);
+  const totalPayable = currentBalance + accruedInterest;
+
   // Total Interest Added for selected days
   const calculatedInterestForDays = Math.round((dailyInterestRateAmt * (Number(daysCount) || 1)) * 100) / 100;
 
@@ -142,8 +149,8 @@ export function AdjustmentLedgerModal({
       return;
     }
 
-    if (paymentAmount > currentBalance) {
-      showToast(`Payment amount (${formatCurrency(paymentAmount)}) cannot exceed outstanding balance (${formatCurrency(currentBalance)})`, 'error');
+    if (paymentAmount > totalPayable) {
+      showToast(`Payment amount (${formatCurrency(paymentAmount)}) cannot exceed total payable (${formatCurrency(totalPayable)})`, 'error');
       return;
     }
 
@@ -250,45 +257,65 @@ export function AdjustmentLedgerModal({
       maxWidth="2xl"
     >
       <div className="space-y-6">
-        {/* SUMMARY HEADER DISCLOSING: Principal, Monthly Interest %, Daily Interest (₹/day), Outstanding Balance */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-gradient-to-br from-violet-950 via-slate-900 to-slate-950 border border-violet-800/60 text-white">
+        {/* SUMMARY HEADER DISCLOSING: Principal, Monthly Interest %, Daily Interest, Outstanding Principal, Accrued Interest, Total Payable */}
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 p-3.5 rounded-xl bg-gradient-to-br from-violet-950 via-slate-900 to-slate-950 border border-violet-800/60 text-white">
           {/* 1. Principal */}
           <div className="flex flex-col">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
               Principal
             </span>
-            <span className="text-lg font-bold text-white mt-1">
+            <span className="text-sm font-bold text-white mt-0.5">
               {formatCurrency(principalAmount)}
             </span>
           </div>
 
           {/* 2. Monthly Interest % */}
           <div className="flex flex-col">
-            <span className="text-[11px] font-medium text-violet-300 uppercase tracking-wider">
-              Monthly Interest %
+            <span className="text-[10px] font-medium text-violet-300 uppercase tracking-wider">
+              Monthly %
             </span>
-            <span className="text-lg font-extrabold text-violet-300 mt-1">
-              {monthlyRate}% / month
+            <span className="text-sm font-extrabold text-violet-300 mt-0.5">
+              {monthlyRate}% / mo
             </span>
           </div>
 
           {/* 3. Daily Interest (₹/day) */}
           <div className="flex flex-col">
-            <span className="text-[11px] font-medium text-emerald-300 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-emerald-300 uppercase tracking-wider">
               Daily Interest
             </span>
-            <span className="text-lg font-extrabold text-emerald-400 mt-1">
+            <span className="text-sm font-extrabold text-emerald-400 mt-0.5">
               {formatCurrency(dailyInterestRateAmt)} / day
             </span>
           </div>
 
-          {/* 4. Outstanding Balance */}
+          {/* 4. Principal Outstanding */}
           <div className="flex flex-col">
-            <span className="text-[11px] font-medium text-rose-300 uppercase tracking-wider">
-              Outstanding Balance
+            <span className="text-[10px] font-medium text-rose-300 uppercase tracking-wider">
+              Outstanding
             </span>
-            <span className="text-lg font-extrabold text-rose-400 mt-1">
+            <span className="text-sm font-extrabold text-rose-400 mt-0.5">
               {formatCurrency(currentBalance)}
+            </span>
+          </div>
+
+          {/* 5. Accrued Interest */}
+          <div className="flex flex-col">
+            <span className="text-[10px] font-medium text-amber-300 uppercase tracking-wider">
+              Accrued Interest
+            </span>
+            <span className="text-sm font-extrabold text-amber-400 mt-0.5">
+              {formatCurrency(accruedInterest)}
+            </span>
+          </div>
+
+          {/* 6. Total Payable */}
+          <div className="flex flex-col">
+            <span className="text-[10px] font-medium text-sky-300 uppercase tracking-wider">
+              Total Payable
+            </span>
+            <span className="text-sm font-extrabold text-sky-300 mt-0.5">
+              {formatCurrency(totalPayable)}
             </span>
           </div>
         </div>
