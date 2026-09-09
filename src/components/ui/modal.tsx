@@ -60,7 +60,7 @@ export function Modal({
       {/* Modal Dialog Container */}
       <div
         className={cn(
-          'relative w-full bg-white dark:bg-[#182237] rounded-3xl border border-slate-200 dark:border-[#26344D] p-6 z-10 animate-in zoom-in-95 duration-250 flex flex-col gap-4 text-slate-900 dark:text-[#F8FAFC] modal-3d-content',
+          'relative w-full bg-white dark:bg-[#0E1626] rounded-3xl border border-slate-200 dark:border-[#1F2C42] p-6 z-10 animate-in zoom-in-95 duration-250 flex flex-col gap-4 text-slate-900 dark:text-[#F8FAFC] modal-3d-content transform-gpu translate-z-[40px]',
           maxWidthClasses[maxWidth]
         )}
       >

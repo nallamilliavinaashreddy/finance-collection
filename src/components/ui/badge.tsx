@@ -23,7 +23,7 @@ export function Badge({ className, variant = 'default', children, ...props }: Ba
   return (
     <div
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-200 border-t border-t-white/10 shadow-xs',
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-200 border-t border-t-white/15 shadow-xs transform-gpu hover:-translate-y-0.5 hover:scale-105',
         variants[variant],
         className
       )}

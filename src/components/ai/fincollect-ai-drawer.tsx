@@ -218,27 +218,27 @@ export function FinCollectAIDrawer() {
       {/* FLOATING ACTION BUTTON (FAB) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full fab-3d-ai animate-float-slow text-white flex items-center gap-2.5 group ring-4 ring-[#8B5CF6]/30 cursor-pointer"
+        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full fab-3d-ai animate-float-slow text-white flex items-center gap-2.5 group ring-4 ring-[#8B5CF6]/40 cursor-pointer transform-gpu"
         title="Open FinCollect AI Copilot"
       >
         <div className="relative flex items-center justify-center">
-          <Bot className="w-5 h-5 text-white group-hover:rotate-12 transition-transform drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]" />
+          <Bot className="w-5.5 h-5.5 text-white group-hover:rotate-12 transition-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]" />
           <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#22C55E] border-2 border-white rounded-full animate-ping" />
         </div>
-        <span className="text-xs font-black tracking-wide uppercase font-sans drop-shadow-xs">
+        <span className="text-xs font-black tracking-wide uppercase font-sans drop-shadow-md">
           FinCollect AI
         </span>
-        <Sparkles className="w-3.5 h-3.5 text-[#E9D5FF] animate-pulse" />
+        <Sparkles className="w-4 h-4 text-[#E9D5FF] animate-pulse" />
       </button>
 
       {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-lg h-full bg-[#121A2B] text-[#F8FAFC] backdrop-blur-2xl border-l border-[#2A3652] shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200">
+          <div className="w-full max-w-lg h-full bg-[#0E1626]/95 text-[#F8FAFC] backdrop-blur-2xl border-l border-[#1F2C42] shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col justify-between animate-in slide-in-from-right duration-300 transform-gpu">
             {/* Header Bar */}
-            <div className="p-4 border-b border-[#2A3652] flex items-center justify-between bg-[#182237] shrink-0">
+            <div className="p-4 border-b border-[#1F2C42] flex items-center justify-between bg-[#141D2E] shrink-0 border-t border-t-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] flex items-center justify-center text-white shadow-md">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] flex items-center justify-center text-white shadow-lg border-t border-white/20">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col leading-tight">
@@ -256,14 +256,14 @@ export function FinCollectAIDrawer() {
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#2A3652]/50 transition-colors"
+                className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#1F2C42] transition-colors border border-transparent hover:border-[#1F2C42]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Page Context Banner */}
-            <div className="px-4 py-2 border-b border-[#2A3652] bg-[#182237]/60 flex items-center justify-between text-[11px] text-[#94A3B8] font-medium shrink-0">
+            <div className="px-4 py-2 border-b border-[#1F2C42] bg-[#141D2E]/60 flex items-center justify-between text-[11px] text-[#94A3B8] font-medium shrink-0">
               <div className="flex items-center gap-1.5">
                 <Compass className="w-3.5 h-3.5 text-[#C084FC]" />
                 <span>Currently analyzing: <strong className="text-[#F8FAFC] font-bold">{pageContextTitle}</strong></span>
@@ -272,12 +272,12 @@ export function FinCollectAIDrawer() {
             </div>
 
             {/* Quick Prompts Bar */}
-            <div className="p-3 border-b border-[#2A3652] bg-[#182237]/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
+            <div className="p-3 border-b border-[#1F2C42] bg-[#141D2E]/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
               {quickPrompts.map((qp) => (
                 <button
                   key={qp.label}
                   onClick={() => handleSendQuery(qp.query)}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#182237] hover:bg-[#8B5CF6]/20 border border-[#2A3652] hover:border-[#8B5CF6]/40 text-[10px] font-bold text-[#94A3B8] hover:text-[#C084FC] whitespace-nowrap transition-all shrink-0"
+                  className="px-2.5 py-1.5 rounded-xl bg-[#141D2E] hover:bg-[#8B5CF6]/20 border border-[#1F2C42] hover:border-[#8B5CF6]/50 text-[10px] font-bold text-[#94A3B8] hover:text-[#C084FC] whitespace-nowrap transition-all shrink-0 shadow-xs hover:-translate-y-0.5"
                 >
                   {qp.label}
                 </button>
@@ -294,10 +294,10 @@ export function FinCollectAIDrawer() {
                   }`}
                 >
                   <div
-                    className={`p-4 rounded-3xl text-xs leading-relaxed shadow-md ${
+                    className={`p-4 rounded-3xl text-xs leading-relaxed shadow-lg transform-gpu translate-z-[4px] ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-semibold rounded-tr-none'
-                        : 'bg-[#182237] border border-[#2A3652] text-[#F8FAFC] rounded-tl-none'
+                        ? 'bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-semibold rounded-tr-none border-t border-white/20'
+                        : 'bg-[#141D2E] border border-[#1F2C42] text-[#F8FAFC] rounded-tl-none shadow-[0_6px_16px_-4px_rgba(0,0,0,0.5)]'
                     }`}
                   >
                     {msg.sender === 'user' ? (
@@ -330,7 +330,7 @@ export function FinCollectAIDrawer() {
               ))}
 
               {isLoading && (
-                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-[#182237] border border-[#2A3652] text-xs text-[#94A3B8] shadow-md">
+                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-[#141D2E] border border-[#1F2C42] text-xs text-[#94A3B8] shadow-lg">
                   <RefreshCw className="w-4 h-4 animate-spin text-[#8B5CF6]" />
                   <span className="font-semibold text-[#F8FAFC]">🤖 FinCollect AI is analyzing your financial data...</span>
                 </div>
@@ -340,7 +340,7 @@ export function FinCollectAIDrawer() {
             </div>
 
             {/* Input Bar */}
-            <div className="p-3.5 border-t border-[#2A3652] bg-[#182237] shrink-0 flex flex-col gap-2">
+            <div className="p-3.5 border-t border-[#1F2C42] bg-[#141D2E] shrink-0 flex flex-col gap-2">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -359,13 +359,13 @@ export function FinCollectAIDrawer() {
                       handleSendQuery();
                     }
                   }}
-                  className="flex-1 p-3 text-xs rounded-2xl bg-[#121A2B] border border-[#2A3652] text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40 focus:border-[#8B5CF6] resize-none"
+                  className="flex-1 p-3 text-xs rounded-2xl bg-[#0A0F1A] border border-[#1F2C42] text-[#F8FAFC] placeholder:text-[#64748B] input-3d-recessed focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40 focus:border-[#8B5CF6] resize-none"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isLoading || !inputQuery.trim()}
-                  className="h-12 px-4 rounded-2xl bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-bold shrink-0"
+                  className="h-12 px-4 rounded-2xl bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-bold shrink-0 shadow-lg"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

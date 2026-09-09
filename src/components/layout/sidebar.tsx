@@ -122,16 +122,16 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group relative border-l-2',
+                'flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group relative border-l-2 transform-gpu',
                 isActive
-                  ? 'bg-gradient-to-r from-[#8B5CF6]/20 via-[#6366F1]/10 to-transparent border-[#8B5CF6] text-[#F8FAFC] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_4px_14px_rgba(139,92,246,0.25)] border-t border-t-white/10'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237]/80 hover:translate-x-0.5'
+                  ? 'bg-gradient-to-r from-[#8B5CF6]/25 via-[#6366F1]/15 to-transparent border-[#8B5CF6] text-[#F8FAFC] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_8px_20px_rgba(139,92,246,0.3)] border-t border-t-white/15 translate-z-[6px] -translate-y-0.5'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237] hover:translate-x-1 hover:border-l-[#8B5CF6]/50'
               )}
             >
               <Icon
                 className={cn(
-                  'w-5 h-5 shrink-0 transition-transform group-hover:scale-105',
-                  isActive ? 'text-[#8B5CF6] drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'
+                  'w-5 h-5 shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:translate-z-[8px]',
+                  isActive ? 'text-[#8B5CF6] drop-shadow-[0_0_10px_rgba(139,92,246,0.6)] scale-105' : 'text-[#94A3B8] group-hover:text-[#8B5CF6]'
                 )}
               />
               {!isCollapsed && (

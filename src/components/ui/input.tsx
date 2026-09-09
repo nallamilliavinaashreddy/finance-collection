@@ -35,12 +35,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={cn(
-              'w-full h-10 px-3.5 text-sm rounded-xl border bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6] disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-[#121A2B] placeholder:text-slate-400 dark:placeholder:text-[#64748B]',
+              'w-full h-10 px-3.5 text-sm rounded-xl border bg-white dark:bg-[#0A0F1A] text-slate-900 dark:text-[#F8FAFC] input-3d-recessed transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 focus:border-[#8B5CF6] disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-[#0E1626] placeholder:text-slate-400 dark:placeholder:text-[#64748B]',
               effectiveLeftIcon && 'pl-10',
               effectiveRightIcon && 'pr-10',
               error
                 ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20'
-                : 'border-slate-300 dark:border-[#26344D]',
+                : 'border-slate-300 dark:border-[#1F2C42]',
               className
             )}
             {...props}

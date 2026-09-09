@@ -17,7 +17,15 @@ export default function DashboardLayout({
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#080B14] text-slate-900 dark:text-[#F8FAFC] flex flex-col transition-colors relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#060913] text-slate-900 dark:text-[#F8FAFC] flex flex-col transition-colors relative overflow-x-hidden app-3d-root">
+      {/* Futuristic Ambient Lighting & Grid Layer */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] dark:opacity-80" />
+        <div className="absolute top-1/3 -right-40 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] dark:opacity-70" />
+        <div className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-indigo-600/10 rounded-full blur-[130px] dark:opacity-60" />
+        <div className="absolute inset-0 futuristic-grid-bg opacity-40 dark:opacity-60" />
+      </div>
+
       {/* Cinematic Falling Money Background Engine */}
       <MoneyRainBackground />
 
