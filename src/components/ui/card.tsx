@@ -20,7 +20,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
 
 export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6 pb-4 flex flex-col gap-1.5', className)} {...props}>
+    <div className={cn('p-6 pb-4 flex flex-col gap-1.5 transform-gpu translate-z-[10px]', className)} {...props}>
       {children}
     </div>
   );
@@ -28,7 +28,7 @@ export function CardHeader({ className, children, ...props }: React.HTMLAttribut
 
 export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('text-lg font-bold tracking-tight text-slate-900 dark:text-[#F8FAFC]', className)} {...props}>
+    <h3 className={cn('text-lg font-bold tracking-tight text-slate-900 dark:text-[#F8FAFC] transform-gpu translate-z-[12px]', className)} {...props}>
       {children}
     </h3>
   );
@@ -36,7 +36,7 @@ export function CardTitle({ className, children, ...props }: React.HTMLAttribute
 
 export function CardDescription({ className, children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn('text-xs text-slate-500 dark:text-[#94A3B8] font-normal leading-relaxed', className)} {...props}>
+    <p className={cn('text-xs text-slate-500 dark:text-[#94A3B8] font-normal leading-relaxed transform-gpu translate-z-[8px]', className)} {...props}>
       {children}
     </p>
   );
@@ -44,7 +44,7 @@ export function CardDescription({ className, children, ...props }: React.HTMLAtt
 
 export function CardContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6 pt-0', className)} {...props}>
+    <div className={cn('p-6 pt-0 transform-gpu translate-z-[15px]', className)} {...props}>
       {children}
     </div>
   );
