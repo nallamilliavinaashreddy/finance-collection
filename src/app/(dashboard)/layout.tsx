@@ -17,7 +17,7 @@ export default function DashboardLayout({
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#060913] text-slate-900 dark:text-[#F8FAFC] flex flex-col transition-colors relative overflow-x-hidden app-3d-root">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#09101F] text-slate-900 dark:text-[#F8FAFC] flex flex-col transition-colors relative overflow-x-hidden app-3d-root">
       {/* Futuristic Ambient Lighting & Grid Layer */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] dark:opacity-80" />

@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-slate-50 dark:bg-[#060913] text-slate-900 dark:text-white antialiased selection:bg-[#FF7A00] selection:text-white app-3d-root">
+      <body className="min-h-screen bg-slate-50 dark:bg-[#09101F] text-slate-900 dark:text-white antialiased selection:bg-[#FF7A00] selection:text-white app-3d-root">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

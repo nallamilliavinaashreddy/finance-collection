@@ -42,7 +42,7 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
   const pageTitle = t(pageTitleKey, pathSegment.charAt(0).toUpperCase() + pathSegment.slice(1));
 
   return (
-    <header className="h-18 border-b border-slate-200/80 dark:border-[#1F2C42] bg-white/90 dark:bg-[#0E1626]/85 backdrop-blur-2xl sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between transition-colors shadow-[0_10px_30px_-5px_rgba(0,0,0,0.6)] border-t border-t-white/10">
+    <header className="h-18 border-b border-slate-200/80 dark:border-[#1F2D4A] bg-white/90 dark:bg-[#0D172E]/90 backdrop-blur-2xl sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between transition-colors shadow-[0_10px_30px_-5px_rgba(0,0,0,0.6)] border-t border-t-white/10">
       {/* Left Section: Mobile Trigger & Page Title */}
       <div className="flex items-center gap-3">
         <button
