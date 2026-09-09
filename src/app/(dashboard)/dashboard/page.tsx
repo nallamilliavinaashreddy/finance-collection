@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { TiltCard } from '@/components/ui/tilt-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -330,86 +331,87 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Card 1: Total Investment */}
-          <Card className="p-5 rounded-3xl border-[#F97316]/30 bg-gradient-to-br from-[#F97316]/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <TiltCard glowColor="orange" className="p-5 border-[#F97316]/40 bg-gradient-to-br from-[#F97316]/15 via-[#121A2B] to-[#0D1220]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-[#F97316] uppercase tracking-wider">
                 {t('dashboard.totalInvestment', 'Total Investment')}
               </span>
-              <div className="w-9 h-9 rounded-2xl bg-[#F97316]/15 flex items-center justify-center text-[#F97316]">
+              <div className="w-9 h-9 rounded-2xl bg-[#F97316]/20 flex items-center justify-center text-[#F97316] shadow-md border border-[#F97316]/30">
                 <Wallet className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl font-black text-[#F97316] mt-3 font-mono truncate">
+            <div className="text-2xl font-black text-[#F97316] mt-3 font-mono truncate drop-shadow-[0_2px_8px_rgba(249,115,22,0.3)]">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.totalInvestment ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">{t('dashboard.investmentKhataBalance', 'Investment Khata balance')}</p>
-          </Card>
+            <p className="text-[11px] text-slate-400 mt-1 font-semibold">{t('dashboard.investmentKhataBalance', 'Investment Khata balance')}</p>
+          </TiltCard>
 
           {/* Card 2: Loan Interest */}
-          <Card className="p-5 rounded-3xl border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <TiltCard glowColor="emerald" className="p-5 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-[#121A2B] to-[#0D1220]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <span className="text-xs font-black text-emerald-400 uppercase tracking-wider">
                 Loan Interest
               </span>
-              <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-md border border-emerald-500/30">
                 <Coins className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-3 font-mono truncate">
+            <div className="text-2xl font-black text-emerald-400 mt-3 font-mono truncate drop-shadow-[0_2px_8px_rgba(34,197,94,0.3)]">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.loanInterest ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400 mt-1 font-semibold">Earned from active loans</p>
-          </Card>
+            <p className="text-[11px] text-emerald-400/80 mt-1 font-semibold">Earned from active loans</p>
+          </TiltCard>
 
           {/* Card 3: Investment Interest */}
-          <Card className="p-5 rounded-3xl border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <TiltCard glowColor="purple" className="p-5 border-amber-500/40 bg-gradient-to-br from-amber-500/15 via-[#121A2B] to-[#0D1220]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+              <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
                 Investment Interest
               </span>
-              <div className="w-9 h-9 rounded-2xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <div className="w-9 h-9 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 shadow-md border border-amber-500/30">
                 <Percent className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-3 font-mono truncate">
+            <div className="text-2xl font-black text-amber-400 mt-3 font-mono truncate drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.investmentInterest ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-amber-600/80 dark:text-amber-400 mt-1 font-semibold">Owner capital interest cost</p>
-          </Card>
+            <p className="text-[11px] text-amber-400/80 mt-1 font-semibold">Owner capital interest cost</p>
+          </TiltCard>
 
           {/* Card 4: Expenses */}
-          <Card className="p-5 rounded-3xl border-rose-500/30 bg-gradient-to-br from-rose-500/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <TiltCard glowColor="blue" className="p-5 border-rose-500/40 bg-gradient-to-br from-rose-500/15 via-[#121A2B] to-[#0D1220]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+              <span className="text-xs font-black text-rose-400 uppercase tracking-wider">
                 Expenses
               </span>
-              <div className="w-9 h-9 rounded-2xl bg-rose-500/15 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <div className="w-9 h-9 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400 shadow-md border border-rose-500/30">
                 <Receipt className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-3 font-mono truncate">
+            <div className="text-2xl font-black text-rose-400 mt-3 font-mono truncate drop-shadow-[0_2px_8px_rgba(239,68,68,0.3)]">
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.totalExpenses ?? 0} formatAsCurrency />}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">Operating expenses</p>
-          </Card>
+            <p className="text-[11px] text-slate-400 mt-1 font-semibold">Operating expenses</p>
+          </TiltCard>
 
           {/* Card 5: Net Profit / Loss */}
-          <Card
-            className={`p-5 rounded-3xl glass-card shadow-xl hover:-translate-y-1 transition-all duration-300 ${
+          <TiltCard
+            glowColor={(data?.profitLoss?.netProfit ?? 0) >= 0 ? 'emerald' : 'orange'}
+            className={`p-5 ${
               (data?.profitLoss?.netProfit ?? 0) >= 0
-                ? 'border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95'
-                : 'border-rose-500/40 bg-gradient-to-br from-rose-500/20 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95'
+                ? 'border-emerald-500/50 bg-gradient-to-br from-emerald-500/20 via-[#121A2B] to-[#0D1220]'
+                : 'border-rose-500/50 bg-gradient-to-br from-rose-500/20 via-[#121A2B] to-[#0D1220]'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-200">
                 Net Profit / Loss
               </span>
               <div
-                className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
+                className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-md border ${
                   (data?.profitLoss?.netProfit ?? 0) >= 0
-                    ? 'bg-emerald-500/20 text-emerald-500'
-                    : 'bg-rose-500/20 text-rose-500'
+                    ? 'bg-emerald-500/25 text-emerald-400 border-emerald-500/40'
+                    : 'bg-rose-500/25 text-rose-400 border-rose-500/40'
                 }`}
               >
                 <Scale className="w-5 h-5" />
@@ -418,8 +420,8 @@ export default function DashboardPage() {
             <div
               className={`text-2xl font-black mt-3 font-mono truncate ${
                 (data?.profitLoss?.netProfit ?? 0) >= 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-rose-600 dark:text-rose-400'
+                  ? 'text-emerald-400 drop-shadow-[0_2px_8px_rgba(34,197,94,0.4)]'
+                  : 'text-rose-400 drop-shadow-[0_2px_8px_rgba(239,68,68,0.4)]'
               }`}
             >
               {isLoading ? '...' : <AnimatedNumber value={data?.profitLoss?.netProfit ?? 0} formatAsCurrency />}
@@ -427,7 +429,7 @@ export default function DashboardPage() {
             <p className="text-[11px] font-extrabold opacity-90 mt-1 uppercase">
               {(data?.profitLoss?.netProfit ?? 0) >= 0 ? 'NET PROFIT' : 'NET LOSS'}
             </p>
-          </Card>
+          </TiltCard>
         </div>
       </div>
 
