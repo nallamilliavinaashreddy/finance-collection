@@ -14,7 +14,7 @@ export function TiltCard({
   children,
   className,
   glowColor = 'purple',
-  tiltMaxAngle = 8,
+  tiltMaxAngle = 4,
   ...props
 }: TiltCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);

@@ -79,7 +79,7 @@ export function DataTable<TData, TValue>({
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-slate-50 dark:hover:bg-[#182237] transition-colors"
+                    className="table-row-3d-hover group"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3.5 text-slate-800 dark:text-[#F8FAFC] whitespace-nowrap">
