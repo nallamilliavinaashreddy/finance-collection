@@ -42,7 +42,7 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
   const pageTitle = t(pageTitleKey, pathSegment.charAt(0).toUpperCase() + pathSegment.slice(1));
 
   return (
-    <header className="h-18 border-b border-slate-200/80 dark:border-[#1F2D4A] bg-white/90 dark:bg-[#0D172E]/90 backdrop-blur-2xl sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between transition-colors shadow-[0_10px_30px_-5px_rgba(0,0,0,0.6)] border-t border-t-white/10">
+    <header className="h-18 border-b border-slate-200/80 dark:border-[#26344D] bg-white/90 dark:bg-[#0D1220] backdrop-blur-2xl sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between transition-colors shadow-xs">
       {/* Left Section: Mobile Trigger & Page Title */}
       <div className="flex items-center gap-3">
         <button
@@ -54,7 +54,7 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
         </button>
 
         <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_#8B5CF6]" />
+          <div className="w-2 h-2 rounded-full bg-[#8B5CF6] shadow-sm" />
           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 dark:text-[#94A3B8] uppercase tracking-wider">
             <span>FinCollect</span>
             <span>/</span>
@@ -73,7 +73,7 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
           <input
             type="text"
             placeholder={t('nav.searchPlaceholder', 'Smart Search loans, customers...')}
-            className="w-64 h-9.5 pl-10 pr-9 text-xs font-medium rounded-xl border border-slate-200 dark:border-[#1F2C42] bg-slate-50/80 dark:bg-[#0A0F1A] text-slate-900 dark:text-[#F8FAFC] placeholder:text-slate-400 dark:placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40 focus:border-[#8B5CF6] transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
+            className="w-64 h-9.5 pl-10 pr-9 text-xs font-medium rounded-xl border border-slate-200 dark:border-[#26344D] bg-slate-50/80 dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] placeholder:text-slate-400 dark:placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/30 focus:border-[#8B5CF6] transition-all"
           />
           <kbd className="absolute right-3 text-[9px] font-mono font-bold text-slate-400 dark:text-[#94A3B8] bg-slate-200/60 dark:bg-[#182237] px-1.5 py-0.5 rounded-md pointer-events-none border border-[#26344D]">
             ⌘K

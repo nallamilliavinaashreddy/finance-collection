@@ -18,17 +18,17 @@
   }
 
   .dark {
-    --background: 220 54% 8%; /* #09101F Dark Premium Navy */
+    --background: 225 43% 5%; /* #080B14 */
     --foreground: 210 40% 98%; /* #F8FAFC */
-    --card: 221 44% 12%; /* #0D172E */
+    --card: 220 41% 12%; /* #121A2B */
     --card-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%; /* #2563EB Royal Blue */
+    --primary: 262.1 83.3% 57.8%; /* #8B5CF6 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 224.3 76.3% 48%; /* #1E3A8A Dark Indigo */
+    --secondary: 219 39% 15%; /* #182237 */
     --secondary-foreground: 210 40% 98%;
-    --muted: 224 35% 15%; /* #131F37 */
+    --muted: 219 39% 15%;
     --muted-foreground: 215 20.2% 65.1%; /* #94A3B8 */
-    --border: 218 41% 21%; /* #1F2D4A */
+    --border: 217 33% 23%; /* #26344D */
   }
 }
 
@@ -36,304 +36,51 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: var(--background);
   color: var(--foreground);
-  overflow-x: hidden;
-}
-
-/* ==========================================================
-   NEXT-GENERATION 3D FINTECH VISUAL UTILITIES & SYSTEM
-   ========================================================== */
-
-.app-3d-root {
-  perspective: 1200px;
-  transform-style: preserve-3d;
 }
 
 /* Glassmorphism Panel Utilities */
 .glass-panel {
   background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
 }
 
 .dark .glass-panel {
-  background-color: rgba(13, 23, 46, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid #1F2D4A;
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.85), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  background-color: rgba(18, 26, 43, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid #26344D;
+  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
 }
 
-/* 3D Elevated Cards */
-.card-3d {
-  background: linear-gradient(145deg, rgba(13, 23, 46, 0.95), rgba(9, 16, 31, 0.98));
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(31, 45, 74, 0.95);
-  border-bottom: 1px solid rgba(31, 45, 74, 0.95);
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75), 0 4px 12px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  transform: translateZ(15px);
-  transform-style: preserve-3d;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (hover: hover) {
-  .card-3d-hover:hover {
-    transform: translateY(-14px) translateZ(40px) scale(1.025);
-    box-shadow: 0 35px 70px -10px rgba(37, 99, 235, 0.4), 0 0 30px 0 rgba(59, 130, 246, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
-    border-top-color: rgba(59, 130, 246, 0.6);
-    border-left-color: rgba(99, 102, 241, 0.4);
-    animation: repulsor-float-bobbing 3s ease-in-out infinite;
-  }
+.dark .glass-card {
+  background-color: rgba(18, 26, 43, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #26344D;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 3D Recessed Input Fields */
-.input-3d-recessed {
-  background-color: rgba(10, 15, 26, 0.85);
-  border: 1px solid #1F2C42;
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.5), inset 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
 }
 
-.input-3d-recessed:focus {
-  border-color: #8B5CF6;
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4), 0 0 12px 0 rgba(139, 92, 246, 0.3);
-  transform: translateY(-1px);
-}
-
-/* 3D Tactile Buttons */
-.button-3d-primary {
-  background: linear-gradient(180deg, #A855F7 0%, #6366F1 50%, #4F8CFF 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
-  transform: translateZ(5px);
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, opacity 0.15s ease;
-}
-
-.button-3d-primary:hover {
-  transform: translateY(-3px) scale(1.03) translateZ(10px);
-  box-shadow: 0 14px 30px -4px rgba(99, 102, 241, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-
-.button-3d-primary:active {
-  transform: translateY(1px) scale(0.98);
-  box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.button-3d-action {
-  background: linear-gradient(180deg, #FF9436 0%, #FF7A00 50%, #E05C00 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 24px -4px rgba(255, 122, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
-}
-
-.button-3d-action:hover {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 14px 30px -4px rgba(255, 122, 0, 0.7);
-}
-
-.button-3d-action:active {
-  transform: translateY(1px) scale(0.98);
-}
-
-/* 3D Category Tab System */
-.tab-3d-base {
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-style: preserve-3d;
-}
-
-.tab-3d-active {
-  transform: translateY(-2px) translateZ(6px);
-  box-shadow: 0 6px 16px -3px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
-}
-
-.tab-3d-daily.tab-3d-active {
-  background: linear-gradient(180deg, #FF9436 0%, #FF7A00 100%);
-  box-shadow: 0 8px 20px -3px rgba(255, 122, 0, 0.5);
-}
-
-.tab-3d-weekly.tab-3d-active {
-  background: linear-gradient(180deg, #A855F7 0%, #8B5CF6 100%);
-  box-shadow: 0 8px 20px -3px rgba(139, 92, 246, 0.5);
-}
-
-.tab-3d-monthly.tab-3d-active {
-  background: linear-gradient(180deg, #60A5FA 0%, #3B82F6 100%);
-  box-shadow: 0 8px 20px -3px rgba(59, 130, 246, 0.5);
-}
-
-.tab-3d-adjustment.tab-3d-active {
-  background: linear-gradient(180deg, #2DD4BF 0%, #14B8A6 100%);
-  box-shadow: 0 8px 20px -3px rgba(20, 184, 166, 0.5);
-}
-
-/* 3D Modal Backdrop & Dialog */
-.modal-3d-content {
-  background: linear-gradient(160deg, rgba(20, 29, 46, 0.98), rgba(10, 15, 25, 0.99));
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(31, 44, 66, 0.95);
-  border-bottom: 1px solid rgba(31, 44, 66, 0.95);
-  box-shadow: 0 35px 80px -20px rgba(0, 0, 0, 0.95), 0 0 45px 0 rgba(139, 92, 246, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-  transform-style: preserve-3d;
-}
-
-/* Floating AI 3D Orb Button */
-@keyframes float-slow {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(2deg);
-  }
-}
-
-.animate-float-slow {
-  animation: float-slow 4s ease-in-out infinite;
-}
-
-/* ==========================================================
-   FUTURISTIC IRON-MAN REPULSOR LEVITATION ENGINE
-   ========================================================== */
-
-@keyframes repulsor-float-bobbing {
-  0%, 100% {
-    transform: translateY(-26px) translateZ(70px) scale(1.045);
-  }
-  50% {
-    transform: translateY(-32px) translateZ(76px) scale(1.05);
-  }
-}
-
-@keyframes repulsor-halo-pulse {
-  0%, 100% {
-    transform: scale(0.95);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.95;
-  }
-}
-
-@keyframes light-sweep {
-  0% {
-    transform: translateX(-100%) rotate(25deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.7;
-  }
-  80% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translateX(200%) rotate(25deg);
-    opacity: 0;
-  }
-}
-
-.animate-repulsor-levitation {
-  animation: repulsor-float-bobbing 2.8s ease-in-out infinite;
-}
-
-.animate-repulsor-halo {
-  animation: repulsor-halo-pulse 2.2s ease-in-out infinite;
-}
-
-.animate-light-sweep {
-  animation: light-sweep 1.2s ease-in-out infinite;
-}
-
-.shadow-repulsor-purple {
-  box-shadow: 0 50px 85px -10px rgba(139, 92, 246, 0.55), 0 0 45px 0 rgba(192, 132, 252, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-}
-
-.shadow-repulsor-blue {
-  box-shadow: 0 50px 85px -10px rgba(59, 130, 246, 0.55), 0 0 45px 0 rgba(96, 165, 250, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-}
-
-.shadow-repulsor-orange {
-  box-shadow: 0 50px 85px -10px rgba(249, 115, 22, 0.55), 0 0 45px 0 rgba(251, 146, 60, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-}
-
-.shadow-repulsor-emerald {
-  box-shadow: 0 50px 85px -10px rgba(34, 197, 94, 0.55), 0 0 45px 0 rgba(74, 222, 128, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-}
-
-.shadow-repulsor-teal {
-  box-shadow: 0 50px 85px -10px rgba(20, 184, 166, 0.55), 0 0 45px 0 rgba(45, 212, 191, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-}
-
-/* 3D Holographic Chart Grid & HUD Utilities */
-.holographic-grid-surface {
-  background-image: 
-    linear-gradient(to right, rgba(139, 92, 246, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(59, 130, 246, 0.08) 1px, transparent 1px);
-  background-size: 32px 32px;
-  transform: perspective(800px) rotateX(12deg);
-}
-
-.chart-neon-glow-emerald {
-  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.75));
-}
-
-.chart-neon-glow-red {
-  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.75));
-}
-
-.chart-neon-glow-purple {
-  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.75));
-}
-
-.fab-3d-ai {
-  background: linear-gradient(135deg, #C052B8 0%, #8B5CF6 50%, #5B8DEF 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 0 14px 35px -5px rgba(139, 92, 246, 0.65), 0 0 25px 0 rgba(192, 84, 251, 0.4), inset 0 2px 0 0 rgba(255, 255, 255, 0.35);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.fab-3d-ai:hover {
-  transform: translateY(-6px) scale(1.08) translateZ(15px);
-  box-shadow: 0 22px 48px -5px rgba(139, 92, 246, 0.85), 0 0 35px 0 rgba(192, 84, 251, 0.6), inset 0 2px 0 0 rgba(255, 255, 255, 0.45);
-}
-
-.fab-3d-ai:active {
-  transform: translateY(0px) scale(0.97);
-  box-shadow: 0 6px 15px -3px rgba(139, 92, 246, 0.5);
-}
-
-/* 3D Table Row Hover Effects */
-.table-row-3d-hover {
-  position: relative;
-  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-left-color 0.2s ease;
-  border-left: 3px solid transparent;
-}
-
-@media (hover: hover) {
-  .table-row-3d-hover:hover {
-    background-color: rgba(241, 245, 249, 0.85);
-    border-left-color: #8B5CF6;
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.06);
-    transform: translateX(4px) translateZ(4px);
-  }
-
-  .dark .table-row-3d-hover:hover {
-    background-color: rgba(20, 29, 46, 0.85);
-    border-left-color: #8B5CF6;
-    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.5);
-    transform: translateX(4px) translateZ(4px);
-  }
-}
-
-/* Futuristic Ambient Grid Overlay Background */
-.futuristic-grid-bg {
-  background-image: 
-    linear-gradient(to right, rgba(139, 92, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+.dark .glass-card:hover {
+  border-color: #384C70;
+  box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.15);
 }
 
 /* Custom Scrollbars */
@@ -352,20 +99,9 @@ body {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(31, 44, 66, 0.8);
+  background: rgba(38, 52, 77, 0.8);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(139, 92, 246, 0.6);
-}
-
-/* Accessibility: prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-    transform: none !important;
-  }
 }

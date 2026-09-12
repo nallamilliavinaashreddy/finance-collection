@@ -51,30 +51,30 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Overlay */}
+      {/* Overlay - rgba(0,0,0,0.65) */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-250"
+        className="fixed inset-0 bg-black/65 backdrop-blur-sm transition-opacity animate-in fade-in"
         onClick={onClose}
       />
 
-      {/* Modal Dialog Container */}
+      {/* Modal Dialog Container - #182237 */}
       <div
         className={cn(
-          'relative w-full bg-white dark:bg-[#0E1626] rounded-3xl border border-slate-200 dark:border-[#1F2C42] p-6 z-10 animate-in zoom-in-95 duration-250 flex flex-col gap-4 text-slate-900 dark:text-[#F8FAFC] modal-3d-content transform-gpu translate-z-[40px]',
+          'relative w-full bg-white dark:bg-[#182237] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#26344D] p-6 z-10 animate-in zoom-in-95 duration-200 flex flex-col gap-4 text-slate-900 dark:text-[#F8FAFC]',
           maxWidthClasses[maxWidth]
         )}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-1.5 rounded-xl text-slate-400 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#2A3652] transition-colors border border-transparent hover:border-slate-700/50"
+          className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {(title || description) && (
           <div className="flex flex-col gap-1 pr-6 border-b border-slate-200 dark:border-[#26344D] pb-3">
-            {title && <h3 className="text-lg font-bold text-slate-900 dark:text-[#F8FAFC]">{title}</h3>}
+            {title && <h3 className="text-lg font-semibold text-slate-900 dark:text-[#F8FAFC]">{title}</h3>}
             {description && <p className="text-xs text-slate-500 dark:text-[#94A3B8]">{description}</p>}
           </div>
         )}

@@ -469,50 +469,50 @@ export default function LoansPage() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-t border-[#26344D]/50 pt-3">
             <button
               onClick={() => setTypeFilter('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold tab-3d-base ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'all'
-                  ? 'bg-gradient-to-r from-[#A855F7] via-[#6366F1] to-[#4F8CFF] text-[#F8FAFC] shadow-[0_8px_20px_-4px_rgba(99,102,241,0.6)] translate-z-[6px] -translate-y-0.5'
-                  : 'bg-[#141D2E] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#1F2C42]'
+                  ? 'bg-gradient-to-r from-[#A855F7] via-[#6366F1] to-[#4F8CFF] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#26344D]'
               }`}
             >
               All Loans ({loans.length})
             </button>
             <button
               onClick={() => setTypeFilter('daily')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold tab-3d-base tab-3d-daily ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'daily'
-                  ? 'tab-3d-active text-[#F8FAFC]'
-                  : 'bg-[#141D2E] text-[#94A3B8] hover:text-[#F97316] border border-[#1F2C42]'
+                  ? 'bg-[#F97316] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#F97316] border border-[#26344D]'
               }`}
             >
               Daily Loans ({loans.filter(l => (l.loanType || 'daily') === 'daily').length})
             </button>
             <button
               onClick={() => setTypeFilter('weekly')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold tab-3d-base tab-3d-weekly ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'weekly'
-                  ? 'tab-3d-active text-[#F8FAFC]'
-                  : 'bg-[#141D2E] text-[#94A3B8] hover:text-[#8B5CF6] border border-[#1F2C42]'
+                  ? 'bg-[#8B5CF6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#8B5CF6] border border-[#26344D]'
               }`}
             >
               Weekly Loans ({loans.filter(l => l.loanType === 'weekly').length})
             </button>
             <button
               onClick={() => setTypeFilter('monthly')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold tab-3d-base tab-3d-monthly ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'monthly'
-                  ? 'tab-3d-active text-[#F8FAFC]'
-                  : 'bg-[#141D2E] text-[#94A3B8] hover:text-[#3B82F6] border border-[#1F2C42]'
+                  ? 'bg-[#3B82F6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#3B82F6] border border-[#26344D]'
               }`}
             >
               Monthly Loans ({loans.filter(l => l.loanType === 'monthly').length})
             </button>
             <button
               onClick={() => setTypeFilter('adjustment')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold tab-3d-base tab-3d-adjustment ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 typeFilter === 'adjustment'
-                  ? 'tab-3d-active text-[#F8FAFC]'
-                  : 'bg-[#141D2E] text-[#94A3B8] hover:text-[#14B8A6] border border-[#1F2C42]'
+                  ? 'bg-[#14B8A6] text-[#F8FAFC] shadow-sm'
+                  : 'bg-[#182237] text-[#94A3B8] hover:text-[#14B8A6] border border-[#26344D]'
               }`}
             >
               Adjustment Loans ({loans.filter(l => l.loanType === 'adjustment').length})

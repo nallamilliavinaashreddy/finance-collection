@@ -5,12 +5,9 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200/80 dark:border-[#1F2C42] bg-white/95 dark:bg-[#0E1626] text-slate-900 dark:text-[#F8FAFC] shadow-lg card-3d card-3d-hover transition-all duration-250 ease-out transform-gpu preserve-3d',
+        'rounded-2xl border border-slate-200/80 dark:border-[#26344D] bg-white/95 dark:bg-[#121A2B] text-slate-900 dark:text-[#F8FAFC] shadow-sm transition-all duration-200 ease-out hover:border-slate-300 dark:hover:border-[#384C70]',
         className
       )}
-      style={{
-        transformStyle: 'preserve-3d',
-      }}
       {...props}
     >
       {children}
@@ -20,7 +17,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
 
 export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6 pb-4 flex flex-col gap-1.5 transform-gpu translate-z-[10px]', className)} {...props}>
+    <div className={cn('p-6 pb-4 flex flex-col gap-1.5', className)} {...props}>
       {children}
     </div>
   );
@@ -28,7 +25,7 @@ export function CardHeader({ className, children, ...props }: React.HTMLAttribut
 
 export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('text-lg font-bold tracking-tight text-slate-900 dark:text-[#F8FAFC] transform-gpu translate-z-[12px]', className)} {...props}>
+    <h3 className={cn('text-lg font-semibold tracking-tight text-slate-900 dark:text-[#F8FAFC]', className)} {...props}>
       {children}
     </h3>
   );
@@ -36,7 +33,7 @@ export function CardTitle({ className, children, ...props }: React.HTMLAttribute
 
 export function CardDescription({ className, children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn('text-xs text-slate-500 dark:text-[#94A3B8] font-normal leading-relaxed transform-gpu translate-z-[8px]', className)} {...props}>
+    <p className={cn('text-xs text-slate-500 dark:text-[#94A3B8] font-normal leading-relaxed', className)} {...props}>
       {children}
     </p>
   );
@@ -44,7 +41,7 @@ export function CardDescription({ className, children, ...props }: React.HTMLAtt
 
 export function CardContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6 pt-0 transform-gpu translate-z-[15px]', className)} {...props}>
+    <div className={cn('p-6 pt-0', className)} {...props}>
       {children}
     </div>
   );
