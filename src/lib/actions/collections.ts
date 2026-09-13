@@ -183,7 +183,6 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
         collected_amount: newCollected,
         balance_amount: newBalanceAfterPayment,
         is_closed: isClosedNow,
-        status: isClosedNow ? 'closed' : 'active',
       })
       .eq('id', formData.loanId);
 
@@ -335,7 +334,6 @@ export async function deleteCollection(id: string): Promise<{ success: boolean; 
           collected_amount: newCollected,
           balance_amount: newBalance,
           is_closed: isClosedNow,
-          status: isClosedNow ? 'closed' : 'active',
         })
         .eq('id', coll.loan_id);
     }

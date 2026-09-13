@@ -396,7 +396,6 @@ export async function recordAdjustmentPayment(
         collected_amount: newTotalPrincipalPaid,
         balance_amount: newPrincipalOutstanding,
         is_closed: isClosedNow,
-        status: isClosedNow ? 'closed' : 'active',
       })
       .eq('id', loanId);
 
