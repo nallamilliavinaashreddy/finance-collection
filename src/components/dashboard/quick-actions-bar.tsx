@@ -47,7 +47,7 @@ export function QuickActionsBar() {
   ];
 
   return (
-    <Card className="p-4 glass-panel shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <Card className="p-4 glass-card-glossy shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wider">
         <Zap className="w-4 h-4 text-[#FF7A00]" />
         <span>Quick Financial Actions:</span>

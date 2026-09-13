@@ -124,8 +124,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group relative border-l-2',
                 isActive
-                  ? 'bg-[#8B5CF6]/12 border-[#8B5CF6] text-[#F8FAFC]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237]'
+                  ? 'bg-gradient-to-r from-[#6366F1]/25 via-[#4F46E5]/15 to-transparent border-[#6366F1] text-[#F8FAFC] shadow-[0_4px_20px_rgba(99,102,241,0.25)] glass-card-glossy'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#182237] hover:translate-x-0.5'
               )}
             >
               <Icon

@@ -66,7 +66,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Bento Box 1: Total Customers (Wide Span) */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-white/90 to-white dark:from-indigo-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-indigo-200/80 dark:border-indigo-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-5 rounded-3xl border border-indigo-200/80 dark:border-indigo-900/50 accent-light-indigo glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               Total Customers
@@ -86,7 +86,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 2: Active Loans */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-white/90 to-white dark:from-emerald-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-5 rounded-3xl border border-emerald-200/80 dark:border-emerald-900/50 accent-light-emerald glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               Active Loans
@@ -106,7 +106,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 3: Active Investment */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-[#F97316]/10 via-white/90 to-white dark:from-[#F97316]/20 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-[#F97316]/30 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-5 rounded-3xl border border-[#F97316]/30 accent-light-gold glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-[#F97316] uppercase tracking-wider">
               Active Investment
@@ -126,7 +126,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 4: Portfolio Interest */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white/90 to-white dark:from-amber-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-amber-200/80 dark:border-amber-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-5 rounded-3xl border border-amber-200/80 dark:border-amber-900/50 accent-light-gold glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
               Portfolio Interest
@@ -146,7 +146,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 5: Remaining Balance */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-rose-500/10 via-white/90 to-white dark:from-rose-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-rose-200/80 dark:border-rose-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-5 rounded-3xl border border-rose-200/80 dark:border-rose-900/50 accent-light-red glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">
               Remaining Balance

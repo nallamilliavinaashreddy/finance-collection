@@ -5,12 +5,12 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200/80 dark:border-[#26344D] bg-white/95 dark:bg-[#121A2B] text-slate-900 dark:text-[#F8FAFC] shadow-sm transition-all duration-200 ease-out hover:border-slate-300 dark:hover:border-[#384C70]',
+        'rounded-2xl border border-slate-200/80 dark:border-[#26344D] bg-white/95 dark:bg-[#121A2B] text-slate-900 dark:text-[#F8FAFC] shadow-sm glass-card-glossy transition-all duration-300 ease-out transform-gpu',
         className
       )}
       {...props}
     >
-      {children}
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

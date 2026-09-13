@@ -88,7 +88,7 @@ export function CashFlowChart({
   const netCashFlowInPeriod = totalIncomeInPeriod - totalExpensesInPeriod;
 
   return (
-    <Card className="p-6 glass-panel shadow-xl flex flex-col gap-6">
+    <Card className="p-6 glass-card-glossy accent-light-indigo shadow-xl flex flex-col gap-6">
       {/* Header & Filter Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-[#262626]/80 pb-4">
         <div className="flex items-center gap-2.5">

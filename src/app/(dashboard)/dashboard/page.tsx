@@ -326,7 +326,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Card 1: Total Investment */}
-          <Card className="p-5 rounded-3xl border-[#F97316]/30 bg-gradient-to-br from-[#F97316]/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <Card className="p-5 rounded-3xl border-[#F97316]/30 accent-light-gold glass-card-glossy shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-[#F97316] uppercase tracking-wider">
                 {t('dashboard.totalInvestment', 'Total Investment')}
@@ -342,7 +342,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 2: Loan Interest */}
-          <Card className="p-5 rounded-3xl border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <Card className="p-5 rounded-3xl border-emerald-500/30 accent-light-emerald glass-card-glossy shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                 Loan Interest
@@ -358,7 +358,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 3: Investment Interest */}
-          <Card className="p-5 rounded-3xl border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <Card className="p-5 rounded-3xl border-amber-500/30 accent-light-gold glass-card-glossy shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                 Investment Interest
@@ -374,7 +374,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 4: Expenses */}
-          <Card className="p-5 rounded-3xl border-rose-500/30 bg-gradient-to-br from-rose-500/10 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 glass-card shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <Card className="p-5 rounded-3xl border-rose-500/30 accent-light-red glass-card-glossy shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">
                 Expenses
@@ -391,10 +391,10 @@ export default function DashboardPage() {
 
           {/* Card 5: Net Profit / Loss */}
           <Card
-            className={`p-5 rounded-3xl glass-card shadow-xl hover:-translate-y-1 transition-all duration-300 ${
+            className={`p-5 rounded-3xl glass-card-glossy shadow-xl transition-all duration-300 ${
               (data?.profitLoss?.netProfit ?? 0) >= 0
-                ? 'border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95'
-                : 'border-rose-500/40 bg-gradient-to-br from-rose-500/20 via-white/90 to-white dark:via-[#0F172A]/90 dark:to-[#0F172A]/95'
+                ? 'border-emerald-500/40 accent-light-emerald'
+                : 'border-rose-500/40 accent-light-red'
             }`}
           >
             <div className="flex items-center justify-between">
