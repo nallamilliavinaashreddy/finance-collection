@@ -437,16 +437,20 @@ export async function recordAdjustmentPayment(
     // Insert into collections table so payment is registered across Collections stream, Day Book, etc.
     let collectionId = insertedId;
     try {
-      const { data: collData } = await supabase.from('collections').insert([
+      const { data: collData, error: collErr } = await supabase.from('collections').insert([
         {
           loan_id: loanId,
           amount_paid: amountPaid,
           payment_date: paymentDate,
           remarks: splitRemark,
-          remaining_balance_after_payment: newPrincipalOutstanding,
         },
       ]).select('id').single();
-      if (collData?.id) collectionId = collData.id;
+
+      if (collErr) {
+        console.error('Collection insert error from adjustment payment:', collErr);
+      } else if (collData?.id) {
+        collectionId = collData.id;
+      }
     } catch (collErr) {
       console.warn('Collection insert notice from adjustment payment:', collErr);
     }

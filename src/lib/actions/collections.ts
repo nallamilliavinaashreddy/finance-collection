@@ -190,45 +190,22 @@ export async function createCollection(formData: CollectionFormData): Promise<{ 
       console.error('Supabase update loan balance error:', loanUpdateErr);
     }
 
-    // Step 5: Save collection payload
-    const { weekStart } = getWeekDateRange(formData.paymentDate);
-
-    const payloadWithBal = {
+    // Step 5: Save clean collection payload matching exact Supabase schema
+    const cleanPayload = {
       loan_id: formData.loanId,
       amount_paid: formData.amountPaid,
       payment_date: formData.paymentDate,
       remarks: formData.remarks?.trim() || null,
-      remaining_balance_after_payment: newBalanceAfterPayment,
-      week_start_date: weekStart,
     };
-
-    let newCollData: any = null;
-    let insertErr: any = null;
 
     const res = await supabase
       .from('collections')
-      .insert([payloadWithBal])
+      .insert([cleanPayload])
       .select('*, loans(*, customers(id, customer_id, customer_name, mobile_number)))')
       .single();
 
-    newCollData = res.data;
-    insertErr = res.error;
-
-    if (insertErr && (insertErr.code === '42703' || insertErr.message?.includes('schema cache'))) {
-      const fallbackPayload = {
-        loan_id: formData.loanId,
-        amount_paid: formData.amountPaid,
-        payment_date: formData.paymentDate,
-        remarks: formData.remarks?.trim() || null,
-      };
-      const retry = await supabase
-        .from('collections')
-        .insert([fallbackPayload])
-        .select('*, loans(*, customers(id, customer_id, customer_name, mobile_number)))')
-        .single();
-      newCollData = retry.data;
-      insertErr = retry.error;
-    }
+    const newCollData = res.data;
+    const insertErr = res.error;
 
     if (insertErr || !newCollData) {
       console.error('Supabase insert collection error:', insertErr);

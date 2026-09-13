@@ -94,7 +94,7 @@ export async function getLoans(
 
       const endDateDate = item.end_date ? new Date(item.end_date) : null;
       const isPastDue = endDateDate ? new Date() > endDateDate : false;
-      const inferredStatus: LoanStatus = isClosedVal ? 'closed' : (item.status ? (item.status as LoanStatus) : (isPastDue ? 'closed' : 'active'));
+      const inferredStatus: LoanStatus = isClosedVal || balance <= 0 ? 'closed' : 'active';
 
       const lType: LoanType = decodeLoanType(item.working_days, item.loan_type);
       const totalWks = decodeTotalWeeks(item.working_days, item.total_weeks);

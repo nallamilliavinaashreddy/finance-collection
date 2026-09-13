@@ -75,10 +75,11 @@ export function CollectionModal({
   // Helper to calculate default collection target based on loan type
   const getTargetAmountForLoan = (loan: Loan): number => {
     const type = loan.loanType || 'daily';
-    if (type === 'daily') return Math.round(loan.dailyAmount || (loan.totalCollectionAmount / (loan.workingDays || 100)));
-    if (type === 'weekly') return Math.round(loan.weeklyAmount || (loan.totalCollectionAmount / (loan.totalWeeks || 10)));
-    if (type === 'monthly') return Math.round(loan.monthlyAmount || (loan.totalCollectionAmount / (loan.totalMonths || 6)));
-    return Math.round(loan.balanceAmount || loan.totalCollectionAmount);
+    let target = Math.round(loan.balanceAmount || loan.totalCollectionAmount);
+    if (type === 'daily') target = Math.round(loan.dailyAmount || (loan.totalCollectionAmount / (loan.workingDays || 100)));
+    else if (type === 'weekly') target = Math.round(loan.weeklyAmount || (loan.totalCollectionAmount / (loan.totalWeeks || 10)));
+    else if (type === 'monthly') target = Math.round(loan.monthlyAmount || (loan.totalCollectionAmount / (loan.totalMonths || 6)));
+    return Math.min(target, loan.balanceAmount);
   };
 
   // Load Customers and Active Loans from Supabase when Modal Opens
@@ -92,7 +93,7 @@ export function CollectionModal({
           setCustomers(custRes.data);
         }
         if (loansRes.success && loansRes.data) {
-          const activeOnly = loansRes.data.filter((l) => !l.isClosed && l.status === 'active');
+          const activeOnly = loansRes.data.filter((l) => !l.isClosed && l.balanceAmount > 0);
           setAllActiveLoans(activeOnly);
         }
         setFetchingData(false);
@@ -153,7 +154,14 @@ export function CollectionModal({
     return getWeekDateRange(watchPaymentDate);
   }, [watchPaymentDate]);
 
+  const [amountError, setAmountError] = useState<string | null>(null);
+
   const handleFormSubmit = async (data: CollectionFormData) => {
+    if (selectedLoanObj && data.amountPaid > selectedLoanObj.balanceAmount) {
+      setAmountError(`Collection amount cannot exceed remaining balance of ${formatCurrency(selectedLoanObj.balanceAmount)}.`);
+      return;
+    }
+    setAmountError(null);
     await onSubmit(data);
   };
 
@@ -284,7 +292,7 @@ export function CollectionModal({
             step="1"
             placeholder="120"
             leftIcon={<IndianRupee className="w-4 h-4 text-slate-400" />}
-            error={errors.amountPaid?.message}
+            error={amountError || errors.amountPaid?.message}
             {...register('amountPaid', { valueAsNumber: true })}
           />
         </div>
