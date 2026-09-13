@@ -7,23 +7,23 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Badge({ className, variant = 'default', children, ...props }: BadgeProps) {
   const variants = {
-    default: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/20',
-    success: 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/20',
-    warning: 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20',
-    error: 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20',
-    info: 'bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/20',
-    purple: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/20',
-    daily: 'bg-[#F97316]/10 text-[#F97316] border border-[#F97316]/20',
-    weekly: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/20',
-    monthly: 'bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/20',
-    adjustment: 'bg-[#14B8A6]/10 text-[#14B8A6] border border-[#14B8A6]/20',
-    outline: 'border border-[#26344D] text-[#94A3B8] bg-transparent',
+    default: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 backdrop-blur-md',
+    success: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 backdrop-blur-md',
+    warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 backdrop-blur-md',
+    error: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 backdrop-blur-md',
+    info: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 backdrop-blur-md',
+    purple: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 backdrop-blur-md',
+    daily: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 backdrop-blur-md',
+    weekly: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 backdrop-blur-md',
+    monthly: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 backdrop-blur-md',
+    adjustment: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 backdrop-blur-md',
+    outline: 'border border-slate-300 dark:border-white/15 text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md',
   };
 
   return (
     <div
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors',
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-tight transition-all duration-150 shadow-2xs',
         variants[variant],
         className
       )}

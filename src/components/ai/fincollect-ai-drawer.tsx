@@ -215,28 +215,28 @@ export function FinCollectAIDrawer() {
 
   return (
     <>
-      {/* FLOATING ACTION BUTTON (FAB) */}
+      {/* FLOATING ACTION BUTTON (FAB) - iOS Liquid Glass Pill */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-[#8B5CF6]/20"
+        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-indigo-500/20 backdrop-blur-xl border border-white/20"
         title="Open FinCollect AI Copilot"
       >
         <div className="relative flex items-center justify-center">
           <Bot className="w-5 h-5 text-white group-hover:rotate-12 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#22C55E] border-2 border-white rounded-full animate-ping" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full animate-ping" />
         </div>
         <span className="text-xs font-black tracking-wide uppercase font-sans">
           FinCollect AI
         </span>
-        <Sparkles className="w-3.5 h-3.5 text-[#C084FC] animate-pulse" />
+        <Sparkles className="w-3.5 h-3.5 text-indigo-200 animate-pulse" />
       </button>
 
-      {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}
+      {/* RIGHT-SIDE SLIDE-OVER AI PANEL - iOS Liquid Glass Sheet */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-lg h-full bg-[#121A2B] text-[#F8FAFC] backdrop-blur-2xl border-l border-[#2A3652] shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 dark:bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200">
+          <div className="w-full max-w-lg h-full bg-white/95 dark:bg-[#070B14]/95 text-slate-900 dark:text-[#F8FAFC] backdrop-blur-2xl border-l border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
             {/* Header Bar */}
-            <div className="p-4 border-b border-[#2A3652] flex items-center justify-between bg-[#182237] shrink-0">
+            <div className="p-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/90 dark:bg-[#0F172A]/90 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] flex items-center justify-center text-white shadow-md">
                   <Bot className="w-5 h-5" />

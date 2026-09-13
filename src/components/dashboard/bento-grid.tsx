@@ -50,10 +50,10 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               Financial Command Center
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
               Modular Bento Analytics Grid powered by live database streams
             </p>
           </div>

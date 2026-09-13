@@ -35,12 +35,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={cn(
-              'w-full h-10 px-3.5 text-sm rounded-xl border bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6] disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-[#121A2B] placeholder:text-slate-400 dark:placeholder:text-[#64748B]',
-              effectiveLeftIcon && 'pl-10',
-              effectiveRightIcon && 'pr-10',
+              'w-full h-10.5 px-4 text-sm font-medium rounded-2xl border bg-slate-50/90 dark:bg-[#141C2E]/90 text-slate-900 dark:text-[#F8FAFC] backdrop-blur-md transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30 focus:border-[#6366F1] focus:bg-white dark:focus:bg-[#0D1322] disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-[#0F172A] placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-xs',
+              effectiveLeftIcon && 'pl-10.5',
+              effectiveRightIcon && 'pr-10.5',
               error
-                ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20'
-                : 'border-slate-300 dark:border-[#26344D]',
+                ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20'
+                : 'border-slate-300/80 dark:border-white/10',
               className
             )}
             {...props}
