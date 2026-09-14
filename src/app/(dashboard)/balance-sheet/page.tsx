@@ -10,25 +10,31 @@ import { ColumnDef } from '@tanstack/react-table';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useToast } from '@/components/providers/toast-provider';
 import { AnimatedNumber } from '@/components/ui/animated-number';
-import { getBalanceSheetData, BalanceSheetData, BalanceSheetItem } from '@/lib/actions/balance-sheet';
+import {
+  getBalanceSheetData,
+  BalanceSheetData,
+  BalanceSheetItem,
+} from '@/lib/actions/balance-sheet';
+import { ManualBalanceSheetEntry } from '@/types';
+import { ManualEntryModal } from '@/components/balance-sheet/manual-entry-modal';
+import { DeleteManualEntryModal } from '@/components/balance-sheet/delete-manual-entry-modal';
 import {
   Scale,
   Calendar,
   RefreshCw,
-  TrendingUp,
   Wallet,
   Landmark,
   PiggyBank,
-  Coins,
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   FileText,
   Search,
   Database,
-  ArrowDownLeft,
-  ArrowUpRight,
   PieChart,
+  Plus,
+  Pencil,
+  Trash2,
+  Layers,
 } from 'lucide-react';
 
 export default function BalanceSheetPage() {
@@ -39,6 +45,14 @@ export default function BalanceSheetPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'All' | 'Assets' | 'Liabilities' | "Owner's Capital">('All');
+
+  // Manual Entry Modal states
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [entryToEdit, setEntryToEdit] = useState<ManualBalanceSheetEntry | null>(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<ManualBalanceSheetEntry | null>(null);
+
   const { showToast } = useToast();
 
   const fetchBalanceSheet = useCallback(async () => {
@@ -70,7 +84,8 @@ export default function BalanceSheetPage() {
     });
   }, [data?.items, categoryFilter, searchQuery]);
 
-  const columns: ColumnDef<BalanceSheetItem>[] = [
+  // Columns for Main Balance Sheet Items Table
+  const itemsColumns: ColumnDef<BalanceSheetItem>[] = [
     {
       accessorKey: 'category',
       header: 'Category',
@@ -107,19 +122,26 @@ export default function BalanceSheetPage() {
     },
     {
       accessorKey: 'amount',
-      header: 'Amount (₹)',
+      header: 'Total Amount (₹)',
       cell: ({ row }) => (
-        <span
-          className={`font-black text-sm font-mono ${
-            row.original.category === 'Assets'
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : row.original.category === 'Liabilities'
-              ? 'text-rose-600 dark:text-rose-400'
-              : 'text-[#FF7A00]'
-          }`}
-        >
-          {formatCurrency(row.original.amount)}
-        </span>
+        <div className="flex flex-col">
+          <span
+            className={`font-black text-sm font-mono ${
+              row.original.category === 'Assets'
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : row.original.category === 'Liabilities'
+                ? 'text-rose-600 dark:text-rose-400'
+                : 'text-[#FF7A00]'
+            }`}
+          >
+            {formatCurrency(row.original.amount)}
+          </span>
+          {(row.original.manualAmount ?? 0) !== 0 && (
+            <span className="text-[10px] text-amber-600 font-mono">
+              (Includes {row.original.manualAmount! > 0 ? '+' : ''}{formatCurrency(row.original.manualAmount!)} manual)
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -133,10 +155,109 @@ export default function BalanceSheetPage() {
     },
   ];
 
+  // Columns for Manual Entries List Table
+  const manualEntriesColumns: ColumnDef<ManualBalanceSheetEntry>[] = [
+    {
+      accessorKey: 'entryDate',
+      header: 'Entry Date',
+      cell: ({ row }) => (
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-mono">
+          {formatDate(row.original.entryDate)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'entryType',
+      header: 'Type',
+      cell: ({ row }) => {
+        const type = row.original.entryType;
+        let variant: 'success' | 'error' | 'warning' | 'info' = 'info';
+        if (type === 'Asset') variant = 'success';
+        if (type === 'Liability') variant = 'error';
+        if (type === 'Owner Capital') variant = 'warning';
+
+        return (
+          <Badge variant={variant} className="font-mono text-[10px]">
+            {type}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'category',
+      header: 'Category',
+      cell: ({ row }) => (
+        <span className="font-bold text-xs text-slate-900 dark:text-white">
+          {row.original.category}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'description',
+      header: 'Description / Remarks',
+      cell: ({ row }) => (
+        <span className="text-xs text-slate-600 dark:text-slate-400">
+          {row.original.description}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'amount',
+      header: 'Amount (₹)',
+      cell: ({ row }) => (
+        <span className="font-black text-sm font-mono text-amber-600 dark:text-amber-400">
+          {formatCurrency(row.original.amount)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'createdBy',
+      header: 'Created By',
+      cell: ({ row }) => (
+        <span className="text-[11px] text-slate-500 font-medium">
+          {row.original.createdBy || 'Admin'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEntryToEdit(row.original);
+              setIsManualModalOpen(true);
+            }}
+            className="h-7 w-7 p-0 rounded-lg hover:bg-amber-500/10 text-amber-600"
+            title="Edit Manual Entry"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEntryToDelete(row.original);
+              setIsDeleteModalOpen(true);
+            }}
+            className="h-7 w-7 p-0 rounded-lg hover:bg-rose-500/10 text-rose-600"
+            title="Delete Entry"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   const summary = data?.summary;
   const assets = data?.assets;
   const liabilities = data?.liabilities;
   const capital = data?.ownersCapital;
+  const manualEntries = data?.manualEntries || [];
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -152,11 +273,11 @@ export default function BalanceSheetPage() {
             </h2>
             <Badge variant="success" className="gap-1 text-[10px] shadow-xs">
               <Database className="w-3 h-3 text-emerald-500" />
-              Live PostgreSQL Engine
+              System + Manual Engine
             </Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
-            Complete financial position of the business at a glance.
+            Automated database figures merged seamlessly with manual financial adjustments.
           </p>
         </div>
 
@@ -169,9 +290,21 @@ export default function BalanceSheetPage() {
               type="date"
               value={asOfDate}
               onChange={(e) => setAsOfDate(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+              className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none font-mono"
             />
           </div>
+
+          <Button
+            onClick={() => {
+              setEntryToEdit(null);
+              setIsManualModalOpen(true);
+            }}
+            size="sm"
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="rounded-xl bg-[#FF7A00] hover:bg-[#e06b00] text-white shadow-md shadow-amber-500/20"
+          >
+            Add Manual Entry
+          </Button>
 
           <Button
             variant="outline"
@@ -200,10 +333,13 @@ export default function BalanceSheetPage() {
               <Wallet className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-3 truncate">
-            {isLoading ? '...' : <AnimatedNumber value={assets?.totalAssets ?? 0} formatAsCurrency />}
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-3 truncate font-mono">
+            {isLoading ? '...' : <AnimatedNumber value={assets?.totalAssets?.totalAmount ?? 0} formatAsCurrency />}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Cash + Loans Receivable + Investments</p>
+          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+            <span>Sys: {formatCurrency(assets?.totalAssets?.systemAmount ?? 0)}</span>
+            <span className="text-amber-600 font-semibold">Man: +{formatCurrency(assets?.totalAssets?.manualAmount ?? 0)}</span>
+          </div>
         </Card>
 
         {/* 2. Total Liabilities */}
@@ -216,10 +352,13 @@ export default function BalanceSheetPage() {
               <Landmark className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-3 truncate">
-            {isLoading ? '...' : <AnimatedNumber value={liabilities?.totalLiabilities ?? 0} formatAsCurrency />}
+          <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-3 truncate font-mono">
+            {isLoading ? '...' : <AnimatedNumber value={liabilities?.totalLiabilities?.totalAmount ?? 0} formatAsCurrency />}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Depositor Payables & Other Payables</p>
+          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+            <span>Sys: {formatCurrency(liabilities?.totalLiabilities?.systemAmount ?? 0)}</span>
+            <span className="text-amber-600 font-semibold">Man: +{formatCurrency(liabilities?.totalLiabilities?.manualAmount ?? 0)}</span>
+          </div>
         </Card>
 
         {/* 3. Owner's Capital */}
@@ -232,10 +371,13 @@ export default function BalanceSheetPage() {
               <PiggyBank className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-[#FF7A00] mt-3 truncate">
-            {isLoading ? '...' : <AnimatedNumber value={capital?.totalCapitalAndRetained ?? 0} formatAsCurrency />}
+          <div className="text-2xl font-black text-[#FF7A00] mt-3 truncate font-mono">
+            {isLoading ? '...' : <AnimatedNumber value={capital?.totalCapitalAndRetained?.totalAmount ?? 0} formatAsCurrency />}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Current Capital + Retained Profit</p>
+          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+            <span>Sys: {formatCurrency(capital?.totalCapitalAndRetained?.systemAmount ?? 0)}</span>
+            <span className="text-amber-600 font-semibold">Man: +{formatCurrency(capital?.totalCapitalAndRetained?.manualAmount ?? 0)}</span>
+          </div>
         </Card>
 
         {/* 4. Net Position */}
@@ -248,8 +390,8 @@ export default function BalanceSheetPage() {
               <PieChart className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-violet-600 dark:text-violet-300 mt-3 truncate">
-            {isLoading ? '...' : <AnimatedNumber value={summary?.netPosition ?? 0} formatAsCurrency />}
+          <div className="text-2xl font-black text-violet-600 dark:text-violet-300 mt-3 truncate font-mono">
+            {isLoading ? '...' : <AnimatedNumber value={summary?.netPosition?.totalAmount ?? 0} formatAsCurrency />}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Total Assets - Total Liabilities</p>
         </Card>
@@ -278,53 +420,83 @@ export default function BalanceSheetPage() {
 
             {/* Asset Items List */}
             <div className="flex flex-col gap-3">
+              {/* 1. Cash in Hand */}
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Cash in Hand</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Current available physical & central cash balance</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(assets?.cashInHand?.systemAmount ?? 0)}
+                    {(assets?.cashInHand?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.cashInHand?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.cashInHand ?? 0)}
+                  {isLoading ? '...' : formatCurrency(assets?.cashInHand?.totalAmount ?? 0)}
                 </span>
               </div>
 
+              {/* 2. Cash in Bank */}
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Cash in Bank</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Bank account balances</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(assets?.cashInBank?.systemAmount ?? 0)}
+                    {(assets?.cashInBank?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.cashInBank?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.cashInBank ?? 0)}
+                  {isLoading ? '...' : formatCurrency(assets?.cashInBank?.totalAmount ?? 0)}
                 </span>
               </div>
 
+              {/* 3. Loans Receivable */}
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">3. Loans Receivable</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Total outstanding loan balance expected from customers</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(assets?.loansReceivable?.systemAmount ?? 0)}
+                    {(assets?.loansReceivable?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.loansReceivable?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.loansReceivable ?? 0)}
+                  {isLoading ? '...' : formatCurrency(assets?.loansReceivable?.totalAmount ?? 0)}
                 </span>
               </div>
 
+              {/* 4. Active Investment */}
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">4. Active Investment</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Current active capital deployed in Investment Khata</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(assets?.activeInvestment?.systemAmount ?? 0)}
+                    {(assets?.activeInvestment?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.activeInvestment?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.activeInvestment ?? 0)}
+                  {isLoading ? '...' : formatCurrency(assets?.activeInvestment?.totalAmount ?? 0)}
                 </span>
               </div>
 
+              {/* 5. Other Assets */}
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">5. Other Assets (Stamps)</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Physical stamp inventory and legal holdings</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(assets?.otherAssets?.systemAmount ?? 0)}
+                    {(assets?.otherAssets?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.otherAssets?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.otherAssets ?? 0)}
+                  {isLoading ? '...' : formatCurrency(assets?.otherAssets?.totalAmount ?? 0)}
                 </span>
               </div>
             </div>
@@ -335,7 +507,7 @@ export default function BalanceSheetPage() {
                 TOTAL ASSETS
               </span>
               <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                {isLoading ? '...' : formatCurrency(assets?.totalAssets ?? 0)}
+                {isLoading ? '...' : formatCurrency(assets?.totalAssets?.totalAmount ?? 0)}
               </span>
             </div>
           </Card>
@@ -363,20 +535,30 @@ export default function BalanceSheetPage() {
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Deposits / Amount Payable</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Total principal payable to active depositors</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(liabilities?.depositsPayable?.systemAmount ?? 0)}
+                    {(liabilities?.depositsPayable?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(liabilities?.depositsPayable?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-rose-600 dark:text-rose-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(liabilities?.depositsPayable ?? 0)}
+                  {isLoading ? '...' : formatCurrency(liabilities?.depositsPayable?.totalAmount ?? 0)}
                 </span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Other Payables</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Pending operational or vendor payables</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(liabilities?.otherPayables?.systemAmount ?? 0)}
+                    {(liabilities?.otherPayables?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(liabilities?.otherPayables?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-rose-600 dark:text-rose-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(liabilities?.otherPayables ?? 0)}
+                  {isLoading ? '...' : formatCurrency(liabilities?.otherPayables?.totalAmount ?? 0)}
                 </span>
               </div>
             </div>
@@ -386,7 +568,7 @@ export default function BalanceSheetPage() {
                 TOTAL LIABILITIES
               </span>
               <span className="text-xl font-black text-rose-600 dark:text-rose-400 font-mono">
-                {isLoading ? '...' : formatCurrency(liabilities?.totalLiabilities ?? 0)}
+                {isLoading ? '...' : formatCurrency(liabilities?.totalLiabilities?.totalAmount ?? 0)}
               </span>
             </div>
           </Card>
@@ -411,20 +593,30 @@ export default function BalanceSheetPage() {
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Total Capital Added</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cumulative direct capital invested by owner</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(capital?.totalCapitalAdded?.systemAmount ?? 0)}
+                    {(capital?.totalCapitalAdded?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(capital?.totalCapitalAdded?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-bold text-sm text-[#FF7A00] font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.totalCapitalAdded ?? 0)}
+                  {isLoading ? '...' : formatCurrency(capital?.totalCapitalAdded?.totalAmount ?? 0)}
                 </span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Capital Withdrawn (-)</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cumulative business capital taken out by owner</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(capital?.capitalWithdrawn?.systemAmount ?? 0)}
+                    {(capital?.capitalWithdrawn?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(capital?.capitalWithdrawn?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-bold text-sm text-rose-500 font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.capitalWithdrawn ?? 0)}
+                  {isLoading ? '...' : formatCurrency(capital?.capitalWithdrawn?.totalAmount ?? 0)}
                 </span>
               </div>
 
@@ -434,17 +626,22 @@ export default function BalanceSheetPage() {
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Capital Added - Capital Withdrawn</p>
                 </div>
                 <span className="font-black text-sm text-[#FF7A00] font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.currentOwnerCapital ?? 0)}
+                  {isLoading ? '...' : formatCurrency(capital?.currentOwnerCapital?.totalAmount ?? 0)}
                 </span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Retained Earnings / Accumulated Profit</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cumulative net profit retained in business</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    System: {formatCurrency(capital?.retainedEarnings?.systemAmount ?? 0)}
+                    {(capital?.retainedEarnings?.manualAmount ?? 0) !== 0 && (
+                      <span className="text-amber-600 font-semibold"> | Manual Adj: +{formatCurrency(capital?.retainedEarnings?.manualAmount ?? 0)}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.retainedEarnings ?? 0)}
+                  {isLoading ? '...' : formatCurrency(capital?.retainedEarnings?.totalAmount ?? 0)}
                 </span>
               </div>
             </div>
@@ -454,7 +651,7 @@ export default function BalanceSheetPage() {
                 TOTAL OWNER&apos;S CAPITAL & PROFIT
               </span>
               <span className="text-xl font-black text-[#FF7A00] font-mono">
-                {isLoading ? '...' : formatCurrency(capital?.totalCapitalAndRetained ?? 0)}
+                {isLoading ? '...' : formatCurrency(capital?.totalCapitalAndRetained?.totalAmount ?? 0)}
               </span>
             </div>
           </Card>
@@ -487,7 +684,7 @@ export default function BalanceSheetPage() {
               </Badge>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 font-mono mt-1">
-              TOTAL ASSETS ({formatCurrency(summary?.totalAssets ?? 0)}) = TOTAL LIABILITIES ({formatCurrency(summary?.totalLiabilities ?? 0)}) + OWNER&apos;S CAPITAL ({formatCurrency(summary?.ownersCapitalTotal ?? 0)})
+              TOTAL ASSETS ({formatCurrency(summary?.totalAssets?.totalAmount ?? 0)}) = TOTAL LIABILITIES ({formatCurrency(summary?.totalLiabilities?.totalAmount ?? 0)}) + OWNER&apos;S CAPITAL ({formatCurrency(summary?.ownersCapitalTotal?.totalAmount ?? 0)})
             </p>
           </div>
         </div>
@@ -503,13 +700,48 @@ export default function BalanceSheetPage() {
       </Card>
 
       {/* ================================================================ */}
-      {/* DETAILED BREAKDOWN TABLE */}
+      {/* MANUAL ENTRIES & ADJUSTMENTS TABLE */}
+      {/* ================================================================ */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <Layers className="w-5 h-5 text-amber-500" />
+            Manual Entries & Financial Adjustments
+            <Badge variant="warning" className="font-mono text-xs">
+              {manualEntries.length} Saved Entries
+            </Badge>
+          </h3>
+          <Button
+            onClick={() => {
+              setEntryToEdit(null);
+              setIsManualModalOpen(true);
+            }}
+            size="sm"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
+          >
+            Add Entry
+          </Button>
+        </div>
+
+        <Card className="glass-panel overflow-hidden">
+          <DataTable
+            columns={manualEntriesColumns}
+            data={manualEntries}
+            emptyText={isLoading ? 'Loading manual entries...' : 'No manual balance sheet adjustments recorded yet.'}
+            pageSize={5}
+          />
+        </Card>
+      </div>
+
+      {/* ================================================================ */}
+      {/* DETAILED SYSTEM BREAKDOWN TABLE */}
       {/* ================================================================ */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-[#FF7A00]" />
-            Detailed Balance Sheet Item Breakdown
+            System Detailed Balance Sheet Item Breakdown
             <Badge variant="outline" className="font-mono text-xs">
               {filteredItems.length} Records
             </Badge>
@@ -548,13 +780,34 @@ export default function BalanceSheetPage() {
 
         <Card className="glass-panel overflow-hidden">
           <DataTable
-            columns={columns}
+            columns={itemsColumns}
             data={filteredItems}
             emptyText={isLoading ? 'Loading Balance Sheet breakdown...' : 'No balance sheet records found.'}
             pageSize={10}
           />
         </Card>
       </div>
+
+      {/* Modals */}
+      <ManualEntryModal
+        isOpen={isManualModalOpen}
+        onClose={() => {
+          setIsManualModalOpen(false);
+          setEntryToEdit(null);
+        }}
+        onSuccess={fetchBalanceSheet}
+        entryToEdit={entryToEdit}
+      />
+
+      <DeleteManualEntryModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setEntryToDelete(null);
+        }}
+        onSuccess={fetchBalanceSheet}
+        entry={entryToDelete}
+      />
     </div>
   );
 }

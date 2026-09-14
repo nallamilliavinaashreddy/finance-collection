@@ -444,4 +444,28 @@ export interface EmployeeMetrics {
   totalSalaryPaidYTD: number;
 }
 
+export type ManualBalanceSheetEntryType = 'Asset' | 'Liability' | 'Owner Capital' | 'Expense/Adjustment';
 
+export type ManualBalanceSheetCategory =
+  | 'Cash in Hand'
+  | 'Cash in Bank'
+  | 'Loans Receivable'
+  | 'Active Investment'
+  | 'Other Asset'
+  | 'Deposits / Amount Payable'
+  | 'Other Payable'
+  | 'Capital Added'
+  | 'Capital Withdrawn'
+  | 'Expense Adjustment';
+
+export interface ManualBalanceSheetEntry {
+  id: string;
+  entryType: ManualBalanceSheetEntryType;
+  category: ManualBalanceSheetCategory;
+  amount: number;
+  entryDate: string;
+  description: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

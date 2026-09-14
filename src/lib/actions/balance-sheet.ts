@@ -1,52 +1,233 @@
 'use server';
 
 import { createClient } from '@supabase/supabase-js';
+import {
+  ManualBalanceSheetEntry,
+  ManualBalanceSheetEntryType,
+  ManualBalanceSheetCategory,
+} from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export interface MetricBreakdown {
+  systemAmount: number;
+  manualAmount: number;
+  totalAmount: number;
+}
 
 export interface BalanceSheetItem {
   id: string;
   category: 'Assets' | 'Liabilities' | "Owner's Capital";
   particulars: string;
   amount: number;
+  systemAmount?: number;
+  manualAmount?: number;
   lastUpdated: string;
   note?: string;
+  isManual?: boolean;
 }
 
 export interface BalanceSheetData {
   asOfDate: string;
   assets: {
-    cashInHand: number;
-    cashInBank: number;
-    loansReceivable: number;
-    activeInvestment: number;
-    otherAssets: number;
-    totalAssets: number;
+    cashInHand: MetricBreakdown;
+    cashInBank: MetricBreakdown;
+    loansReceivable: MetricBreakdown;
+    activeInvestment: MetricBreakdown;
+    otherAssets: MetricBreakdown;
+    totalAssets: MetricBreakdown;
   };
   liabilities: {
-    depositsPayable: number;
-    otherPayables: number;
-    totalLiabilities: number;
+    depositsPayable: MetricBreakdown;
+    otherPayables: MetricBreakdown;
+    totalLiabilities: MetricBreakdown;
   };
   ownersCapital: {
-    totalCapitalAdded: number;
-    capitalWithdrawn: number;
-    currentOwnerCapital: number;
-    retainedEarnings: number;
-    totalCapitalAndRetained: number;
+    totalCapitalAdded: MetricBreakdown;
+    capitalWithdrawn: MetricBreakdown;
+    currentOwnerCapital: MetricBreakdown;
+    retainedEarnings: MetricBreakdown;
+    totalCapitalAndRetained: MetricBreakdown;
   };
   summary: {
-    totalAssets: number;
-    totalLiabilities: number;
-    ownersCapitalTotal: number;
+    totalAssets: MetricBreakdown;
+    totalLiabilities: MetricBreakdown;
+    ownersCapitalTotal: MetricBreakdown;
     totalLiabilitiesAndCapital: number;
-    netPosition: number;
+    netPosition: MetricBreakdown;
     isBalanced: boolean;
     difference: number;
   };
   items: BalanceSheetItem[];
+  manualEntries: ManualBalanceSheetEntry[];
+}
+
+function isTableNotFoundError(err: any): boolean {
+  if (!err) return false;
+  const code = err.code || '';
+  const message = err.message || '';
+  return (
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    message.includes('manual_balance_sheet_entries') ||
+    message.includes('schema cache') ||
+    message.includes('relation')
+  );
+}
+
+export async function getManualBalanceSheetEntries(): Promise<ManualBalanceSheetEntry[]> {
+  try {
+    const { data, error } = await supabase
+      .from('manual_balance_sheet_entries')
+      .select('*')
+      .order('entry_date', { ascending: false });
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        console.warn('manual_balance_sheet_entries table not found, returning empty array');
+        return [];
+      }
+      console.error('Error fetching manual balance sheet entries:', error);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      entryType: row.entry_type as ManualBalanceSheetEntryType,
+      category: row.category as ManualBalanceSheetCategory,
+      amount: Number(row.amount) || 0,
+      entryDate: row.entry_date || new Date().toISOString().split('T')[0],
+      description: row.description || '',
+      createdBy: row.created_by || 'Admin',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  } catch (err) {
+    console.error('Failed to get manual balance sheet entries:', err);
+    return [];
+  }
+}
+
+export async function createManualBalanceSheetEntry(formData: {
+  entryType: ManualBalanceSheetEntryType;
+  category: ManualBalanceSheetCategory;
+  amount: number;
+  entryDate: string;
+  description: string;
+  createdBy?: string;
+}): Promise<{ success: boolean; data?: ManualBalanceSheetEntry; error?: string }> {
+  try {
+    const payload = {
+      entry_type: formData.entryType,
+      category: formData.category,
+      amount: formData.amount,
+      entry_date: formData.entryDate,
+      description: formData.description,
+      created_by: formData.createdBy || 'Admin',
+    };
+
+    const { data, error } = await supabase
+      .from('manual_balance_sheet_entries')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        return {
+          success: false,
+          error: 'Table manual_balance_sheet_entries does not exist in database yet.',
+        };
+      }
+      return { success: false, error: error.message };
+    }
+
+    const created: ManualBalanceSheetEntry = {
+      id: data.id,
+      entryType: data.entry_type,
+      category: data.category,
+      amount: Number(data.amount) || 0,
+      entryDate: data.entry_date,
+      description: data.description,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+
+    return { success: true, data: created };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to create manual entry' };
+  }
+}
+
+export async function updateManualBalanceSheetEntry(
+  id: string,
+  formData: {
+    entryType: ManualBalanceSheetEntryType;
+    category: ManualBalanceSheetCategory;
+    amount: number;
+    entryDate: string;
+    description: string;
+  }
+): Promise<{ success: boolean; data?: ManualBalanceSheetEntry; error?: string }> {
+  try {
+    const payload = {
+      entry_type: formData.entryType,
+      category: formData.category,
+      amount: formData.amount,
+      entry_date: formData.entryDate,
+      description: formData.description,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('manual_balance_sheet_entries')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const updated: ManualBalanceSheetEntry = {
+      id: data.id,
+      entryType: data.entry_type,
+      category: data.category,
+      amount: Number(data.amount) || 0,
+      entryDate: data.entry_date,
+      description: data.description,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+
+    return { success: true, data: updated };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to update manual entry' };
+  }
+}
+
+export async function deleteManualBalanceSheetEntry(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('manual_balance_sheet_entries')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to delete manual entry' };
+  }
 }
 
 export async function getBalanceSheetData(asOfDateInput?: string): Promise<BalanceSheetData> {
@@ -59,9 +240,9 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
       .select('remaining_balance, amount_given, is_closed, created_at')
       .eq('is_closed', false);
 
-    let loansReceivable = 0;
+    let sysLoansReceivable = 0;
     if (!loansErr && activeLoans) {
-      loansReceivable = activeLoans.reduce((sum, l) => sum + (Number(l.remaining_balance) || 0), 0);
+      sysLoansReceivable = activeLoans.reduce((sum, l) => sum + (Number(l.remaining_balance) || 0), 0);
     }
 
     // 2. Fetch Investment Transactions & Central Cash Flow
@@ -70,10 +251,10 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
       .select('*')
       .lte('transaction_date', asOfDate);
 
-    let cashInHand = 0;
-    let activeInvestment = 0;
-    let totalCapitalAdded = 0;
-    let capitalWithdrawn = 0;
+    let sysCashInHand = 0;
+    let sysActiveInvestment = 0;
+    let sysTotalCapitalAdded = 0;
+    let sysCapitalWithdrawn = 0;
 
     if (!invErr && invTx) {
       let runBal = 0;
@@ -84,14 +265,14 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
 
         const desc = (tx.description || '').toLowerCase();
         if (desc.includes('capital added') || desc.includes('direct investment') || desc.includes('owner capital')) {
-          totalCapitalAdded += amtIn;
+          sysTotalCapitalAdded += amtIn;
         } else if (desc.includes('capital withdrawn') || desc.includes('taken capital') || desc.includes('owner withdrawal')) {
-          capitalWithdrawn += amtOut;
+          sysCapitalWithdrawn += amtOut;
         }
       });
 
-      cashInHand = runBal > 0 ? runBal : 0;
-      activeInvestment = totalCapitalAdded > capitalWithdrawn ? totalCapitalAdded - capitalWithdrawn : totalCapitalAdded;
+      sysCashInHand = runBal > 0 ? runBal : 0;
+      sysActiveInvestment = sysTotalCapitalAdded > sysCapitalWithdrawn ? sysTotalCapitalAdded - sysCapitalWithdrawn : sysTotalCapitalAdded;
     }
 
     // 3. Fetch Depositors Outstanding Payable
@@ -99,9 +280,9 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
       .from('depositor_accounts')
       .select('id, deposit_amount, status');
 
-    let depositsPayable = 0;
+    let sysDepositsPayable = 0;
     if (!depErr && depAcc) {
-      depositsPayable = depAcc.reduce((sum, d) => sum + (Number(d.deposit_amount) || 0), 0);
+      sysDepositsPayable = depAcc.reduce((sum, d) => sum + (Number(d.deposit_amount) || 0), 0);
     }
 
     // 4. Fetch Stamps Value (Other Assets)
@@ -109,9 +290,9 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
       .from('stamps')
       .select('amount, cost');
 
-    let otherAssets = 0;
+    let sysOtherAssets = 0;
     if (!stampsErr && stampsData) {
-      otherAssets = stampsData.reduce((sum, s) => sum + (Number(s.amount) || Number(s.cost) || 0), 0);
+      sysOtherAssets = stampsData.reduce((sum, s) => sum + (Number(s.amount) || Number(s.cost) || 0), 0);
     }
 
     // 5. Calculate Retained Earnings (Net Profit from P&L: Loan Interest - Expenses)
@@ -121,103 +302,210 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
     const totalCollected = (collectionsData || []).reduce((s, c) => s + (Number(c.amount) || 0), 0);
     const totalExpenses = (expensesData || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
-    const retainedEarnings = Math.max(0, totalCollected - totalExpenses);
+    const sysRetainedEarnings = Math.max(0, totalCollected - totalExpenses);
+    const sysCashInBank = 0;
+    const sysOtherPayables = 0;
 
-    // Compute Totals
-    const cashInBank = 0; // Default safe 0 if bank integration not configured
-    const otherPayables = 0;
+    // 6. Fetch Manual Entries up to asOfDate
+    const allManualEntries = await getManualBalanceSheetEntries();
+    const manualEntries = allManualEntries.filter(
+      (e) => !e.entryDate || e.entryDate <= asOfDate
+    );
 
-    const totalAssets = cashInHand + cashInBank + loansReceivable + activeInvestment + otherAssets;
-    const totalLiabilities = depositsPayable + otherPayables;
-    const currentOwnerCapital = Math.max(0, totalCapitalAdded - capitalWithdrawn);
-    const totalCapitalAndRetained = currentOwnerCapital + retainedEarnings;
+    let manualCashInHand = 0;
+    let manualCashInBank = 0;
+    let manualLoansReceivable = 0;
+    let manualActiveInvestment = 0;
+    let manualOtherAssets = 0;
 
-    const totalLiabilitiesAndCapital = totalLiabilities + totalCapitalAndRetained;
-    const netPosition = totalAssets - totalLiabilities;
-    const difference = Math.abs(totalAssets - totalLiabilitiesAndCapital);
+    let manualDepositsPayable = 0;
+    let manualOtherPayables = 0;
+
+    let manualCapitalAdded = 0;
+    let manualCapitalWithdrawn = 0;
+    let manualExpenseAdjustment = 0;
+
+    manualEntries.forEach((entry) => {
+      const amt = Number(entry.amount) || 0;
+      switch (entry.category) {
+        case 'Cash in Hand':
+          manualCashInHand += amt;
+          break;
+        case 'Cash in Bank':
+          manualCashInBank += amt;
+          break;
+        case 'Loans Receivable':
+          manualLoansReceivable += amt;
+          break;
+        case 'Active Investment':
+          manualActiveInvestment += amt;
+          break;
+        case 'Other Asset':
+          manualOtherAssets += amt;
+          break;
+        case 'Deposits / Amount Payable':
+          manualDepositsPayable += amt;
+          break;
+        case 'Other Payable':
+          manualOtherPayables += amt;
+          break;
+        case 'Capital Added':
+          manualCapitalAdded += amt;
+          break;
+        case 'Capital Withdrawn':
+          manualCapitalWithdrawn += amt;
+          break;
+        case 'Expense Adjustment':
+          manualExpenseAdjustment += amt;
+          break;
+      }
+    });
+
+    const createBreakdown = (sys: number, man: number): MetricBreakdown => ({
+      systemAmount: sys,
+      manualAmount: man,
+      totalAmount: sys + man,
+    });
+
+    const cashInHand = createBreakdown(sysCashInHand, manualCashInHand);
+    const cashInBank = createBreakdown(sysCashInBank, manualCashInBank);
+    const loansReceivable = createBreakdown(sysLoansReceivable, manualLoansReceivable);
+    const activeInvestment = createBreakdown(sysActiveInvestment, manualActiveInvestment);
+    const otherAssets = createBreakdown(sysOtherAssets, manualOtherAssets);
+
+    const sysTotalAssets = sysCashInHand + sysCashInBank + sysLoansReceivable + sysActiveInvestment + sysOtherAssets;
+    const manTotalAssets = manualCashInHand + manualCashInBank + manualLoansReceivable + manualActiveInvestment + manualOtherAssets;
+    const totalAssets = createBreakdown(sysTotalAssets, manTotalAssets);
+
+    const depositsPayable = createBreakdown(sysDepositsPayable, manualDepositsPayable);
+    const otherPayables = createBreakdown(sysOtherPayables, manualOtherPayables);
+
+    const sysTotalLiabilities = sysDepositsPayable + sysOtherPayables;
+    const manTotalLiabilities = manualDepositsPayable + manualOtherPayables;
+    const totalLiabilities = createBreakdown(sysTotalLiabilities, manTotalLiabilities);
+
+    const totalCapitalAdded = createBreakdown(sysTotalCapitalAdded, manualCapitalAdded);
+    const capitalWithdrawn = createBreakdown(sysCapitalWithdrawn, manualCapitalWithdrawn);
+    const currentOwnerCapital = createBreakdown(
+      Math.max(0, sysTotalCapitalAdded - sysCapitalWithdrawn),
+      manualCapitalAdded - manualCapitalWithdrawn
+    );
+
+    const retainedEarnings = createBreakdown(sysRetainedEarnings, manualExpenseAdjustment);
+    const totalCapitalAndRetained = createBreakdown(
+      currentOwnerCapital.systemAmount + retainedEarnings.systemAmount,
+      currentOwnerCapital.manualAmount + retainedEarnings.manualAmount
+    );
+
+    const sysNetPosition = sysTotalAssets - sysTotalLiabilities;
+    const manNetPosition = manTotalAssets - manTotalLiabilities;
+    const netPosition = createBreakdown(sysNetPosition, manNetPosition);
+
+    const totalLiabilitiesAndCapital = totalLiabilities.totalAmount + totalCapitalAndRetained.totalAmount;
+    const difference = Math.abs(totalAssets.totalAmount - totalLiabilitiesAndCapital);
     const isBalanced = difference < 1.0;
 
-    // Detailed Breakdown Items List for Table
+    // Build Items List including system breakdown & manual entries
     const items: BalanceSheetItem[] = [
       {
         id: 'asset-1',
         category: 'Assets',
         particulars: 'Cash in Hand (Central Cash Balance)',
-        amount: cashInHand,
+        amount: cashInHand.totalAmount,
+        systemAmount: cashInHand.systemAmount,
+        manualAmount: cashInHand.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Live net cash balance from central cash flow ledger',
+        note: 'Live net cash balance from central cash flow ledger + manual adjustments',
       },
       {
         id: 'asset-2',
         category: 'Assets',
         particulars: 'Cash in Bank',
-        amount: cashInBank,
+        amount: cashInBank.totalAmount,
+        systemAmount: cashInBank.systemAmount,
+        manualAmount: cashInBank.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Bank account cash holdings',
+        note: 'Bank account holdings + manual bank adjustments',
       },
       {
         id: 'asset-3',
         category: 'Assets',
         particulars: 'Loans Receivable (Customer Outstanding)',
-        amount: loansReceivable,
+        amount: loansReceivable.totalAmount,
+        systemAmount: loansReceivable.systemAmount,
+        manualAmount: loansReceivable.manualAmount,
         lastUpdated: asOfDate,
-        note: 'SUM of active loan principal balances expected from borrowers',
+        note: 'SUM of active loan principal balances + manual loan adjustments',
       },
       {
         id: 'asset-4',
         category: 'Assets',
         particulars: 'Active Investment Capital',
-        amount: activeInvestment,
+        amount: activeInvestment.totalAmount,
+        systemAmount: activeInvestment.systemAmount,
+        manualAmount: activeInvestment.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Direct business capital deployed in Investment Khata',
+        note: 'Direct business capital deployed in Investment Khata + manual adjustments',
       },
       {
         id: 'asset-5',
         category: 'Assets',
-        particulars: 'Other Assets (Stamps Inventory)',
-        amount: otherAssets,
+        particulars: 'Other Assets (Stamps Inventory & Adjustments)',
+        amount: otherAssets.totalAmount,
+        systemAmount: otherAssets.systemAmount,
+        manualAmount: otherAssets.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Physical stamp holdings and document assets',
+        note: 'Physical stamp holdings and document assets + manual adjustments',
       },
       {
         id: 'liab-1',
         category: 'Liabilities',
         particulars: 'Deposits / Amount Payable to Depositors',
-        amount: depositsPayable,
+        amount: depositsPayable.totalAmount,
+        systemAmount: depositsPayable.systemAmount,
+        manualAmount: depositsPayable.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Total principal payable to active depositors',
+        note: 'Total principal payable to active depositors + manual adjustments',
       },
       {
         id: 'liab-2',
         category: 'Liabilities',
         particulars: 'Other Payables',
-        amount: otherPayables,
+        amount: otherPayables.totalAmount,
+        systemAmount: otherPayables.systemAmount,
+        manualAmount: otherPayables.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Pending vendor or operational payables',
+        note: 'Pending vendor or operational payables + manual adjustments',
       },
       {
         id: 'cap-1',
         category: "Owner's Capital",
         particulars: "Owner's Capital Added",
-        amount: totalCapitalAdded,
+        amount: totalCapitalAdded.totalAmount,
+        systemAmount: totalCapitalAdded.systemAmount,
+        manualAmount: totalCapitalAdded.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Cumulative direct capital added by owner',
+        note: 'Cumulative direct capital added by owner + manual additions',
       },
       {
         id: 'cap-2',
         category: "Owner's Capital",
-        particulars: "Capital Withdrawn",
-        amount: capitalWithdrawn,
+        particulars: 'Capital Withdrawn',
+        amount: capitalWithdrawn.totalAmount,
+        systemAmount: capitalWithdrawn.systemAmount,
+        manualAmount: capitalWithdrawn.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Cumulative business capital taken out by owner',
+        note: 'Cumulative business capital taken out by owner + manual withdrawals',
       },
       {
         id: 'cap-3',
         category: "Owner's Capital",
         particulars: 'Retained Earnings / Accumulated Net Profit',
-        amount: retainedEarnings,
+        amount: retainedEarnings.totalAmount,
+        systemAmount: retainedEarnings.systemAmount,
+        manualAmount: retainedEarnings.manualAmount,
         lastUpdated: asOfDate,
-        note: 'Cumulative net profit retained in business',
+        note: 'Cumulative net profit retained in business + expense adjustments',
       },
     ];
 
@@ -253,42 +541,45 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
         difference,
       },
       items,
+      manualEntries: allManualEntries,
     };
   } catch (err) {
     console.error('Error calculating Balance Sheet data:', err);
-    // Safe Fallback
+    const zeroBreakdown: MetricBreakdown = { systemAmount: 0, manualAmount: 0, totalAmount: 0 };
     return {
       asOfDate,
       assets: {
-        cashInHand: 0,
-        cashInBank: 0,
-        loansReceivable: 0,
-        activeInvestment: 0,
-        otherAssets: 0,
-        totalAssets: 0,
+        cashInHand: zeroBreakdown,
+        cashInBank: zeroBreakdown,
+        loansReceivable: zeroBreakdown,
+        activeInvestment: zeroBreakdown,
+        otherAssets: zeroBreakdown,
+        totalAssets: zeroBreakdown,
       },
       liabilities: {
-        depositsPayable: 0,
-        otherPayables: 0,
-        totalLiabilities: 0,
+        depositsPayable: zeroBreakdown,
+        otherPayables: zeroBreakdown,
+        totalLiabilities: zeroBreakdown,
       },
       ownersCapital: {
-        totalCapitalAdded: 0,
-        capitalWithdrawn: 0,
-        currentOwnerCapital: 0,
-        retainedEarnings: 0,
-        totalCapitalAndRetained: 0,
+        totalCapitalAdded: zeroBreakdown,
+        capitalWithdrawn: zeroBreakdown,
+        currentOwnerCapital: zeroBreakdown,
+        retainedEarnings: zeroBreakdown,
+        totalCapitalAndRetained: zeroBreakdown,
       },
       summary: {
-        totalAssets: 0,
-        totalLiabilities: 0,
-        ownersCapitalTotal: 0,
+        totalAssets: zeroBreakdown,
+        totalLiabilities: zeroBreakdown,
+        ownersCapitalTotal: zeroBreakdown,
         totalLiabilitiesAndCapital: 0,
-        netPosition: 0,
+        netPosition: zeroBreakdown,
         isBalanced: true,
         difference: 0,
       },
       items: [],
+      manualEntries: [],
     };
   }
 }
+
