@@ -163,35 +163,40 @@ export function FinCollectAIDrawer() {
 
       {/* RIGHT-SIDE JARVIS SLIDE-OVER PANEL */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 overflow-hidden bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsOpen(false);
+          }}
+        >
           <div className="w-full max-w-lg h-full bg-[#070A12]/95 text-white backdrop-blur-2xl border-l border-sky-500/25 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
             {/* JARVIS Header Bar */}
-            <div className="p-4 border-b border-sky-500/20 flex items-center justify-between bg-slate-900/80 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-inner">
-                  <Cpu className="w-5 h-5 text-sky-400" />
+            <div className="p-3.5 sm:p-4 border-b border-sky-500/20 flex items-center justify-between bg-slate-900/80 shrink-0 gap-2">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-inner shrink-0">
+                  <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
                 </div>
-                <div className="flex flex-col leading-tight">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black font-mono tracking-wider text-white">FINCOLLECT AI</h3>
-                    <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded uppercase">
+                <div className="flex flex-col leading-tight min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <h3 className="text-sm sm:text-base font-black font-mono tracking-wider text-white truncate">FINCOLLECT AI</h3>
+                    <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded uppercase shrink-0">
                       [JARVIS.ONLINE]
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono truncate">
                     Multilingual Financial Telemetry OS
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* AI Language Selector */}
-                <div className="relative flex items-center bg-slate-900 border border-sky-500/30 rounded-xl px-2 py-1">
-                  <Languages className="w-3.5 h-3.5 text-sky-400 mr-1" />
+                <div className="relative flex items-center bg-slate-900 border border-sky-500/30 rounded-xl px-2 py-1 max-w-[120px] sm:max-w-none">
+                  <Languages className="w-3.5 h-3.5 text-sky-400 mr-1 shrink-0" />
                   <select
                     value={preferredLang}
                     onChange={(e) => setPreferredLang(e.target.value as SupportedLanguageCode)}
-                    className="bg-transparent text-[11px] font-mono font-bold text-white focus:outline-none cursor-pointer"
+                    className="bg-transparent text-[10px] sm:text-[11px] font-mono font-bold text-white focus:outline-none cursor-pointer truncate"
                   >
                     {ALL_SUPPORTED_LANGUAGES.map(l => (
                       <option key={l.code} value={l.code} className="bg-[#0F172A] text-white">
@@ -201,11 +206,15 @@ export function FinCollectAIDrawer() {
                   </select>
                 </div>
 
+                {/* HUD Minimal Close Button */}
                 <button
+                  type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-sky-500/15 transition-colors"
+                  title="Close FINCOLLECT AI Panel"
+                  aria-label="Close FINCOLLECT AI Panel"
+                  className="w-8 h-8 rounded-full bg-slate-900/90 border border-sky-500/30 text-sky-400 hover:text-cyan-300 hover:border-cyan-400 hover:bg-sky-500/20 hover:shadow-[0_0_12px_rgba(56,189,248,0.35)] active:scale-95 transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 stroke-[2.5]" />
                 </button>
               </div>
             </div>
