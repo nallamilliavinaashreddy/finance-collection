@@ -500,7 +500,7 @@ export async function recordAdjustmentPayment(
         amountPaid,
         0,
         'collection',
-        insertedId,
+        collectionId || insertedId,
         `Adjustment Collection Received from ${custName} (${custId})`,
         paymentDate
       );

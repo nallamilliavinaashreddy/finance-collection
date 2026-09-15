@@ -234,15 +234,15 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
   const asOfDate = asOfDateInput || new Date().toISOString().split('T')[0];
 
   try {
-    // 1. Fetch Loans Receivable (SUM of remaining_balance on active loans)
+    // 1. Fetch Loans Receivable (SUM of balance_amount on active loans)
     const { data: activeLoans, error: loansErr } = await supabase
       .from('loans')
-      .select('remaining_balance, amount_given, is_closed, created_at')
+      .select('balance_amount, amount_given, is_closed, created_at')
       .eq('is_closed', false);
 
     let sysLoansReceivable = 0;
     if (!loansErr && activeLoans) {
-      sysLoansReceivable = activeLoans.reduce((sum, l) => sum + (Number(l.remaining_balance) || 0), 0);
+      sysLoansReceivable = activeLoans.reduce((sum, l) => sum + (Number(l.balance_amount) || 0), 0);
     }
 
     // 2. Fetch Investment Transactions & Central Cash Flow
@@ -263,7 +263,7 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
         const amtOut = Number(tx.amount_out) || 0;
         runBal += amtIn - amtOut;
 
-        const desc = (tx.description || '').toLowerCase();
+        const desc = (tx.remarks || tx.transaction_type || '').toLowerCase();
         if (desc.includes('capital added') || desc.includes('direct investment') || desc.includes('owner capital')) {
           sysTotalCapitalAdded += amtIn;
         } else if (desc.includes('capital withdrawn') || desc.includes('taken capital') || desc.includes('owner withdrawal')) {
@@ -296,10 +296,10 @@ export async function getBalanceSheetData(asOfDateInput?: string): Promise<Balan
     }
 
     // 5. Calculate Retained Earnings (Net Profit from P&L: Loan Interest - Expenses)
-    const { data: collectionsData } = await supabase.from('collections').select('amount');
+    const { data: collectionsData } = await supabase.from('collections').select('amount_paid');
     const { data: expensesData } = await supabase.from('expenses').select('amount');
 
-    const totalCollected = (collectionsData || []).reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const totalCollected = (collectionsData || []).reduce((s, c) => s + (Number(c.amount_paid) || 0), 0);
     const totalExpenses = (expensesData || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
     const sysRetainedEarnings = Math.max(0, totalCollected - totalExpenses);

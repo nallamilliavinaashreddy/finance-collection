@@ -3,9 +3,9 @@ import { Collection, LoanType, InterestType } from '@/types';
 import { CollectionFormData } from '@/lib/validations/collection';
 import { getWeekDateRange, getMonthDateRange } from '@/lib/utils';
 import { decodeLoanType } from '@/lib/actions/loans';
-import { recordInvestmentTransaction } from '@/lib/actions/investment';
+import { recordInvestmentTransaction, deleteInvestmentTransactionByReference } from '@/lib/actions/investment';
 import { recordInterestTransaction, deleteInterestTransactionByCollectionId } from '@/lib/actions/interest';
-import { recordAdjustmentPayment } from '@/lib/actions/adjustment-ledger';
+import { recordAdjustmentPayment, getAdjustmentLoanBalances } from '@/lib/actions/adjustment-ledger';
 
 // 1. Get Collections from Supabase (Joined with loans & customers)
 export async function getCollections(
@@ -288,13 +288,56 @@ export async function deleteCollection(id: string): Promise<{ success: boolean; 
       return { success: false, error: 'Collection record not found.' };
     }
 
+    const loanInfo = coll.loans || {};
+    const loanType: LoanType = decodeLoanType(loanInfo.working_days, loanInfo.loan_type);
+
+    // Delete row from collections table
     const { error: delErr } = await supabase.from('collections').delete().eq('id', id);
     if (delErr) {
       console.error('Supabase delete collection error:', delErr);
       return { success: false, error: delErr.message };
     }
 
-    if (coll.loans) {
+    // Reverse adjustment_ledger payment if it is an adjustment loan
+    if (loanType === 'adjustment' && coll.loan_id) {
+      try {
+        const { data: matchingLedger } = await supabase
+          .from('adjustment_ledger')
+          .select('id')
+          .eq('loan_id', coll.loan_id)
+          .eq('transaction_type', 'payment')
+          .eq('payment_received', coll.amount_paid)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (matchingLedger && matchingLedger.length > 0) {
+          const adjLedgerId = matchingLedger[0].id;
+          await supabase.from('adjustment_ledger').delete().eq('id', adjLedgerId);
+          // Delete investment transaction if referenced by adjustment_ledger id
+          await deleteInvestmentTransactionByReference('collection', adjLedgerId);
+        }
+      } catch (adjDelErr) {
+        console.warn('Notice: Error clearing adjustment_ledger payment on collection delete:', adjDelErr);
+      }
+
+      // Re-evaluate adjustment loan balances
+      try {
+        const adjBalances = await getAdjustmentLoanBalances(coll.loan_id, supabase);
+        const isClosedNow = adjBalances.principalOutstanding <= 0 && adjBalances.accruedInterest <= 0;
+
+        await supabase
+          .from('loans')
+          .update({
+            collected_amount: adjBalances.totalPrincipalPaid,
+            balance_amount: adjBalances.principalOutstanding,
+            is_closed: isClosedNow,
+          })
+          .eq('id', coll.loan_id);
+      } catch (adjBalErr) {
+        console.warn('Notice: Error updating adjustment loan balance on delete:', adjBalErr);
+      }
+    } else if (coll.loans) {
+      // Re-evaluate standard loan balances (Daily, Weekly, Monthly)
       const { data: remainingColls } = await supabase
         .from('collections')
         .select('amount_paid')
@@ -320,6 +363,13 @@ export async function deleteCollection(id: string): Promise<{ success: boolean; 
       await deleteInterestTransactionByCollectionId(id);
     } catch (intDelErr) {
       console.warn('Notice: Failed deleting interest transaction for collection:', id, intDelErr);
+    }
+
+    // Automatically delete investment transaction linked to this collection
+    try {
+      await deleteInvestmentTransactionByReference('collection', id);
+    } catch (invDelErr) {
+      console.warn('Notice: Failed deleting investment transaction for collection:', id, invDelErr);
     }
 
     return { success: true };
