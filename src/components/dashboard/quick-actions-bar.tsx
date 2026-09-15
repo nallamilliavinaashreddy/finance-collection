@@ -14,52 +14,27 @@ import {
 
 export function QuickActionsBar() {
   const actions = [
-    {
-      label: 'Add Customer',
-      href: '/customers',
-      icon: UserPlus,
-      color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500',
-    },
-    {
-      label: 'Create Loan',
-      href: '/loans',
-      icon: Landmark,
-      color: 'bg-[#FF7A00]/10 text-[#FF7A00] border-[#FF7A00]/20 hover:bg-[#FF7A00] hover:text-white',
-    },
-    {
-      label: 'Record Collection',
-      href: '/collections',
-      icon: Receipt,
-      color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-500',
-    },
-    {
-      label: 'Add Expense',
-      href: '/expenses',
-      icon: Wallet,
-      color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500',
-    },
-    {
-      label: 'Add Investment',
-      href: '/investment-khata',
-      icon: PiggyBank,
-      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500',
-    },
+    { label: 'Add Customer', href: '/customers', icon: UserPlus },
+    { label: 'Create Loan', href: '/loans', icon: Landmark },
+    { label: 'Record Collection', href: '/collections', icon: Receipt },
+    { label: 'Add Expense', href: '/expenses', icon: Wallet },
+    { label: 'Add Capital', href: '/investment-khata', icon: PiggyBank },
   ];
 
   return (
-    <Card className="p-4 glass-card-glossy shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <Card className="p-3.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 rounded-xl">
       <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wider">
-        <Zap className="w-4 h-4 text-[#FF7A00]" />
-        <span>Quick Financial Actions:</span>
+        <Zap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+        <span>Quick Actions:</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 w-full sm:w-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full sm:w-auto">
         {actions.map((act) => {
           const Icon = act.icon;
           return (
             <Link key={act.label} href={act.href}>
               <div
-                className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer ${act.color}`}
+                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:bg-blue-600 dark:hover:border-blue-600 text-xs font-semibold transition-colors duration-150 flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span className="truncate">{act.label}</span>

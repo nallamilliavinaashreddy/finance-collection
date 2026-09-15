@@ -15,8 +15,6 @@ import {
   AlertTriangle,
   RefreshCw,
   Printer,
-  Download,
-  SlidersHorizontal,
 } from 'lucide-react';
 
 interface AccountingBookFrameProps {
@@ -51,130 +49,123 @@ export function AccountingBookFrame({
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-12">
+    <div className="flex flex-col gap-5 pb-10">
       {/* Top Header & Navigation Tabs */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
+          <div className="flex items-center gap-2.5 mb-1">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {title}
             </h2>
             {isBalanced ? (
-              <Badge variant="success" className="gap-1.5 py-1 px-2.5 text-xs font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E]" />
-                Books Balanced
+              <Badge variant="outline" className="gap-1 py-0.5 px-2 text-[11px] font-semibold text-emerald-600 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                Balanced
               </Badge>
             ) : (
-              <Badge variant="error" className="gap-1.5 py-1 px-2.5 text-xs font-semibold animate-pulse">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+              <Badge variant="outline" className="gap-1 py-0.5 px-2 text-[11px] font-semibold text-rose-600 border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                 Imbalance: {formatCurrency(difference)}
               </Badge>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-[#94A3B8]">{subtitle}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
         </div>
 
         {/* Statement Switcher & Actions */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Statement Quick Tabs */}
-          <div className="flex items-center bg-slate-100 dark:bg-[#182237] p-1 rounded-xl border border-slate-200 dark:border-[#26344D]">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
             <Link
               href="/trial-balance"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 pathname === '/trial-balance'
-                  ? 'bg-white dark:bg-[#26344D] text-slate-900 dark:text-[#F8FAFC] shadow-sm'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Scale className="w-3.5 h-3.5 text-amber-500" />
+              <Scale className="w-3.5 h-3.5" />
               Trial Balance
             </Link>
             <Link
               href="/profit-loss"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 pathname === '/profit-loss'
-                  ? 'bg-white dark:bg-[#26344D] text-slate-900 dark:text-[#F8FAFC] shadow-sm'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+              <TrendingUp className="w-3.5 h-3.5" />
               Profit & Loss
             </Link>
             <Link
               href="/balance-sheet"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 pathname === '/balance-sheet'
-                  ? 'bg-white dark:bg-[#26344D] text-slate-900 dark:text-[#F8FAFC] shadow-sm'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC]'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
+              <BookOpen className="w-3.5 h-3.5" />
               Balance Sheet
             </Link>
           </div>
 
           {/* Date Picker */}
-          <div className="relative flex items-center">
-            <Calendar className="w-4 h-4 absolute left-3 text-slate-400 dark:text-[#94A3B8] pointer-events-none" />
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xs">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-xs text-slate-400 font-medium hidden sm:inline">As of:</span>
             <input
               type="date"
               value={asOfDate}
               onChange={(e) => onDateChange(e.target.value)}
-              className="h-10 pl-9 pr-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-[#26344D] bg-white dark:bg-[#1B2638] text-slate-900 dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="bg-transparent text-xs font-semibold text-slate-900 dark:text-white focus:outline-none cursor-pointer"
             />
           </div>
 
-          <Button variant="outline" size="md" onClick={onRefresh} className="px-3" title="Refresh Accounting Engine">
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-amber-500' : 'text-slate-500 dark:text-[#94A3B8]'}`} />
+          {/* Refresh Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="h-9 px-3 border-slate-200 dark:border-slate-800"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
 
-          <Button variant="outline" size="md" onClick={handlePrint} className="px-3 hidden sm:flex" title="Print Statement">
-            <Printer className="w-4 h-4 text-slate-500 dark:text-[#94A3B8]" />
+          {/* Print Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            className="h-9 px-3 border-slate-200 dark:border-slate-800 hidden sm:flex"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-500" />
           </Button>
 
           {actions}
         </div>
       </div>
 
-      {/* Traditional Accounting Ledger Book Canvas */}
-      <div className="relative rounded-2xl border border-amber-900/20 dark:border-amber-500/20 bg-[#FFFDF9] dark:bg-[#0F172A] shadow-xl overflow-hidden print:border-none print:shadow-none">
-        {/* Top Ledger Paper Date Header Ribbon */}
-        <div className="bg-amber-100/70 dark:bg-[#1E293B] border-b border-amber-200 dark:border-[#334155] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 font-serif font-bold text-lg shadow-inner">
-              ₹
-            </div>
-            <div>
-              <div className="text-xs font-serif uppercase tracking-widest text-amber-900 dark:text-amber-400 font-bold">
-                FINCOLLECT ACCOUNTING LEDGER BOOK
-              </div>
-              <div className="text-sm font-semibold text-slate-800 dark:text-[#F8FAFC]">
-                {title} • <span className="text-amber-700 dark:text-amber-400 font-serif">{formatDate(asOfDate)}</span>
-              </div>
-            </div>
+      {/* Accounting Book Document Container */}
+      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+        {/* Book Title Banner */}
+        <div className="bg-slate-900 text-white p-4 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
+              Official Accounting Book Statement
+            </span>
+            <h1 className="text-lg font-bold tracking-tight mt-0.5">{title}</h1>
           </div>
-
-          {/* Book Balances Indicator */}
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-2 bg-amber-50 dark:bg-slate-900/60 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-slate-800 font-mono">
-              <span className="text-slate-500 dark:text-slate-400">STATUS:</span>
-              <span className={`font-bold ${isBalanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {isBalanced ? 'EQUAL BALANCED' : 'UNBALANCED'}
-              </span>
-            </div>
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 block font-mono">FINANCIAL PERIOD</span>
+            <span className="text-xs font-semibold text-slate-200">As of {formatDate(asOfDate)}</span>
           </div>
         </div>
 
-        {/* Ledger Content Area */}
-        <div className="p-6 md:p-8">
-          {children}
-        </div>
-
-        {/* Bottom Ledger Footer */}
-        <div className="border-t border-amber-200/60 dark:border-slate-800 px-6 py-3 bg-amber-50/40 dark:bg-slate-950/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-          <div>FinCollect Double-Entry General Ledger Engine</div>
-          <div>Derived from Live Supabase Transaction Logs</div>
-        </div>
+        {/* Statement Content */}
+        <div className="p-4 md:p-6">{children}</div>
       </div>
     </div>
   );

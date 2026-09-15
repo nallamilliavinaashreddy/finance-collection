@@ -17,7 +17,6 @@ interface CollectionPerformanceChartProps {
 }
 
 export function CollectionPerformanceChart({ collections = [] }: CollectionPerformanceChartProps) {
-  // Group collections by day for the last 14 days
   const barData = useMemo(() => {
     const now = new Date();
     const map: Record<string, { displayDate: string; total: number }> = {};
@@ -45,38 +44,38 @@ export function CollectionPerformanceChart({ collections = [] }: CollectionPerfo
   const maxTotal = useMemo(() => Math.max(1, ...barData.map((d) => d.total)), [barData]);
 
   return (
-    <Card className="p-6 glass-panel shadow-xl flex flex-col justify-between gap-6 border-slate-200/80 dark:border-slate-800/80">
-      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-3.5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center text-[#F97316]">
-            <BarChart3 className="w-5 h-5" />
+    <Card className="p-5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between gap-4 rounded-xl">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <BarChart3 className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
-              Collection Distribution
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+              14-Day Collection Stream
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              14-Day Collection Entry Performance Stream
+              Daily collection volume distribution
             </p>
           </div>
         </div>
-        <Badge variant="info" className="font-mono text-[10px]">
-          BAR STREAM
+        <Badge variant="outline" className="font-mono text-[10px] text-slate-500 border-slate-200 dark:border-slate-800">
+          DAILY VOLUME
         </Badge>
       </div>
 
       <div className="w-full h-56 pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
             <XAxis
               dataKey="displayDate"
-              tick={{ fontSize: 10, fill: '#94A3B8' }}
+              tick={{ fontSize: 10, fill: '#64748B' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#94A3B8' }}
+              tick={{ fontSize: 10, fill: '#64748B' }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)}
@@ -85,9 +84,9 @@ export function CollectionPerformanceChart({ collections = [] }: CollectionPerfo
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="p-2.5 rounded-2xl bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl text-xs">
-                      <span className="font-bold text-slate-900 dark:text-white">{label}: </span>
-                      <span className="font-mono font-bold text-[#F97316]">
+                    <div className="p-2.5 rounded-lg bg-slate-900 text-white shadow-md text-xs border border-slate-800">
+                      <span className="font-semibold text-slate-300">{label}: </span>
+                      <span className="font-mono font-bold text-blue-400">
                         {formatCurrency(Number(payload[0]?.value || 0))}
                       </span>
                     </div>
@@ -96,11 +95,12 @@ export function CollectionPerformanceChart({ collections = [] }: CollectionPerfo
                 return null;
               }}
             />
-            <Bar dataKey="total" radius={[8, 8, 0, 0]}>
+            <Bar dataKey="total" radius={[4, 4, 0, 0]}>
               {barData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.total === maxTotal && maxTotal > 0 ? '#F97316' : '#10B981'}
+                  fill={entry.total === maxTotal && maxTotal > 0 ? '#2563EB' : '#3B82F6'}
+                  opacity={entry.total > 0 ? 0.85 : 0.2}
                 />
               ))}
             </Bar>

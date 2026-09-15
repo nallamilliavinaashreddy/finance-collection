@@ -4,7 +4,6 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import { AnimatedNumber } from '@/components/ui/animated-number';
 import {
   Users,
   Landmark,
@@ -14,12 +13,9 @@ import {
   Scale,
   Calendar,
   PiggyBank,
-  TrendingUp,
   FileText,
-  Clock,
-  Sparkles,
   ArrowUpRight,
-  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 
 interface OverallSummary {
@@ -42,225 +38,225 @@ interface BentoGridProps {
 
 export function BentoGrid({ overall, isLoading }: BentoGridProps) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {/* Section Header */}
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center text-[#F97316]">
-            <Sparkles className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-              Financial Command Center
+            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+              Financial Overview
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-              Modular Bento Analytics Grid powered by live database streams
+              Real-time portfolio metrics and daily transaction summary
             </p>
           </div>
         </div>
-        <Badge variant="info" className="font-mono text-[11px] py-1 px-3 shadow-xs">
-          BENTO INTELLIGENCE
+        <Badge variant="outline" className="font-mono text-[10px] border-slate-300 dark:border-slate-800 text-slate-500">
+          LIVE DATA
         </Badge>
       </div>
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Bento Box 1: Total Customers (Wide Span) */}
-        <Card className="p-5 rounded-3xl border border-indigo-200/80 dark:border-indigo-900/50 accent-light-indigo glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Bento Box 1: Total Customers */}
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Total Customers
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Users className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4 flex items-baseline justify-between">
-            <span className="text-3xl font-black text-slate-900 dark:text-white font-sans">
+          <div className="mt-3 flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-slate-900 dark:text-white font-sans">
               {isLoading ? '...' : overall?.totalCustomers ?? 0}
             </span>
-            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
-              Verified Accounts
+            <span className="text-[10px] font-medium text-slate-400">
+              Accounts
             </span>
           </div>
         </Card>
 
         {/* Bento Box 2: Active Loans */}
-        <Card className="p-5 rounded-3xl border border-emerald-200/80 dark:border-emerald-900/50 accent-light-emerald glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Active Loans
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Landmark className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Landmark className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4 flex items-baseline justify-between">
-            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-sans">
+          <div className="mt-3 flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-slate-900 dark:text-white font-sans">
               {isLoading ? '...' : overall?.activeLoansCount ?? 0}
             </span>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-              Yield Generating
+            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+              Active
             </span>
           </div>
         </Card>
 
         {/* Bento Box 3: Active Investment */}
-        <Card className="p-5 rounded-3xl border border-[#F97316]/30 accent-light-gold glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-[#F97316] uppercase tracking-wider">
-              Active Investment
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Active Capital
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-[#F97316]/15 flex items-center justify-center text-[#F97316]">
-              <Wallet className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Wallet className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-[#F97316] font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.activeInvestment ?? 0)}
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 block">
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
               Deployed Capital
             </span>
           </div>
         </Card>
 
         {/* Bento Box 4: Portfolio Interest */}
-        <Card className="p-5 rounded-3xl border border-amber-200/80 dark:border-amber-900/50 accent-light-gold glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-              Portfolio Interest
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Total Interest
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Coins className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <Coins className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-amber-600 dark:text-amber-400 font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.totalInterest ?? 0)}
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 block">
-              Total Interest Earnings
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+              Interest Earnings
             </span>
           </div>
         </Card>
 
         {/* Bento Box 5: Remaining Balance */}
-        <Card className="p-5 rounded-3xl border border-rose-200/80 dark:border-rose-900/50 accent-light-red glass-card-glossy shadow-xl transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">
-              Remaining Balance
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Outstanding Principal
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-rose-500/15 flex items-center justify-center text-rose-600 dark:text-rose-400">
-              <Scale className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <Scale className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.remainingBalance ?? 0)}
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 block">
-              Outstanding Principal Target
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+              Pending Principal Target
             </span>
           </div>
         </Card>
 
         {/* Bento Box 6: Today's Collections */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-white/90 to-white dark:from-emerald-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-emerald-300/80 dark:border-emerald-800/60 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Today&apos;s Collections
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+              Today&apos;s Collection
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-              <ArrowUpRight className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.todaysCollections ?? 0)}
             </span>
-            <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400 font-bold mt-1 block">
-              Live Cash In Received
+            <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 font-medium mt-0.5 block">
+              Live Cash Received
             </span>
           </div>
         </Card>
 
         {/* Bento Box 7: Today's Expenses */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-rose-500/10 via-white/90 to-white dark:from-rose-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-rose-300/80 dark:border-rose-800/60 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Today&apos;s Expenses
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-500">
-              <Receipt className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <Receipt className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-rose-600 dark:text-rose-400 font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.todaysExpenses ?? 0)}
             </span>
-            <span className="text-[10px] text-rose-600/80 dark:text-rose-400 font-bold mt-1 block">
-              Operating Cash Out
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+              Operating Outflow
             </span>
           </div>
         </Card>
 
         {/* Bento Box 8: Today's Stamp Cost */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-violet-500/10 via-white/90 to-white dark:from-violet-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-violet-200/80 dark:border-violet-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-violet-700 dark:text-violet-300 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Today&apos;s Stamp Cost
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-300">
-              <FileText className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <FileText className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-violet-600 dark:text-violet-300 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.todaysStampCost ?? 0)}
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 block">
-              Legal Stamp Paper Expense
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+              Legal Stamp Expense
             </span>
           </div>
         </Card>
 
         {/* Bento Box 9: Today's Chit Pay */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white/90 to-white dark:from-amber-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-amber-300/80 dark:border-amber-800/60 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Today&apos;s Chit Pay
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500">
-              <PiggyBank className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <PiggyBank className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.todaysChitPayments ?? 0)}
             </span>
-            <span className="text-[10px] text-amber-600/80 dark:text-amber-300 font-bold mt-1 block">
-              Daily Chit Installment Out
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+              Daily Chit Installment
             </span>
           </div>
         </Card>
 
         {/* Bento Box 10: This Month Chit Pay */}
-        <Card className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 via-white/90 to-white dark:from-amber-950/30 dark:via-[#0F172A]/90 dark:to-[#0F172A]/95 border border-amber-300/80 dark:border-amber-800/60 shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+        <Card className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               This Month Chit Pay
             </span>
-            <div className="w-9 h-9 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500">
-              <Calendar className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <Calendar className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-amber-600 dark:text-amber-300 font-mono truncate block">
+          <div className="mt-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white font-mono truncate block">
               {isLoading ? '...' : formatCurrency(overall?.thisMonthsChitPayments ?? 0)}
             </span>
-            <span className="text-[10px] text-amber-600/80 dark:text-amber-300 font-bold mt-1 block">
-              Monthly Accumulated Chit Out
+            <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+              Monthly Accumulated Chit
             </span>
           </div>
         </Card>

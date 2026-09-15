@@ -4,31 +4,31 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
+    --background: 210 40% 98%; /* #F8FAFC */
+    --foreground: 222.2 84% 4.9%; /* #0F172A */
+    --card: 0 0% 100%; /* #FFFFFF */
     --card-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%;
+    --primary: 217 91% 60%; /* #2563EB - Refined Fintech Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 210 40% 96.1%; /* #F1F5F9 */
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --border: 214.3 31.8% 91.4%;
+    --muted-foreground: 215.4 16.3% 46.9%; /* #64748B */
+    --border: 214.3 31.8% 91.4%; /* #E2E8F0 */
   }
 
   .dark {
-    --background: 225 43% 4.5%; /* #070A12 - Deep Apple Navy */
+    --background: 222 47% 7%; /* #0B0F17 - Deep Minimal Navy */
     --foreground: 210 40% 98%; /* #F8FAFC */
-    --card: 222 40% 9%; /* #0F172A */
+    --card: 222 40% 11%; /* #111827 - Slate Card */
     --card-foreground: 210 40% 98%;
-    --primary: 262.1 83.3% 57.8%; /* #8B5CF6 */
+    --primary: 217 91% 60%; /* #2563EB - Refined Fintech Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 219 39% 13%; /* #141C2E */
+    --secondary: 217 33% 15%; /* #1E293B */
     --secondary-foreground: 210 40% 98%;
-    --muted: 219 39% 13%;
+    --muted: 217 33% 15%;
     --muted-foreground: 215 20.2% 65.1%; /* #94A3B8 */
-    --border: 217 33% 20%; /* #202C42 */
+    --border: 217 33% 18%; /* #1E293B - Subtle Border */
   }
 }
 
@@ -41,134 +41,68 @@ body {
 }
 
 /* ==========================================================
-   IPHONE-INSPIRED LIQUID GLASS ENGINE & SHINE ANIMATION
+   MINIMAL FINTECH GLASS & PANEL UTILITIES
    ========================================================== */
 
-@keyframes glass-shine-sweep {
-  0% {
-    transform: translateX(-160%) skewX(-20deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.45;
-  }
-  80% {
-    opacity: 0.45;
-  }
-  100% {
-    transform: translateX(260%) skewX(-20deg);
-    opacity: 0;
-  }
-}
-
-/* Base Liquid Glass Panel */
+/* Base Clean Panel */
 .glass-panel,
 .glass-liquid-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.03);
 }
 
 .dark .glass-panel,
 .dark .glass-liquid-panel {
-  background: rgba(13, 19, 34, 0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.55);
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
 }
 
-/* Premium Liquid Glass Card with Apple Spring Motion */
+/* Minimal Fintech Card */
 .glass-card,
 .glass-card-glossy,
 .glass-liquid-card {
   position: relative;
   overflow: hidden;
-  border-radius: 1.5rem; /* 24px iOS radius */
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.82) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 1rem; /* 16px radius */
+  background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
-    0 12px 32px -8px rgba(15, 23, 42, 0.06),
-    0 4px 6px -2px rgba(15, 23, 42, 0.02);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dark .glass-card,
 .dark .glass-card-glossy,
 .dark .glass-liquid-card {
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.88) 0%, rgba(10, 15, 27, 0.92) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(32, 44, 66, 0.8);
-  border-bottom: 1px solid rgba(32, 44, 66, 0.8);
-  box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.1),
-    0 20px 48px -10px rgba(0, 0, 0, 0.7),
-    0 4px 12px -2px rgba(0, 0, 0, 0.4);
-}
-
-/* Subtle Apple Sheen Sweep Overlay */
-.glass-card::before,
-.glass-card-glossy::before,
-.glass-liquid-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.02) 40%,
-    rgba(255, 255, 255, 0.18) 50%,
-    rgba(255, 255, 255, 0.02) 60%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 2;
-  animation: glass-shine-sweep 5s ease-in-out infinite;
+  background: #111827;
+  border: 1px solid rgba(30, 41, 59, 0.85);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
 }
 
 @media (hover: hover) {
   .glass-card:hover,
   .glass-card-glossy:hover,
   .glass-liquid-card:hover {
-    transform: translateY(-6px) scale(1.015);
-    box-shadow: 
-      inset 0 1px 2px 0 rgba(255, 255, 255, 1),
-      0 24px 48px -12px rgba(99, 102, 241, 0.18);
-    border-color: rgba(99, 102, 241, 0.4);
+    border-color: rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
   }
   .dark .glass-card:hover,
   .dark .glass-card-glossy:hover,
   .dark .glass-liquid-card:hover {
-    transform: translateY(-7px) scale(1.015);
-    box-shadow: 
-      inset 0 1px 2px 0 rgba(255, 255, 255, 0.18),
-      0 28px 56px -12px rgba(99, 102, 241, 0.3),
-      0 0 20px 0 rgba(139, 92, 246, 0.15);
-    border-top-color: rgba(139, 92, 246, 0.6);
-    border-left-color: rgba(99, 102, 241, 0.4);
-  }
-  .glass-card:hover::before,
-  .glass-card-glossy:hover::before,
-  .glass-liquid-card:hover::before {
-    animation-duration: 2.8s;
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.5);
   }
 }
 
-/* Custom Tactile Apple Scrollbars */
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -176,50 +110,31 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.4);
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(38, 52, 77, 0.7);
+  background: rgba(51, 65, 85, 0.6);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(37, 99, 235, 0.6);
 }
 
 /* Category Accent Lighting Utilities */
 .accent-light-gold {
-  box-shadow: 0 12px 30px -8px rgba(245, 158, 11, 0.22), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
-  border-top-color: rgba(245, 158, 11, 0.5) !important;
+  border-top: 2px solid rgba(217, 119, 6, 0.8) !important;
 }
 
 .accent-light-emerald {
-  box-shadow: 0 12px 30px -8px rgba(16, 185, 129, 0.22), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
-  border-top-color: rgba(16, 185, 129, 0.5) !important;
+  border-top: 2px solid rgba(22, 163, 74, 0.8) !important;
 }
 
 .accent-light-red {
-  box-shadow: 0 12px 30px -8px rgba(239, 68, 68, 0.22), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
-  border-top-color: rgba(239, 68, 68, 0.5) !important;
+  border-top: 2px solid rgba(220, 38, 38, 0.8) !important;
 }
 
 .accent-light-indigo {
-  box-shadow: 0 12px 30px -8px rgba(99, 102, 241, 0.22), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
-  border-top-color: rgba(99, 102, 241, 0.5) !important;
-}
-
-/* Accessibility: prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  .glass-card::before,
-  .glass-card-glossy::before,
-  .glass-liquid-card::before {
-    animation: none !important;
-  }
-  .glass-card,
-  .glass-card-glossy,
-  .glass-liquid-card {
-    transition: none !important;
-    transform: none !important;
-  }
+  border-top: 2px solid rgba(37, 99, 235, 0.8) !important;
 }

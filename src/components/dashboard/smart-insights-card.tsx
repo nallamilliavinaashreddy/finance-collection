@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import { Sparkles, CheckCircle2, TrendingUp, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Sparkles, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface SmartInsightsCardProps {
   todaysCollections?: number;
@@ -64,30 +64,30 @@ export function SmartInsightsCard({
   }, [todaysCollections, todaysExpenses, activeLoansCount, remainingBalance, netProfit]);
 
   return (
-    <Card className="p-6 glass-panel shadow-xl flex flex-col justify-between gap-4 border-[#FF7A00]/30 bg-gradient-to-br from-amber-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95">
-      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#262626]/80 pb-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#FF7A00]/10 border border-[#FF7A00]/20 flex items-center justify-center text-[#FF7A00]">
-            <Sparkles className="w-4 h-4" />
+    <Card className="p-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col justify-between gap-3.5 rounded-xl">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <Sparkles className="w-3.5 h-3.5" />
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
             Smart Financial Insights
           </h3>
         </div>
-        <Badge variant="warning" className="font-mono text-[10px]">
-          AI ENGINE
+        <Badge variant="outline" className="font-mono text-[10px] text-slate-500 border-slate-200 dark:border-slate-800">
+          ANALYTICS
         </Badge>
       </div>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         {insights.map((ins, idx) => (
           <div
             key={idx}
-            className="p-3 rounded-xl bg-white/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200 font-medium"
+            className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-start gap-2 text-xs text-slate-800 dark:text-slate-200 font-medium"
           >
-            {ins.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />}
-            {ins.type === 'warning' && <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />}
-            {ins.type === 'info' && <ShieldCheck className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />}
+            {ins.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />}
+            {ins.type === 'warning' && <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />}
+            {ins.type === 'info' && <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />}
             <span>{ins.text}</span>
           </div>
         ))}

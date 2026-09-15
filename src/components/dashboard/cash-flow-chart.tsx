@@ -13,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, ArrowUpRight } from 'lucide-react';
 
 interface CollectionItem {
   paymentDate: string;
@@ -28,12 +28,10 @@ interface CashFlowChartProps {
 
 export function CashFlowChart({
   collections = [],
-  todaysExpenses = 0,
   thisMonthsExpenses = 0,
 }: CashFlowChartProps) {
   const [timeRange, setTimeRange] = useState<'7D' | '30D' | '3M' | '6M' | '1Y'>('30D');
 
-  // Build chart dataset grouped by dates
   const chartData = useMemo(() => {
     const now = new Date();
     let daysToInclude = 30;
@@ -44,7 +42,6 @@ export function CashFlowChart({
 
     const dataMap: Record<string, { date: string; displayDate: string; collections: number; expenses: number }> = {};
 
-    // Generate dates working backwards
     for (let i = daysToInclude - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
@@ -56,14 +53,12 @@ export function CashFlowChart({
       dataMap[iso] = { date: iso, displayDate, collections: 0, expenses: 0 };
     }
 
-    // Populate collections
     collections.forEach((c) => {
       if (c.paymentDate && dataMap[c.paymentDate]) {
         dataMap[c.paymentDate].collections += Number(c.amountPaid || 0);
       }
     });
 
-    // Estimate daily expense distribution for smooth baseline
     const dateKeys = Object.keys(dataMap);
     const avgExpensePerDay = dateKeys.length > 0 ? thisMonthsExpenses / Math.max(1, dateKeys.length) : 0;
 
@@ -88,33 +83,33 @@ export function CashFlowChart({
   const netCashFlowInPeriod = totalIncomeInPeriod - totalExpensesInPeriod;
 
   return (
-    <Card className="p-6 glass-card-glossy accent-light-indigo shadow-xl flex flex-col gap-6">
+    <Card className="p-5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col gap-5 rounded-xl">
       {/* Header & Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-[#262626]/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
-            <TrendingUp className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-wide">
-              Cash Flow Intelligence
+            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+              Cash Flow Trend
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Live Income (Collections) vs Operating Expenses & Net Cash Flow
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+              Inflow vs Outflow tracking across active accounting window
             </p>
           </div>
         </div>
 
-        {/* Time Range Selector */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#141414] p-1 rounded-xl border border-slate-200 dark:border-[#262626]">
+        {/* Time Range Filter Pills */}
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
           {(['7D', '30D', '3M', '6M', '1Y'] as const).map((r) => (
             <button
               key={r}
               onClick={() => setTimeRange(r)}
-              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
                 timeRange === r
-                  ? 'bg-[#FF7A00] text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {r}
@@ -123,120 +118,89 @@ export function CashFlowChart({
         </div>
       </div>
 
-      {/* Summary KPI Highlights */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 flex items-center justify-between">
+      {/* Summary KPI Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Income (Collections)
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
+              Inflow Collections
             </span>
-            <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
               {formatCurrency(totalIncomeInPeriod)}
-            </p>
+            </span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-500">
-            <ArrowUpRight className="w-4 h-4" />
-          </div>
+          <ArrowUpRight className="w-4 h-4 text-emerald-500" />
         </div>
 
-        <div className="p-3.5 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex items-center justify-between">
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
-              Operating Expenses
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
+              Outflow Expenses
             </span>
-            <p className="text-lg font-black text-rose-600 dark:text-rose-400 font-mono mt-0.5">
+            <span className="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono">
               {formatCurrency(totalExpensesInPeriod)}
-            </p>
-          </div>
-          <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center text-rose-500">
-            <ArrowDownRight className="w-4 h-4" />
+            </span>
           </div>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-violet-50/60 dark:bg-violet-950/20 border border-violet-200/80 dark:border-violet-900/40 flex items-center justify-between">
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
-              Net Cash Flow
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
+              Net Surplus
             </span>
-            <p className="text-lg font-black text-violet-600 dark:text-violet-300 font-mono mt-0.5">
+            <span className="text-lg font-bold text-blue-600 dark:text-blue-400 font-mono">
               {formatCurrency(netCashFlowInPeriod)}
-            </p>
+            </span>
           </div>
-          <Badge variant={netCashFlowInPeriod >= 0 ? 'success' : 'error'} className="font-mono text-[10px]">
-            {netCashFlowInPeriod >= 0 ? '+POSITIVE' : '-NEGATIVE'}
-          </Badge>
         </div>
       </div>
 
-      {/* Chart Visualization */}
-      <div className="w-full h-72 pt-2">
+      {/* Recharts Area Chart */}
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
-              <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#EF4444" stopOpacity={0.0} />
+              <linearGradient id="colorCollections" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
             <XAxis
               dataKey="displayDate"
-              tick={{ fontSize: 11, fill: '#94A3B8' }}
+              tick={{ fontSize: 10, fill: '#64748B' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: '#94A3B8' }}
+              tick={{ fontSize: 10, fill: '#64748B' }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)}
+              tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
             />
-
             <Tooltip
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
+                  const colls = Number(payload[0]?.value || 0);
                   return (
-                    <div className="p-3 rounded-xl bg-white/95 dark:bg-[#141414]/95 backdrop-blur-xl border border-slate-200 dark:border-[#262626] shadow-xl flex flex-col gap-1 text-xs">
-                      <span className="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-1">
-                        {label}
-                      </span>
-                      <div className="flex justify-between gap-4 text-emerald-600 dark:text-emerald-400 font-medium">
-                        <span>Income (Collections):</span>
-                        <span className="font-bold font-mono">{formatCurrency(Number(payload[0]?.value || 0))}</span>
-                      </div>
-                      <div className="flex justify-between gap-4 text-rose-500 font-medium">
-                        <span>Expenses:</span>
-                        <span className="font-bold font-mono">{formatCurrency(Number(payload[1]?.value || 0))}</span>
-                      </div>
+                    <div className="p-2.5 rounded-lg bg-slate-900 text-white text-xs shadow-md border border-slate-800">
+                      <p className="font-semibold text-slate-300">{label}</p>
+                      <p className="font-bold text-blue-400 mt-1">
+                        Collection: {formatCurrency(colls)}
+                      </p>
                     </div>
                   );
                 }
                 return null;
               }}
             />
-
             <Area
               type="monotone"
               dataKey="collections"
-              name="Income"
-              stroke="#10B981"
-              strokeWidth={2.5}
-              fillOpacity={1}
-              fill="url(#incomeGrad)"
-            />
-            <Area
-              type="monotone"
-              dataKey="expenses"
-              name="Expenses"
-              stroke="#EF4444"
+              stroke="#3B82F6"
               strokeWidth={2}
               fillOpacity={1}
-              fill="url(#expenseGrad)"
+              fill="url(#colorCollections)"
             />
           </AreaChart>
         </ResponsiveContainer>

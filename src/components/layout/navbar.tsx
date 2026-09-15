@@ -42,24 +42,24 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
   const pageTitle = t(pageTitleKey, pathSegment.charAt(0).toUpperCase() + pathSegment.slice(1));
 
   return (
-    <header className="h-18 border-b border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#070B14]/85 backdrop-blur-2xl sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between transition-colors shadow-xs glass-liquid-panel">
+    <header className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#0B0F17]/95 backdrop-blur-md sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between transition-colors shadow-xs">
       {/* Left Section: Mobile Trigger & Page Title */}
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobileNav}
-          className="md:hidden p-2 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-transform active:scale-95"
+          className="md:hidden p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-xs" />
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+          <div className="w-2 h-2 rounded-full bg-blue-600" />
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
             <span>FinCollect</span>
             <span>/</span>
           </div>
-          <h1 className="text-base font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
+          <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
             {pageTitle}
           </h1>
         </div>
@@ -69,72 +69,71 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
       <div className="flex items-center gap-3">
         {/* Global Smart Search */}
         <div className="hidden lg:flex items-center relative">
-          <Search className="w-4 h-4 absolute left-3.5 text-slate-400 dark:text-slate-400 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3 text-slate-400 pointer-events-none" />
           <input
             type="text"
             placeholder={t('nav.searchPlaceholder', 'Smart Search loans, customers...')}
-            className="w-64 h-9.5 pl-10 pr-9 text-xs font-medium rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-slate-900 dark:text-[#F8FAFC] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all backdrop-blur-md"
+            className="w-64 h-9 pl-9 pr-8 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
           />
-          <kbd className="absolute right-3 text-[9px] font-mono font-bold text-slate-400 dark:text-slate-400 bg-slate-200/60 dark:bg-white/10 px-1.5 py-0.5 rounded-md pointer-events-none border border-slate-300/50 dark:border-white/10">
-            ⌘K
-          </kbd>
         </div>
 
         {/* Global Language Selector */}
         <LanguageSelector />
 
-        {/* Notifications Icon with Pulse Badge */}
+        {/* Notifications Icon */}
         <button
-          className="w-9.5 h-9.5 flex items-center justify-center rounded-2xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-150 active:scale-95 relative"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
           title="Notifications"
         >
-          <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-[#070B14] animate-pulse" />
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-blue-600" />
         </button>
 
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        <div className="h-5 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
+        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
-        {/* Admin Profile Dropdown */}
+        {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2.5 p-1.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-[#182237] transition-colors"
+            className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
           >
-            <div className="relative w-8 h-8 rounded-xl bg-gradient-to-tr from-[#A855F7] to-[#6366F1] text-white flex items-center justify-center font-black text-xs shadow-sm">
-              AD
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#22C55E] border-2 border-white dark:border-[#0D1220] rounded-full" />
+            <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center">
+              {getInitials(user?.fullName || 'Admin')}
             </div>
-            <div className="hidden sm:flex flex-col text-left leading-tight">
-              <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">
-                Administrator
+            <div className="hidden sm:flex flex-col">
+              <span className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
+                {user?.fullName || 'Administrator'}
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-[#94A3B8] font-medium">Owner Admin</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase leading-none font-mono">
+                {user?.role || 'admin'}
+              </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-white dark:bg-[#121A2B] border border-slate-200 dark:border-[#26344D] shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 text-xs">
-              <div className="p-3 border-b border-slate-100 dark:border-[#26344D]">
-                <p className="font-bold text-slate-900 dark:text-[#F8FAFC]">Administrator</p>
-                <p className="text-[10px] text-slate-500 dark:text-[#94A3B8] font-mono mt-0.5">admin@fincollect.pro</p>
+            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in duration-150">
+              <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                  {user?.fullName || 'Administrator'}
+                </p>
+                <p className="text-[10px] text-slate-400 truncate">
+                  {user?.email || 'admin@fincollect.app'}
+                </p>
               </div>
-
-              <div className="pt-1">
-                <button
-                  onClick={() => {
-                    setIsProfileOpen(false);
-                    logout();
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-bold text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log Out</span>
+              </button>
             </div>
           )}
         </div>
