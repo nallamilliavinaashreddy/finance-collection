@@ -108,7 +108,7 @@ export function FinCollectCoreHero({
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-space-stone cursor-pointer group">
             <div>
               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-cyan-400 transition-colors">
-                [SPACE STONE // INFLOW] COLLECTIONS
+                [INFLOW] TODAY COLLECTIONS
               </span>
               <span className="text-xl font-bold font-mono text-sky-400">
                 {isLoading ? '...' : <AnimatedNumber value={overall?.todaysCollections ?? 0} formatAsCurrency />}
@@ -122,7 +122,7 @@ export function FinCollectCoreHero({
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-reality-stone cursor-pointer group">
             <div>
               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-rose-400 transition-colors">
-                [REALITY STONE // OUTFLOW] EXPENSES
+                [OUTFLOW] TODAY EXPENSES
               </span>
               <span className="text-xl font-bold font-mono text-rose-400">
                 {isLoading ? '...' : <AnimatedNumber value={overall?.todaysExpenses ?? 0} formatAsCurrency />}
@@ -145,7 +145,7 @@ export function FinCollectCoreHero({
             {/* Central Glowing Core Panel */}
             <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-[#0F172A] via-[#1E293B] to-[#0B0F17] border border-sky-400/40 shadow-[0_0_30px_rgba(56,189,248,0.2)] flex flex-col items-center justify-center p-3 text-center relative z-10 hover-time-stone cursor-pointer transition-all duration-500 group">
               <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-sky-400 mb-1 group-hover:text-emerald-400 transition-colors">
-                [TIME STONE] NET SURPLUS
+                SYSTEM NET SURPLUS
               </span>
               <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-white group-hover:scale-105 transition-transform">
                 {isLoading ? '...' : <AnimatedNumber value={netProfit} formatAsCurrency />}
@@ -163,7 +163,7 @@ export function FinCollectCoreHero({
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-power-stone cursor-pointer group">
             <div>
               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-purple-400 transition-colors">
-                [POWER STONE // PORTFOLIO] ACTIVE LOANS
+                [PORTFOLIO] ACTIVE LOANS
               </span>
               <span className="text-xl font-bold font-mono text-white">
                 {isLoading ? '...' : overall?.activeLoansCount ?? 0} <span className="text-xs text-slate-400 font-normal">Active</span>
@@ -177,7 +177,7 @@ export function FinCollectCoreHero({
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-mind-stone cursor-pointer group">
             <div>
               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-yellow-400 transition-colors">
-                [MIND STONE // CAPITAL] PRINCIPAL
+                [CAPITAL] OUTSTANDING PRINCIPAL
               </span>
               <span className="text-xl font-bold font-mono text-amber-400">
                 {isLoading ? '...' : <AnimatedNumber value={overall?.remainingBalance ?? 0} formatAsCurrency />}

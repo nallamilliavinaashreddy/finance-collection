@@ -63,11 +63,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
 
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Bento Box 1: Total Customers (SOUL STONE) */}
+        {/* Bento Box 1: Total Customers */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-soul-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-orange-400 transition-colors">
-              [SOUL STONE // 01] CUSTOMERS
+              [01] TOTAL CUSTOMERS
             </span>
             <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 group-hover:bg-orange-500/20 group-hover:border-orange-400 transition-all">
               <Users className="w-4 h-4" />
@@ -83,11 +83,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 2: Active Loans (POWER STONE) */}
+        {/* Bento Box 2: Active Loans */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-power-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-purple-400 transition-colors">
-              [POWER STONE // 02] LOANS
+              [02] ACTIVE LOANS
             </span>
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:bg-purple-500/20 group-hover:border-purple-400 transition-all">
               <Landmark className="w-4 h-4" />
@@ -103,11 +103,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 3: Active Investment (SPACE STONE) */}
+        {/* Bento Box 3: Active Investment */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-space-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
-              [SPACE STONE // 03] CAPITAL
+              [03] DEPLOYED CAPITAL
             </span>
             <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 group-hover:bg-sky-500/20 group-hover:border-cyan-400 transition-all">
               <Wallet className="w-4 h-4" />
@@ -123,11 +123,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 4: Portfolio Interest (MIND STONE) */}
+        {/* Bento Box 4: Portfolio Interest */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-mind-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
-              [MIND STONE // 04] INTEREST
+              [04] TARGET INTEREST
             </span>
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-amber-500/20 group-hover:border-yellow-400 transition-all">
               <Coins className="w-4 h-4" />
@@ -143,11 +143,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 5: Remaining Balance (POWER STONE) */}
+        {/* Bento Box 5: Remaining Balance */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-power-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-purple-400 transition-colors">
-              [POWER STONE // 05] BALANCE
+              [05] OUTSTANDING BAL
             </span>
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:bg-purple-500/20 group-hover:border-purple-400 transition-all">
               <Scale className="w-4 h-4" />
@@ -163,11 +163,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 6: Today's Collections (SPACE STONE) */}
+        {/* Bento Box 6: Today's Collections */}
         <Card className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-space-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
-              [SPACE STONE // 06] COLLECTIONS
+              [06] TODAY COLLECTIONS
             </span>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-sky-500/20 group-hover:border-cyan-400 group-hover:text-cyan-400 transition-all">
               <ArrowUpRight className="w-4 h-4" />
@@ -183,11 +183,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 7: Today's Expenses (REALITY STONE) */}
+        {/* Bento Box 7: Today's Expenses */}
         <Card className="p-4 rounded-2xl border border-rose-500/30 bg-rose-950/20 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-reality-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-rose-400 uppercase tracking-wider group-hover:text-rose-300 transition-colors">
-              [REALITY STONE // 07] EXPENSES
+              [07] TODAY EXPENSES
             </span>
             <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:bg-rose-500/30 group-hover:border-rose-400 transition-all">
               <Receipt className="w-4 h-4" />
@@ -203,11 +203,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 8: Today's Stamp Cost (MIND STONE) */}
+        {/* Bento Box 8: Today's Stamp Cost */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-mind-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
-              [MIND STONE // 08] STAMPS
+              [08] STAMP COST
             </span>
             <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 group-hover:bg-amber-500/20 group-hover:border-yellow-400 group-hover:text-amber-400 transition-all">
               <FileText className="w-4 h-4" />
@@ -223,11 +223,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 9: Today's Chit Pay (TIME STONE) */}
+        {/* Bento Box 9: Today's Chit Pay */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-time-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
-              [TIME STONE // 09] DAILY CHIT
+              [09] DAILY CHIT
             </span>
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-emerald-500/20 group-hover:border-emerald-400 group-hover:text-emerald-400 transition-all">
               <PiggyBank className="w-4 h-4" />
@@ -243,11 +243,11 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
           </div>
         </Card>
 
-        {/* Bento Box 10: This Month Chit Pay (TIME STONE) */}
+        {/* Bento Box 10: This Month Chit Pay */}
         <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-time-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
-              [TIME STONE // 10] MONTH CHIT
+              [10] MONTH CHIT PAY
             </span>
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-emerald-500/20 group-hover:border-emerald-400 group-hover:text-emerald-400 transition-all">
               <Calendar className="w-4 h-4" />
