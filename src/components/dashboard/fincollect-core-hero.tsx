@@ -105,31 +105,31 @@ export function FinCollectCoreHero({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10 py-2">
         {/* Left Telemetry Cluster */}
         <div className="lg:col-span-4 flex flex-col gap-3">
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-space-stone cursor-pointer group">
             <div>
-              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
-                [INFLOW] TODAY COLLECTIONS
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-cyan-400 transition-colors">
+                [SPACE STONE // INFLOW] COLLECTIONS
               </span>
               <span className="text-xl font-bold font-mono text-sky-400">
                 {isLoading ? '...' : <AnimatedNumber value={overall?.todaysCollections ?? 0} formatAsCurrency />}
               </span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 font-mono text-xs">
-              +
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 font-mono text-xs group-hover:bg-sky-500/20 group-hover:border-sky-400 transition-all">
+              ⚡
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-reality-stone cursor-pointer group">
             <div>
-              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
-                [OUTFLOW] TODAY EXPENSES
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-rose-400 transition-colors">
+                [REALITY STONE // OUTFLOW] EXPENSES
               </span>
               <span className="text-xl font-bold font-mono text-rose-400">
                 {isLoading ? '...' : <AnimatedNumber value={overall?.todaysExpenses ?? 0} formatAsCurrency />}
               </span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-mono text-xs">
-              -
+            <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-mono text-xs group-hover:bg-rose-500/20 group-hover:border-rose-400 transition-all">
+              🔻
             </div>
           </div>
         </div>
@@ -139,15 +139,15 @@ export function FinCollectCoreHero({
           <div className="relative w-52 h-52 sm:w-60 sm:h-60 flex items-center justify-center">
             {/* Outer Concentric Arc Rings */}
             <div className="absolute inset-0 rounded-full border border-sky-500/20 arc-reactor-ring border-t-sky-400 border-r-blue-500" />
-            <div className="absolute inset-3 rounded-full border border-sky-500/15 arc-reactor-reverse border-b-cyan-400 border-l-indigo-500" />
+            <div className="absolute inset-3 rounded-full border border-sky-500/15 arc-reactor-reverse border-b-emerald-400 border-l-purple-500" />
             <div className="absolute inset-6 rounded-full border border-dashed border-sky-500/25 arc-reactor-ring" />
 
             {/* Central Glowing Core Panel */}
-            <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-[#0F172A] via-[#1E293B] to-[#0B0F17] border border-sky-400/40 shadow-[0_0_30px_rgba(56,189,248,0.2)] flex flex-col items-center justify-center p-3 text-center relative z-10">
-              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-sky-400 mb-1">
-                SYSTEM NET SURPLUS
+            <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-[#0F172A] via-[#1E293B] to-[#0B0F17] border border-sky-400/40 shadow-[0_0_30px_rgba(56,189,248,0.2)] flex flex-col items-center justify-center p-3 text-center relative z-10 hover-time-stone cursor-pointer transition-all duration-500 group">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-sky-400 mb-1 group-hover:text-emerald-400 transition-colors">
+                [TIME STONE] NET SURPLUS
               </span>
-              <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-white">
+              <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-white group-hover:scale-105 transition-transform">
                 {isLoading ? '...' : <AnimatedNumber value={netProfit} formatAsCurrency />}
               </span>
               <span className="text-[9px] font-mono text-emerald-400 font-semibold mt-1 flex items-center gap-1">
@@ -160,31 +160,31 @@ export function FinCollectCoreHero({
 
         {/* Right Telemetry Cluster */}
         <div className="lg:col-span-4 flex flex-col gap-3">
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-power-stone cursor-pointer group">
             <div>
-              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
-                [PORTFOLIO] ACTIVE LOANS
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-purple-400 transition-colors">
+                [POWER STONE // PORTFOLIO] ACTIVE LOANS
               </span>
               <span className="text-xl font-bold font-mono text-white">
                 {isLoading ? '...' : overall?.activeLoansCount ?? 0} <span className="text-xs text-slate-400 font-normal">Active</span>
               </span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-mono text-xs">
-              #
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-mono text-xs group-hover:bg-purple-500/20 group-hover:border-purple-400 transition-all">
+              🔮
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-sky-500/15 backdrop-blur-md flex items-center justify-between hover-mind-stone cursor-pointer group">
             <div>
-              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
-                [CAPITAL] OUTSTANDING PRINCIPAL
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block group-hover:text-yellow-400 transition-colors">
+                [MIND STONE // CAPITAL] PRINCIPAL
               </span>
               <span className="text-xl font-bold font-mono text-amber-400">
                 {isLoading ? '...' : <AnimatedNumber value={overall?.remainingBalance ?? 0} formatAsCurrency />}
               </span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-mono text-xs">
-              ★
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-mono text-xs group-hover:bg-amber-500/20 group-hover:border-yellow-400 transition-all">
+              💎
             </div>
           </div>
         </div>
