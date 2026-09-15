@@ -440,9 +440,8 @@ export default function DashboardPage() {
       {/* ================================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CashFlowChart
-          collections={daily?.recentCollections}
-          todaysExpenses={overall?.todaysExpenses}
-          thisMonthsExpenses={overall?.thisMonthsExpenses}
+          collections={data?.allCollections}
+          expenses={data?.allExpenses}
         />
         <CollectionPerformanceChart collections={daily?.recentCollections} />
       </div>

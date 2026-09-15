@@ -45,6 +45,19 @@ export interface AdjustmentSectionMetrics {
   activeLoans: Loan[];
 }
 
+export interface DashboardExpenseItem {
+  id: string;
+  expenseDate: string;
+  amount: number;
+  category?: string;
+}
+
+export interface DashboardCollectionItem {
+  id: string;
+  paymentDate: string;
+  amountPaid: number;
+}
+
 export interface CategorizedDashboardData {
   overallSummary: OverallSummary;
   profitLoss: ProfitAndLossMetrics;
@@ -52,6 +65,8 @@ export interface CategorizedDashboardData {
   weeklySection: TypeSectionMetrics;
   monthlySection: TypeSectionMetrics;
   adjustmentSection: AdjustmentSectionMetrics;
+  allExpenses: DashboardExpenseItem[];
+  allCollections: DashboardCollectionItem[];
 }
 
 export async function getDashboardData(): Promise<{
@@ -103,9 +118,17 @@ export async function getDashboardData(): Promise<{
     let todaysExpenses = 0;
     let thisMonthsExpenses = 0;
     let totalExpensesSum = 0;
+    let formattedExpensesList: DashboardExpenseItem[] = [];
     try {
       const { data: expData, error: expErr } = await supabase.from('expenses').select('*');
       if (!expErr && expData) {
+        formattedExpensesList = expData.map((e: any) => ({
+          id: e.id,
+          expenseDate: e.expense_date,
+          amount: Number(e.amount || 0),
+          category: e.category,
+        }));
+
         todaysExpenses = expData
           .filter((e: any) => e.expense_date === todayISO)
           .reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0);
@@ -237,6 +260,12 @@ export async function getDashboardData(): Promise<{
       };
     });
 
+    const formattedCollectionsList: DashboardCollectionItem[] = allFormattedCollections.map((c) => ({
+      id: c.id,
+      paymentDate: c.paymentDate,
+      amountPaid: c.amountPaid,
+    }));
+
     // Format adjustment ledger items
     const allLedgerItems: AdjustmentLedgerItem[] = (rawLedger || []).map((item: any) => ({
       id: item.id,
@@ -248,33 +277,40 @@ export async function getDashboardData(): Promise<{
       interestAdded: Number(item.interest_added || 0),
       paymentReceived: Number(item.payment_received || 0),
       closingBalance: Number(item.closing_balance || 0),
-      remarks: item.remarks || undefined,
+      remarks: item.remarks,
       createdAt: item.created_at,
     }));
 
-    // 1. OVERALL SUMMARY
-    const activeLoansList = allFormattedLoans.filter((l) => !l.isClosed);
-    const activeLoansInvestment = activeLoansList.reduce((sum, l) => sum + l.amountGiven, 0);
-    // Active Investment = Owner Capital from Investment Khata if available (> 0), else active loans principal
-    const activeInvestment = totalInvestmentCapital > 0 ? totalInvestmentCapital : activeLoansInvestment;
+    // Filter Active Loans
+    const activeLoansList = allFormattedLoans.filter((l) => !l.isClosed && l.balanceAmount > 0);
 
-    const overallTotalGiven = allFormattedLoans.reduce((sum, l) => sum + l.amountGiven, 0);
-    const overallTotalTarget = allFormattedLoans.reduce((sum, l) => sum + l.totalCollectionAmount, 0);
-    const overallTotalCollected = allFormattedLoans.reduce((sum, l) => sum + l.collectedAmount, 0);
-    const overallRemaining = Math.max(0, overallTotalTarget - overallTotalCollected);
-    const overallTodaysColl = allFormattedCollections
+    // Compute Overall Summary Metrics
+    const activeLoansCount = activeLoansList.length;
+
+    // Investment Capital = SUM(amountGiven) of Active Loans
+    const activeInvestmentSum = activeLoansList.reduce((sum, l) => sum + l.amountGiven, 0);
+
+    // Interest Target = SUM(totalCollectionAmount - amountGiven) of Active Loans
+    const activeInterestTargetSum = activeLoansList.reduce(
+      (sum, l) => sum + (l.totalCollectionAmount - l.amountGiven),
+      0
+    );
+
+    // Remaining Balance = SUM(balanceAmount) of Active Loans
+    const activeRemainingBalanceSum = activeLoansList.reduce((sum, l) => sum + l.balanceAmount, 0);
+
+    // Today's Collections
+    const todaysCollectionsSum = allFormattedCollections
       .filter((c) => c.paymentDate === todayISO)
       .reduce((sum, c) => sum + c.amountPaid, 0);
 
-    const totalInterest = Math.max(0, overallTotalTarget - overallTotalGiven);
-
     const overallSummary: OverallSummary = {
       totalCustomers: totalCustomersCount || 0,
-      activeLoansCount: activeLoansList.length,
-      activeInvestment,
-      totalInterest,
-      remainingBalance: overallRemaining,
-      todaysCollections: overallTodaysColl,
+      activeLoansCount,
+      activeInvestment: activeInvestmentSum,
+      totalInterest: activeInterestTargetSum,
+      remainingBalance: activeRemainingBalanceSum,
+      todaysCollections: todaysCollectionsSum,
       todaysExpenses,
       thisMonthsExpenses,
       todaysStampCost,
@@ -283,60 +319,51 @@ export async function getDashboardData(): Promise<{
       thisMonthsChitPayments,
     };
 
-    // 2. PROFIT & LOSS CALCULATIONS
-    // Formula: Net Profit = Loan Interest - Investment Interest - Expenses
-    // Loan Interest: Total interest earned from active loans
-    const loanInterest = activeLoansList.reduce(
-      (sum, l) => sum + Math.max(0, l.totalCollectionAmount - l.amountGiven),
-      0
-    );
+    // Calculate Loan Interest Earned (Total Collections across all settled/active loans - Total Principal)
+    const totalCollectionsAllTime = allFormattedCollections.reduce((sum, c) => sum + c.amountPaid, 0);
+    const loanInterestEarned = Math.max(0, totalCollectionsAllTime - activeInvestmentSum);
 
-    // Investment Interest: Total daily simple interest cost on owner's capital
-    const investmentInterest = investmentInterestCost;
-
-    // Expenses: Total operational expenses (Stamps and Chits are excluded)
-    const totalExpenses = totalExpensesSum;
-
-    // Net Profit / Loss
-    const netProfit = Math.round((loanInterest - investmentInterest - totalExpenses) * 100) / 100;
+    const netProfitVal = loanInterestEarned - (investmentInterestCost + totalExpensesSum);
 
     const profitLoss: ProfitAndLossMetrics = {
-      totalInvestment: totalInvestmentCapital > 0 ? totalInvestmentCapital : activeLoansInvestment,
-      loanInterest: Math.round(loanInterest * 100) / 100,
-      investmentInterest: Math.round(investmentInterest * 100) / 100,
-      totalExpenses: Math.round(totalExpenses * 100) / 100,
-      netProfit,
+      totalInvestment: totalInvestmentCapital,
+      loanInterest: loanInterestEarned,
+      investmentInterest: investmentInterestCost,
+      totalExpenses: totalExpensesSum,
+      netProfit: netProfitVal,
     };
 
-    // Helper to compute type section metrics (Daily, Weekly, Monthly)
-    const computeTypeSection = (type: LoanType): TypeSectionMetrics => {
+    // Categorize Sections by Loan Type
+    const buildSectionMetrics = (type: LoanType): TypeSectionMetrics => {
       const typeLoans = allFormattedLoans.filter((l) => l.loanType === type);
-      const activeLoans = typeLoans.filter((l) => !l.isClosed);
-      const investment = activeLoans.reduce((sum, l) => sum + l.amountGiven, 0);
+      const activeTypeLoans = typeLoans.filter((l) => !l.isClosed && l.balanceAmount > 0);
+      const typeInvestment = activeTypeLoans.reduce((sum, l) => sum + l.amountGiven, 0);
+      const typeInterest = activeTypeLoans.reduce(
+        (sum, l) => sum + (l.totalCollectionAmount - l.amountGiven),
+        0
+      );
 
-      const given = typeLoans.reduce((sum, l) => sum + l.amountGiven, 0);
-      const target = typeLoans.reduce((sum, l) => sum + l.totalCollectionAmount, 0);
-      const interest = Math.max(0, target - given);
-
-      const typeColls = allFormattedCollections.filter((c) => c.loanType === type);
+      const typeColls = allFormattedCollections
+        .filter((c) => c.loanType === type)
+        .slice(0, 5);
 
       return {
-        activeLoansCount: activeLoans.length,
+        activeLoansCount: activeTypeLoans.length,
         totalLoansCount: typeLoans.length,
-        investment,
-        interest,
-        recentCollections: typeColls.slice(0, 5),
-        activeLoans: activeLoans.slice(0, 5),
+        investment: typeInvestment,
+        interest: typeInterest,
+        recentCollections: typeColls,
+        activeLoans: activeTypeLoans.slice(0, 5),
       };
     };
 
-    const dailySection = computeTypeSection('daily');
-    const weeklySection = computeTypeSection('weekly');
-    const monthlySection = computeTypeSection('monthly');
+    const dailySection = buildSectionMetrics('daily');
+    const weeklySection = buildSectionMetrics('weekly');
+    const monthlySection = buildSectionMetrics('monthly');
 
-    // ADJUSTMENT LOANS SECTION
+    // Adjustment Loan Section
     const adjLoans = allFormattedLoans.filter((l) => l.loanType === 'adjustment');
-    const activeAdjLoans = adjLoans.filter((l) => !l.isClosed);
+    const activeAdjLoans = adjLoans.filter((l) => !l.isClosed && l.balanceAmount > 0);
     const adjInvestment = activeAdjLoans.reduce((sum, l) => sum + l.amountGiven, 0);
     const outstandingBalance = activeAdjLoans.reduce((sum, l) => sum + l.balanceAmount, 0);
 
@@ -358,6 +385,8 @@ export async function getDashboardData(): Promise<{
         weeklySection,
         monthlySection,
         adjustmentSection,
+        allExpenses: formattedExpensesList,
+        allCollections: formattedCollectionsList,
       },
     };
   } catch (err: any) {
