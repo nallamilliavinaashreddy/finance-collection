@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { queryFinCollectAI, AIResponse } from '@/lib/actions/ai-assistant';
 import { FormattedAIResponse } from './formatted-ai-response';
 import { useToast } from '@/components/providers/toast-provider';
+import { ALL_SUPPORTED_LANGUAGES, SupportedLanguageCode } from '@/lib/ai/multilingual-lexicon';
 import {
   Bot,
   Sparkles,
@@ -14,13 +15,8 @@ import {
   Send,
   Copy,
   Check,
-  TrendingUp,
-  Coins,
-  Receipt,
-  Wallet,
-  Scale,
+  Languages,
   RefreshCw,
-  Zap,
   Compass,
 } from 'lucide-react';
 
@@ -35,11 +31,12 @@ interface ChatMessage {
 export function FinCollectAIDrawer() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [preferredLang, setPreferredLang] = useState<SupportedLanguageCode>('auto');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       sender: 'ai',
-      text: `Hello, Administrator 👋\n\nI am **FinCollect AI**, your intelligent financial copilot. Ask me anything about your active loans, collections, operating expenses, or investment cash flows.`,
+      text: `Hello, Administrator 👋\n\nI am **FinCollect AI**, your Pan-India financial assistant. I support **22 Scheduled Indian Languages** (తెలుగు, हिन्दी, தமிழ், ಕನ್ನಡ, മലയാളം, मराठी, বাংলা, ગુજરાતી, ਪੰਜਾਬੀ, ଓଡ଼ିଆ, অসমীয়া, اردو, etc.) + English & transliterated queries.`,
       category: 'general',
       timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     },
@@ -51,7 +48,6 @@ export function FinCollectAIDrawer() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
-  // Compute active page context tag
   const pageSegment = pathname.split('/')[1] || 'dashboard';
   const pageContextTitle =
     pageSegment.charAt(0).toUpperCase() + pageSegment.slice(1).replace('-', ' ');
@@ -80,84 +76,15 @@ export function FinCollectAIDrawer() {
 
     if (!queryToSend) setInputQuery('');
 
-    const lower = text.toLowerCase().trim();
-
-    // ----------------------------------------------------
-    // CLIENT INSTANT INTERCEPT FOR GREETINGS & SIMPLE MESSAGES (< 2ms)
-    // ----------------------------------------------------
-    const greetingSet = new Set(['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good afternoon', 'hi there', 'hello ai']);
-    const thanksSet = new Set(['thanks', 'thank you', 'thanks!', 'thank you!', 'dhanyavadagalu', 'thanks bro', 'thx']);
-    const helpSet = new Set(['help', 'help me', 'what can you do', 'options', 'menu']);
-    const byeSet = new Set(['bye', 'goodbye', 'ok', 'okay', 'cya']);
-
-    if (greetingSet.has(lower)) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: `Hello, Administrator 👋 How can I assist you with your FinCollect financial analytics today?\n\n→ Show today's collection\n→ Show highest pending loan\n→ Show business net profit`,
-          category: 'general',
-          timestamp: userTimestamp,
-        },
-      ]);
-      return;
-    }
-
-    if (thanksSet.has(lower)) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: `You're very welcome! Let me know whenever you need more financial insights or reports.\n\n→ Show today's collection\n→ Analyze Dashboard`,
-          category: 'general',
-          timestamp: userTimestamp,
-        },
-      ]);
-      return;
-    }
-
-    if (helpSet.has(lower)) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: `I am **FinCollect AI**, your intelligent financial copilot. You can ask me:\n- **Collections**: *What is today's collection?*, *Show weekly collection*\n- **Loans**: *Which loan has the highest pending balance?*, *Show active loans*\n- **Expenses**: *What are today's expenses?*\n- **Investment**: *What is my investment balance?*\n\n→ Analyze Dashboard\n→ Today's collection entha?`,
-          category: 'general',
-          timestamp: userTimestamp,
-        },
-      ]);
-      return;
-    }
-
-    if (byeSet.has(lower)) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: `Goodbye, Administrator! I am here whenever you need real-time business insights.`,
-          category: 'general',
-          timestamp: userTimestamp,
-        },
-      ]);
-      return;
-    }
-
-    // ----------------------------------------------------
-    // FINANCIAL DATA QUERIES (WITH 6-SECOND TIMEOUT RACE)
-    // ----------------------------------------------------
     setIsLoading(true);
 
     try {
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), 6000)
+        setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), 8000)
       );
 
       const res = await Promise.race([
-        queryFinCollectAI(text, pageSegment),
+        queryFinCollectAI(text, pageSegment, preferredLang),
         timeoutPromise,
       ]) as AIResponse;
 
@@ -177,8 +104,8 @@ export function FinCollectAIDrawer() {
 
       const errorText =
         err.message === 'REQUEST_TIMEOUT'
-          ? `⚠️ I'm having trouble processing that request right now due to a network timeout. Please click below to try again.\n\n→ ${text}`
-          : `⚠️ An error occurred while retrieving your financial data. Please click below to retry.\n\n→ ${text}`;
+          ? `⚠️ Request timed out. Please click to retry.\n\n→ ${text}`
+          : `⚠️ An error occurred while fetching data. Please retry.\n\n→ ${text}`;
 
       setMessages((prev) => [
         ...prev,
@@ -203,19 +130,20 @@ export function FinCollectAIDrawer() {
   };
 
   const quickPrompts = [
-    { label: '📊 Analyze Dashboard', query: 'What is my current net profit and business overview?' },
-    { label: '💰 Today\'s Collection', query: 'What is today\'s total collection?' },
-    { label: '📅 Weekly Collection', query: 'Show my total collection for this week' },
-    { label: '🗓 Monthly Collection', query: 'Show my total collection for this month' },
-    { label: '⚠️ Pending Loans', query: 'Which loans have the highest pending balance?' },
-    { label: '📈 Investment Summary', query: 'What is my current investment balance and cash flow?' },
-    { label: '💸 Expense Analysis', query: 'What are today\'s expenses?' },
-    { label: '🤝 Settlement Insights', query: 'Which loans are close to settlement?' },
+    { label: '💰 Today Collection', query: 'Today collection entha?' },
+    { label: 'आज कितना कलेक्शन हुआ?', query: 'आज कितना कलेक्शन हुआ?' },
+    { label: 'இன்று எவ்வளவு collection?', query: 'இன்று எவ்வளவு collection வந்தது?' },
+    { label: '👥 Total Customers', query: 'How many customers are there?' },
+    { label: '💵 Cash in Hand', query: 'Cash in hand entha undi?' },
+    { label: '🏦 Active Loans', query: 'How many active loans?' },
+    { label: '⚖️ Financial Statements', query: 'Show financial statements overview' },
   ];
+
+  const currentLangObj = ALL_SUPPORTED_LANGUAGES.find(l => l.code === preferredLang) || ALL_SUPPORTED_LANGUAGES[0];
 
   return (
     <>
-      {/* FLOATING ACTION BUTTON (FAB) - iOS Liquid Glass Pill */}
+      {/* FLOATING ACTION BUTTON (FAB) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-indigo-500/20 backdrop-blur-xl border border-white/20"
@@ -231,7 +159,7 @@ export function FinCollectAIDrawer() {
         <Sparkles className="w-3.5 h-3.5 text-indigo-200 animate-pulse" />
       </button>
 
-      {/* RIGHT-SIDE SLIDE-OVER AI PANEL - iOS Liquid Glass Sheet */}
+      {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 dark:bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200">
           <div className="w-full max-w-lg h-full bg-white/95 dark:bg-[#070B14]/95 text-slate-900 dark:text-[#F8FAFC] backdrop-blur-2xl border-l border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
@@ -245,30 +173,48 @@ export function FinCollectAIDrawer() {
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-black tracking-tight text-[#F8FAFC]">FinCollect AI</h3>
                     <Badge variant="success" className="text-[9px] py-0 px-1.5 font-mono">
-                      ● AI READY
+                      ● PAN-INDIA
                     </Badge>
                   </div>
                   <span className="text-[10px] text-[#94A3B8] font-medium">
-                    Your Intelligent Financial Assistant
+                    22 Languages + Transliteration
                   </span>
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#2A3652]/50 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* AI Language Selector */}
+                <div className="relative flex items-center bg-[#182237] border border-[#2A3652] rounded-xl px-2 py-1">
+                  <Languages className="w-3.5 h-3.5 text-[#C084FC] mr-1" />
+                  <select
+                    value={preferredLang}
+                    onChange={(e) => setPreferredLang(e.target.value as SupportedLanguageCode)}
+                    className="bg-transparent text-[11px] font-bold text-[#F8FAFC] focus:outline-none cursor-pointer"
+                  >
+                    {ALL_SUPPORTED_LANGUAGES.map(l => (
+                      <option key={l.code} value={l.code} className="bg-[#0F172A] text-white">
+                        {l.flag} {l.nativeName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#2A3652]/50 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Page Context Banner */}
             <div className="px-4 py-2 border-b border-[#2A3652] bg-[#182237]/60 flex items-center justify-between text-[11px] text-[#94A3B8] font-medium shrink-0">
               <div className="flex items-center gap-1.5">
                 <Compass className="w-3.5 h-3.5 text-[#C084FC]" />
-                <span>Currently analyzing: <strong className="text-[#F8FAFC] font-bold">{pageContextTitle}</strong></span>
+                <span>Context: <strong className="text-[#F8FAFC] font-bold">{pageContextTitle}</strong></span>
               </div>
-              <span className="font-mono text-[9px] text-[#22C55E]">Read-Only Safety On</span>
+              <span className="font-mono text-[9px] text-[#22C55E]">Target: {currentLangObj.name}</span>
             </div>
 
             {/* Quick Prompts Bar */}
@@ -332,7 +278,7 @@ export function FinCollectAIDrawer() {
               {isLoading && (
                 <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-[#182237] border border-[#2A3652] text-xs text-[#94A3B8] shadow-md">
                   <RefreshCw className="w-4 h-4 animate-spin text-[#8B5CF6]" />
-                  <span className="font-semibold text-[#F8FAFC]">🤖 FinCollect AI is analyzing your financial data...</span>
+                  <span className="font-semibold text-[#F8FAFC]">🤖 FinCollect AI processing multilingual query...</span>
                 </div>
               )}
 
@@ -350,7 +296,7 @@ export function FinCollectAIDrawer() {
               >
                 <textarea
                   rows={2}
-                  placeholder="Ask FinCollect AI about your business... (Press Enter to send, Shift+Enter for newline)"
+                  placeholder="Ask in English, తెలుగు, हिन्दी, தமிழ், ಕನ್ನಡ, or transliteration... (Press Enter to send)"
                   value={inputQuery}
                   onChange={(e) => setInputQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -371,7 +317,7 @@ export function FinCollectAIDrawer() {
                 </Button>
               </form>
               <span className="text-[9px] text-[#94A3B8] block text-center font-mono">
-                FinCollect AI operates in Read-Only Safety Mode.
+                Supports 22 Scheduled Indian Languages in Read-Only Safety Mode.
               </span>
             </div>
           </div>

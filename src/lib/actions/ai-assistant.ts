@@ -8,6 +8,9 @@ import { getFinancialStatements } from './accounting';
 import { getInvestmentMetrics } from './investment';
 import { getAdjustmentLoanBalances } from './adjustment-ledger';
 import { decodeLoanType } from './loans';
+import { SupportedLanguageCode, FINANCIAL_LEXICON } from '@/lib/ai/multilingual-lexicon';
+import { detectLanguage } from '@/lib/ai/language-detector';
+import { MultilingualResponseFormatter } from '@/lib/ai/response-templates';
 
 export interface AIResponse {
   success: boolean;
@@ -17,17 +20,19 @@ export interface AIResponse {
   timestamp: string;
   performanceMs?: number;
   error?: string;
+  detectedLanguage?: SupportedLanguageCode;
 }
 
 // Lightweight cache for identical queries within 5 seconds
 const responseCache: Record<string, { data: AIResponse; expiry: number }> = {};
 
 /**
- * Universal FinCollect AI Assistant: Direct Database Query Router + Accounting Engine Alignment
+ * Universal FinCollect AI Assistant: Pan-India Multilingual Direct DB Router
  */
 export async function queryFinCollectAI(
   rawQuery: string,
-  pageContext: string = 'dashboard'
+  pageContext: string = 'dashboard',
+  preferredLanguage: SupportedLanguageCode = 'auto'
 ): Promise<AIResponse> {
   const startTime = performance.now();
   const timestamp = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -35,12 +40,16 @@ export async function queryFinCollectAI(
   if (!rawQuery || !rawQuery.trim()) {
     return {
       success: true,
-      message: 'Please ask a question about your business (e.g. *"How many customers are there?"*, *"Today collection entha?"*, *"Ramesh balance entha?"*).',
+      message: 'Please ask a question about your business (e.g. *"How many customers are there?"*, *"Today collection entha?"*, *"आज कितना कलेक्शन हुआ?"*, *"இன்று எவ்வளவு collection வந்தது?"*).',
       suggestedFollowUps: ['How many customers are there?', "What is today's collection?", 'How many active loans?'],
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
+
+  // Detect Language & Script
+  const langDetection = detectLanguage(rawQuery, preferredLanguage);
+  const targetLang = langDetection.effectiveCode;
 
   const query = rawQuery.toLowerCase().trim();
   const bounds = getAIDateBounds();
@@ -55,6 +64,7 @@ export async function queryFinCollectAI(
       message: '🔒 **Security Guard**: FinCollect AI operates in **READ-ONLY mode**. It cannot create, modify, or delete database records. Please use the application modules to record transactions.',
       category: 'general',
       timestamp,
+      detectedLanguage: targetLang,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
@@ -62,17 +72,17 @@ export async function queryFinCollectAI(
   // ----------------------------------------------------
   // STEP 1: DETERMINISTIC GREETINGS & SIMPLE MESSAGES
   // ----------------------------------------------------
-  const greetingSet = new Set(['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good afternoon', 'hi there', 'hello ai']);
-  const thanksSet = new Set(['thanks', 'thank you', 'thanks!', 'thank you!', 'dhanyavadagalu', 'thanks bro', 'thx']);
-  const helpSet = new Set(['help', 'help me', 'what can you do', 'options', 'menu']);
-  const byeSet = new Set(['bye', 'goodbye', 'ok', 'okay', 'cya']);
+  const greetingSet = new Set(['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good afternoon', 'hi there', 'hello ai', 'హలో', 'నమస్తే', 'नमस्ते', 'வணக்கம்', 'ನಮಸ್ಕಾರ']);
+  const thanksSet = new Set(['thanks', 'thank you', 'thanks!', 'thank you!', 'dhanyavadagalu', 'thanks bro', 'thx', 'ధన్యవాదాలు', 'धन्यवाद', 'நன்றி', 'ಧನ್ಯವಾದಗಳು']);
+  const helpSet = new Set(['help', 'help me', 'what can you do', 'options', 'menu', 'సహాయం', 'मदद', 'உதவி']);
 
   if (greetingSet.has(query)) {
     return {
       success: true,
-      message: `Hello! 👋 How can I assist you with your FinCollect financial data today?\n\n→ Total customers entha mandi?\n→ Today collection entha?\n→ Cash in hand entha undi?\n→ Ramesh balance entha?`,
+      message: `Hello! 👋 How can I assist you with your FinCollect financial data today?\n\n→ Total customers entha mandi?\n→ Today collection entha?\n→ आज कितना कलेक्शन हुआ?\n→ இன்று எவ்வளவு collection வந்தது?`,
       category: 'general',
       timestamp,
+      detectedLanguage: targetLang,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
@@ -83,6 +93,7 @@ export async function queryFinCollectAI(
       message: `You're very welcome! Ask me anytime you need financial insights or customer balance updates.`,
       category: 'general',
       timestamp,
+      detectedLanguage: targetLang,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
@@ -90,25 +101,16 @@ export async function queryFinCollectAI(
   if (helpSet.has(query)) {
     return {
       success: true,
-      message: `I am **FinCollect AI**, your real-time financial assistant. I understand English & Telugu transliteration:\n\n- 👥 **Customers**: *"How many customers are there?"*, *"Ramesh balance entha?"*\n- 💰 **Collections**: *"Today collection entha?"*, *"Show today's transactions"*\n- 📖 **Day Book**: *"What is today's opening balance?"*, *"Today closing balance"* \n- 🏦 **Loans**: *"How many active loans?"*, *"Which loans are fully settled?"*\n- ⚖️ **Accounting**: *"Total assets entha?"*, *"Cash in hand entha undi?"*, *"Today profit/loss?"*\n- 💸 **Expenses**: *"Today expenses entha?"*`,
+      message: `I am **FinCollect AI**, your Pan-India financial assistant supporting 22 Indian languages & transliterations:\n\n- 👥 **Customers**: *"How many customers are there?"*, *"Ramesh balance entha?"*, *"आज Ramesh का balance कितना है?"*\n- 💰 **Collections**: *"Today collection entha?"*, *"आज कितना कलेक्शन हुआ?"*, *"இன்று எவ்வளவு collection வந்தது?"*\n- 📖 **Day Book**: *"What is today's opening balance?"*, *"Today closing balance"*\n- 🏦 **Loans**: *"How many active loans?"*, *"Which loans are fully settled?"*\n- ⚖️ **Accounting**: *"Total assets entha?"*, *"Cash in hand entha undi?"*, *"Today profit/loss?"*`,
       category: 'general',
       timestamp,
-      performanceMs: Math.round(performance.now() - startTime),
-    };
-  }
-
-  if (byeSet.has(query)) {
-    return {
-      success: true,
-      message: `Goodbye! Have a great day.`,
-      category: 'general',
-      timestamp,
+      detectedLanguage: targetLang,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
 
   // Check 5-second query cache for identical fast repeat prompts
-  const cacheKey = `${query}_${pageContext}`;
+  const cacheKey = `${query}_${pageContext}_${targetLang}`;
   const cached = responseCache[cacheKey];
   if (cached && cached.expiry > Date.now()) {
     return { ...cached.data, timestamp, performanceMs: Math.round(performance.now() - startTime) };
@@ -117,12 +119,24 @@ export async function queryFinCollectAI(
   const supabase = await createClient();
 
   try {
+    // Helper matchers against financial lexicon
+    const hasWord = (list: string[]) => list.some(word => query.includes(word));
+
+    const isCustomerWord = hasWord(FINANCIAL_LEXICON.customer);
+    const isCollectionWord = hasWord(FINANCIAL_LEXICON.collection);
+    const isLoanWord = hasWord(FINANCIAL_LEXICON.loan);
+    const isTodayWord = hasWord(FINANCIAL_LEXICON.today);
+    const isBalanceWord = hasWord(FINANCIAL_LEXICON.balance);
+    const isCashInHandWord = hasWord(FINANCIAL_LEXICON.cashInHand);
+    const isInterestWord = hasWord(FINANCIAL_LEXICON.interest);
+    const isExpenseWord = hasWord(FINANCIAL_LEXICON.expenses);
+
     // ----------------------------------------------------
     // INTENT 1: TOTAL CUSTOMERS COUNT
     // ----------------------------------------------------
     if (
-      (query.includes('customer') || query.includes('customers') || query.includes('borrower') || query.includes('client')) &&
-      (query.includes('how many') || query.includes('count') || query.includes('total') || query.includes('entha mandi') || query.includes('anni')) &&
+      isCustomerWord &&
+      (query.includes('how many') || query.includes('count') || query.includes('total') || query.includes('entha mandi') || query.includes('anni') || query.includes('kitne') || query.includes('kitna') || query.includes('eshtu') || query.includes('কত') || query.includes('எவ்வளவு')) &&
       !query.includes('balance') && !query.includes('pending') && !query.includes('history')
     ) {
       const { count, error: dbErr } = await supabase
@@ -135,7 +149,7 @@ export async function queryFinCollectAI(
       }
 
       const totalCust = count || 0;
-      const message = `**Total Customers**: **${totalCust}**`;
+      const message = MultilingualResponseFormatter.formatCustomerCount(totalCust, targetLang);
 
       const result: AIResponse = {
         success: true,
@@ -143,6 +157,7 @@ export async function queryFinCollectAI(
         category: 'general',
         suggestedFollowUps: ['How many active loans?', "Today's collection?", 'Cash in hand?'],
         timestamp,
+        detectedLanguage: targetLang,
         performanceMs: Math.round(performance.now() - startTime),
       };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
@@ -150,22 +165,24 @@ export async function queryFinCollectAI(
     }
 
     // ----------------------------------------------------
-    // INTENT 2: CUSTOMER SPECIFIC LOOKUP (e.g. "Ramesh balance entha?", "Ramesh collection history")
+    // INTENT 2: CUSTOMER SPECIFIC LOOKUP (e.g. "Ramesh balance entha?", "आज Ramesh का balance कितना है?")
     // ----------------------------------------------------
     const isCustomerQuery =
-      query.includes('balance') ||
+      isBalanceWord ||
       query.includes('pending') ||
       query.includes('history') ||
       query.includes('collected') ||
       query.includes('amount') ||
-      query.includes('entha');
+      query.includes('entha') ||
+      query.includes('kitna') ||
+      query.includes('kitne') ||
+      query.includes('eshtu') ||
+      query.includes('evvalavu');
 
-    // Extract potential customer search query
     let nameSearchTerm = '';
     if (isCustomerQuery) {
-      // Remove keywords to isolate name
       const cleaned = query
-        .replace(/balance|pending|history|collection|collected|amount|entha|mandi|vachindi|ki|aaj|ivala|today|show|what|is|the|from|for|of/g, ' ')
+        .replace(/balance|pending|history|collection|collected|amount|entha|mandi|vachindi|ki|aaj|ivala|today|show|what|is|the|from|for|of|kitna|kitne|batao|ka|ge|inru|evvalavu|ivattu|eshtu|aastu|aait|baki|bakilu/g, ' ')
         .trim();
       if (cleaned.length >= 2) {
         nameSearchTerm = cleaned;
@@ -183,36 +200,27 @@ export async function queryFinCollectAI(
         matchedCustomers.slice(0, 5).forEach(c => {
           msg += `- **${c.customer_name}** (ID: \`${c.customer_id}\`)\n`;
         });
-        return { success: true, message: msg.trim(), category: 'general', timestamp };
+        return { success: true, message: msg.trim(), category: 'general', timestamp, detectedLanguage: targetLang };
       }
 
       if (matchedCustomers && matchedCustomers.length === 1) {
         const cust = matchedCustomers[0];
 
-        // Fetch customer's loans
         const { data: custLoans } = await supabase
           .from('loans')
           .select('*, collections(id, amount_paid, payment_date)')
           .eq('customer_id', cust.id);
 
-        let totalGiven = 0;
-        let totalTarget = 0;
-        let totalCollected = 0;
         let totalOutstanding = 0;
         let totalAccruedInterest = 0;
         let activeLoansCount = 0;
-        let closedLoansCount = 0;
 
         for (const l of custLoans || []) {
-          const given = Number(l.amount_given || 0);
           const target = Number(l.total_collection || 0);
           const colls = l.collections || [];
           const collected = colls.reduce((sum: number, c: any) => sum + Number(c.amount_paid || 0), 0);
           const balance = Math.max(0, target - collected);
 
-          totalGiven += given;
-          totalTarget += target;
-          totalCollected += collected;
           totalOutstanding += balance;
 
           const lType = decodeLoanType(l.working_days, l.loan_type);
@@ -221,51 +229,47 @@ export async function queryFinCollectAI(
             totalAccruedInterest += adjBal.accruedInterest;
           }
 
-          if (l.is_closed || balance <= 0) closedLoansCount++;
-          else activeLoansCount++;
+          if (!l.is_closed && balance > 0) activeLoansCount++;
         }
 
-        let msg = `### 👤 ${cust.customer_name} (ID: \`${cust.customer_id}\`)\n\n`;
-        msg += `- **Active Loans**: ${activeLoansCount} (Closed: ${closedLoansCount})\n`;
-        msg += `- **Total Principal Given**: ${formatCurrency(totalGiven)}\n`;
-        msg += `- **Total Collected**: ${formatCurrency(totalCollected)}\n`;
-        msg += `- **Outstanding Principal**: **${formatCurrency(totalOutstanding)}**\n`;
-        if (totalAccruedInterest > 0) {
-          msg += `- **Accrued Interest (Adjustment)**: **${formatCurrency(totalAccruedInterest)}**\n`;
-          msg += `- **Total Payable**: **${formatCurrency(totalOutstanding + totalAccruedInterest)}**\n`;
-        }
-
-        // Fetch recent collections
         const { data: custColls } = await supabase
           .from('collections')
-          .select('amount_paid, payment_date, remarks, loans(customer_id)')
+          .select('amount_paid, payment_date')
           .eq('loans.customer_id', cust.id)
           .order('payment_date', { ascending: false })
           .limit(3);
 
-        if (custColls && custColls.length > 0) {
-          msg += `\n#### 📜 Recent Collections:\n`;
-          custColls.forEach((c: any) => {
-            msg += `- **${formatCurrency(c.amount_paid)}** on ${formatDate(c.payment_date)}${c.remarks ? ` (${c.remarks})` : ''}\n`;
-          });
-        }
+        const lastColl = custColls && custColls.length > 0 ? Number(custColls[0].amount_paid || 0) : 0;
+        const lastDate = custColls && custColls.length > 0 ? custColls[0].payment_date : undefined;
 
-        const result: AIResponse = { success: true, message: msg.trim(), category: 'loans', timestamp };
+        const payload = {
+          customer_id: cust.customer_id,
+          customer_name: cust.customer_name,
+          mobile_number: cust.mobile_number,
+          activeLoansCount,
+          totalPrincipalOutstanding: totalOutstanding,
+          totalAccruedAdjustmentInterest: totalAccruedInterest,
+          totalPayableAmount: totalOutstanding + totalAccruedInterest,
+          recentCollectionsCount: custColls?.length || 0,
+          lastCollectionAmount: lastColl,
+          lastCollectionDate: lastDate,
+        };
+
+        const msg = MultilingualResponseFormatter.formatCustomerDetails(payload, targetLang);
+
+        const result: AIResponse = { success: true, message: msg, category: 'loans', timestamp, detectedLanguage: targetLang };
         responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
         return result;
       }
     }
 
     // ----------------------------------------------------
-    // INTENT 3: TODAY'S COLLECTION & TODAY'S TRANSACTIONS
+    // INTENT 3: TODAY'S COLLECTION
     // ----------------------------------------------------
-    if (
-      (query.includes('today') || query.includes('ivala') || query.includes('ee roju') || query.includes('aaj')) &&
-      (query.includes('collection') || query.includes('collected') || query.includes('transaction') || query.includes('vachindi'))
-    ) {
+    if (isTodayWord && (isCollectionWord || query.includes('vachindi') || query.includes('hua') || query.includes('vandhadhu') || query.includes('aayitu'))) {
       const { data: rawColls, error: dbErr } = await supabase
         .from('collections')
-        .select('id, amount_paid, payment_date, remarks, loans(loan_type, working_days, balance_amount, customers(customer_name, customer_id))')
+        .select('id, amount_paid')
         .eq('payment_date', bounds.todayISO);
 
       if (dbErr) {
@@ -275,29 +279,9 @@ export async function queryFinCollectAI(
 
       const todaysColls = rawColls || [];
       const total = todaysColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
+      const message = MultilingualResponseFormatter.formatTodayCollection(total, todaysColls.length, targetLang);
 
-      if (query.includes('transaction') || query.includes('show') || query.includes('list')) {
-        let msg = `### 📜 Today's Transactions (${formatDate(bounds.todayISO)})\n\n`;
-        msg += `- **Total Collected Today**: **${formatCurrency(total)}** (${todaysColls.length} payments)\n\n`;
-
-        if (todaysColls.length > 0) {
-          msg += `| Customer Name | Code | Type | Amount Paid |\n`;
-          msg += `| :--- | :--- | :--- | :--- |\n`;
-          todaysColls.forEach((c: any) => {
-            const name = c.loans?.customers?.customer_name || 'Customer';
-            const code = c.loans?.customers?.customer_id || 'N/A';
-            const type = decodeLoanType(c.loans?.working_days, c.loans?.loan_type);
-            msg += `| **${name}** | \`${code}\` | \`[${type.toUpperCase()}]\` | **${formatCurrency(c.amount_paid)}** |\n`;
-          });
-        } else {
-          msg += `*No transactions recorded today (${formatDate(bounds.todayISO)}).*`;
-        }
-
-        return { success: true, message: msg.trim(), category: 'collections', timestamp };
-      }
-
-      const message = `**Today's Collection**: **${formatCurrency(total)}** (${todaysColls.length} payments on ${formatDate(bounds.todayISO)})`;
-      const result: AIResponse = { success: true, message, category: 'collections', timestamp };
+      const result: AIResponse = { success: true, message, category: 'collections', timestamp, detectedLanguage: targetLang };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
@@ -305,10 +289,7 @@ export async function queryFinCollectAI(
     // ----------------------------------------------------
     // INTENT 4: MONTHLY COLLECTION
     // ----------------------------------------------------
-    if (
-      (query.includes('month') || query.includes('ee month') || query.includes('this month')) &&
-      (query.includes('collection') || query.includes('collected') || query.includes('vachindi'))
-    ) {
+    if ((query.includes('month') || query.includes('મહિના') || query.includes('మహిన') || query.includes('మహా') || query.includes('ਮਹੀਨੇ') || query.includes('মাস')) && (isCollectionWord || query.includes('vachindi'))) {
       const { data: rawColls } = await supabase
         .from('collections')
         .select('amount_paid')
@@ -316,200 +297,86 @@ export async function queryFinCollectAI(
         .lte('payment_date', bounds.todayISO);
 
       const total = (rawColls || []).reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
-      const message = `**This Month's Collection**: **${formatCurrency(total)}** (${formatDate(bounds.monthStartISO)} – ${formatDate(bounds.todayISO)})`;
+      const message = MultilingualResponseFormatter.formatMonthlyCollection(total, (rawColls || []).length, targetLang);
 
-      const result: AIResponse = { success: true, message, category: 'collections', timestamp };
+      const result: AIResponse = { success: true, message, category: 'collections', timestamp, detectedLanguage: targetLang };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 5: DAY BOOK OPENING / CLOSING BALANCE
+    // INTENT 5: CASH IN HAND & DAY BOOK
     // ----------------------------------------------------
-    if (
-      query.includes('opening balance') ||
-      query.includes('closing balance') ||
-      query.includes('day book')
-    ) {
-      const dayBookRes = await getDayBookData(bounds.todayISO);
-
-      if (!dayBookRes.success || !dayBookRes.data) {
-        return { success: false, message: 'Failed to fetch Day Book data.', timestamp };
-      }
-
-      const d = dayBookRes.data;
-      let msg = `### 📖 Day Book (${formatDate(bounds.todayISO)})\n\n`;
-      msg += `- **Opening Balance**: **${formatCurrency(d.openingBalance)}**\n`;
-      msg += `- **Total Cash In Today**: **${formatCurrency(d.totalCashIn)}**\n`;
-      msg += `- **Total Cash Out Today**: **${formatCurrency(d.totalCashOut)}**\n`;
-      msg += `- **Closing Balance**: **${formatCurrency(d.closingBalance)}**`;
-
-      const result: AIResponse = { success: true, message: msg.trim(), category: 'general', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
-      return result;
-    }
-
-    // ----------------------------------------------------
-    // INTENT 6: CASH IN HAND & WORKING CAPITAL
-    // ----------------------------------------------------
-    if (
-      query.includes('cash in hand') ||
-      query.includes('cash balance') ||
-      query.includes('hand cash') ||
-      (query.includes('cash') && query.includes('entha'))
-    ) {
+    if (isCashInHandWord || (query.includes('cash') && (query.includes('hand') || query.includes('entha') || query.includes('kitna') || query.includes('und')))) {
       const invMetrics = await getInvestmentMetrics();
       const currentCash = invMetrics.data?.currentBalance ?? 0;
-      const message = `**Cash in Hand**: **${formatCurrency(currentCash)}**`;
+      const dayBookRes = await getDayBookData(bounds.todayISO);
+      const closingBal = dayBookRes.data?.closingBalance ?? currentCash;
 
-      const result: AIResponse = { success: true, message, category: 'investments', timestamp };
+      const message = MultilingualResponseFormatter.formatCashInHand(currentCash, closingBal, targetLang);
+
+      const result: AIResponse = { success: true, message, category: 'investments', timestamp, detectedLanguage: targetLang };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 7: ACTIVE LOANS, SETTLED LOANS, & TOTAL OUTSTANDING
+    // INTENT 6: ACTIVE LOANS PORTFOLIO
     // ----------------------------------------------------
-    if (
-      query.includes('active loan') ||
-      query.includes('loan count') ||
-      query.includes('settled') ||
-      query.includes('outstanding') ||
-      (query.includes('total') && query.includes('pending'))
-    ) {
+    if (isLoanWord && (query.includes('active') || query.includes('count') || query.includes('outstanding') || query.includes('pending') || query.includes('kitne') || query.includes('entha'))) {
       const { data: allLoans } = await supabase
         .from('loans')
-        .select('id, amount_given, total_collection, balance_amount, is_closed');
+        .select('id, balance_amount, is_closed');
 
       const loansList = allLoans || [];
       const activeLoans = loansList.filter(l => !l.is_closed && Number(l.balance_amount || 0) > 0);
-      const settledLoans = loansList.filter(l => l.is_closed || Number(l.balance_amount || 0) <= 0);
-
       const totalOutstanding = activeLoans.reduce((sum, l) => sum + Number(l.balance_amount || 0), 0);
-      const totalTarget = loansList.reduce((sum, l) => sum + Number(l.total_collection || 0), 0);
 
-      if (query.includes('settled')) {
-        const message = `**Fully Settled / Closed Loans**: **${settledLoans.length} loans**`;
-        return { success: true, message, category: 'loans', timestamp };
-      }
+      const message = MultilingualResponseFormatter.formatActiveLoans(activeLoans.length, totalOutstanding, targetLang);
 
-      if (query.includes('outstanding')) {
-        const message = `**Total Customer Outstanding Balance**: **${formatCurrency(totalOutstanding)}** (${activeLoans.length} active loans)`;
-        return { success: true, message, category: 'loans', timestamp };
-      }
-
-      let msg = `### 🏦 Loans Portfolio Overview\n\n`;
-      msg += `- **Active Loans**: **${activeLoans.length}**\n`;
-      msg += `- **Closed / Settled Loans**: **${settledLoans.length}**\n`;
-      msg += `- **Total Outstanding Balance**: **${formatCurrency(totalOutstanding)}**`;
-
-      const result: AIResponse = { success: true, message: msg.trim(), category: 'loans', timestamp };
+      const result: AIResponse = { success: true, message, category: 'loans', timestamp, detectedLanguage: targetLang };
       responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 8: INTEREST COLLECTED & ACCRUED
-    // ----------------------------------------------------
-    if (query.includes('interest')) {
-      const { data: intTx } = await supabase.from('interest_transactions').select('interest_amount');
-      const totalInterestCollected = (intTx || []).reduce((sum, r) => sum + Number(r.interest_amount || 0), 0);
-
-      const message = `**Total Interest Collected**: **${formatCurrency(totalInterestCollected)}**`;
-      const result: AIResponse = { success: true, message, category: 'loans', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
-      return result;
-    }
-
-    // ----------------------------------------------------
-    // INTENT 9: OPERATING EXPENSES
-    // ----------------------------------------------------
-    if (query.includes('expense') || query.includes('kharchu') || query.includes('kharcha')) {
-      const { data: todayExp } = await supabase
-        .from('expenses')
-        .select('amount')
-        .eq('expense_date', bounds.todayISO);
-
-      const totalTodayExp = (todayExp || []).reduce((sum, e) => sum + Number(e.amount || 0), 0);
-      const message = `**Today's Expenses**: **${formatCurrency(totalTodayExp)}** (${formatDate(bounds.todayISO)})`;
-
-      const result: AIResponse = { success: true, message, category: 'expenses', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
-      return result;
-    }
-
-    // ----------------------------------------------------
-    // INTENT 10: INVESTMENT BALANCE
-    // ----------------------------------------------------
-    if (query.includes('investment')) {
-      const invMetrics = await getInvestmentMetrics();
-      const cap = invMetrics.data?.totalCapitalAdded ?? 0;
-      const bal = invMetrics.data?.currentBalance ?? 0;
-
-      let msg = `### 📈 Investment Summary\n\n`;
-      msg += `- **Total Owner Capital Added**: **${formatCurrency(cap)}**\n`;
-      msg += `- **Current Working Balance**: **${formatCurrency(bal)}**`;
-
-      const result: AIResponse = { success: true, message: msg.trim(), category: 'investments', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
-      return result;
-    }
-
-    // ----------------------------------------------------
-    // INTENT 11: FINANCIAL STATEMENTS (ASSETS, LIABILITIES, PROFIT/LOSS, TRIAL BALANCE)
+    // INTENT 7: FINANCIAL STATEMENTS (ASSETS, LIABILITIES, PROFIT/LOSS)
     // ----------------------------------------------------
     if (
-      query.includes('asset') ||
-      query.includes('liability') ||
-      query.includes('liabilities') ||
-      query.includes('profit') ||
-      query.includes('loss') ||
-      query.includes('trial balance')
+      query.includes('asset') || query.includes('liability') || query.includes('liabilities') ||
+      query.includes('profit') || query.includes('loss') || query.includes('लाभ') || query.includes('லாபம்')
     ) {
       const bundle = await getFinancialStatements(bounds.todayISO);
       const bs = bundle.balanceSheet;
       const pnl = bundle.profitAndLoss;
 
-      if (query.includes('asset')) {
-        const message = `**Total Assets**: **${formatCurrency(bs.summary.totalAssets)}**`;
-        return { success: true, message, category: 'accounting', timestamp };
-      }
+      const message = MultilingualResponseFormatter.formatFinancialStatements(
+        {
+          totalAssets: bs.summary.totalAssets,
+          totalLiabilities: bs.summary.totalLiabilitiesAndCapital,
+          netProfitLoss: pnl.netProfitOrLoss,
+        },
+        targetLang
+      );
 
-      if (query.includes('liability') || query.includes('liabilities')) {
-        const message = `**Total Liabilities & Capital**: **${formatCurrency(bs.summary.totalLiabilitiesAndCapital)}**`;
-        return { success: true, message, category: 'accounting', timestamp };
-      }
-
-      if (query.includes('profit') || query.includes('loss')) {
-        const message = `**${pnl.isNetProfit ? "Today's / Accumulated Net Profit" : 'Net Loss'}**: **${formatCurrency(Math.abs(pnl.netProfitOrLoss))}**`;
-        return { success: true, message, category: 'accounting', timestamp };
-      }
-
-      let msg = `### ⚖️ Financial Statements Summary (${formatDate(bounds.todayISO)})\n\n`;
-      msg += `- **Total Assets**: **${formatCurrency(bs.summary.totalAssets)}**\n`;
-      msg += `- **Total Liabilities & Capital**: **${formatCurrency(bs.summary.totalLiabilitiesAndCapital)}**\n`;
-      msg += `- **Net Profit**: **${formatCurrency(pnl.netProfitOrLoss)}**\n`;
-      msg += `- **Books Balanced**: **${bs.summary.isBalanced ? '✓ Yes' : '⚠️ No'}**`;
-
-      return { success: true, message: msg.trim(), category: 'accounting', timestamp };
+      const result: AIResponse = { success: true, message, category: 'accounting', timestamp, detectedLanguage: targetLang };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
+      return result;
     }
 
     // ----------------------------------------------------
     // FALLBACK CLARIFICATION
     // ----------------------------------------------------
     const fallbackMarkdown = `
-### 🤖 FinCollect AI Assistant
+### 🤖 FinCollect AI Assistant (Pan-India Multilingual)
 
-I am your real-time financial data assistant. You can ask me:
+I answer financial questions across 22 Indian languages & transliterations:
 
-- 👥 *"How many customers are there?"*
-- 💰 *"Today collection entha?"*
-- 📜 *"Show today's transactions"*
-- 👤 *"Ramesh balance entha?"*
-- 📖 *"What is today's opening balance?"*
-- 💵 *"Cash in hand entha undi?"*
-- 🏦 *"How many active loans?"*
-- ⚖️ *"Total assets entha?"* or *"Today profit/loss entha?"*
+- 👥 *"How many customers are there?"* / *"మొత్తం వినియోగదారులు ఎంత మంది?"*
+- 💰 *"Today collection entha?"* / *"आज कितना कलेक्शन हुआ?"* / *"இன்று எவ்வளவு collection வந்தது?"*
+- 👤 *"Ramesh balance entha?"* / *"आज Ramesh का balance कितना है?"*
+- 💵 *"Cash in hand entha undi?"* / *"हाथ में नकद कितना है?"*
+- 🏦 *"How many active loans?"* / *"एक्टिव लोन कितने हैं?"*
     `.trim();
 
     return {
@@ -517,6 +384,7 @@ I am your real-time financial data assistant. You can ask me:
       message: fallbackMarkdown,
       category: 'general',
       timestamp,
+      detectedLanguage: targetLang,
       performanceMs: Math.round(performance.now() - startTime),
     };
   } catch (err: any) {
@@ -526,6 +394,7 @@ I am your real-time financial data assistant. You can ask me:
       message: 'An unexpected database error occurred while querying FinCollect AI. Please try again.',
       error: err?.message,
       timestamp,
+      detectedLanguage: targetLang,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
