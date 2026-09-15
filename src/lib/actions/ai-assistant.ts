@@ -3,22 +3,28 @@
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { getAIDateBounds } from '@/lib/utils/ai-date-utils';
-import { getDashboardData } from './dashboard';
+import { getDayBookData } from './day-book';
+import { getFinancialStatements } from './accounting';
 import { getInvestmentMetrics } from './investment';
+import { getAdjustmentLoanBalances } from './adjustment-ledger';
+import { decodeLoanType } from './loans';
 
 export interface AIResponse {
   success: boolean;
   message: string;
-  category?: 'dashboard' | 'loans' | 'collections' | 'expenses' | 'investments' | 'settlements' | 'general';
+  category?: 'dashboard' | 'loans' | 'collections' | 'expenses' | 'investments' | 'accounting' | 'general';
   suggestedFollowUps?: string[];
   timestamp: string;
   performanceMs?: number;
   error?: string;
 }
 
-// In-Memory Server Cache (15s TTL)
+// Lightweight cache for identical queries within 5 seconds
 const responseCache: Record<string, { data: AIResponse; expiry: number }> = {};
 
+/**
+ * Universal FinCollect AI Assistant: Direct Database Query Router + Accounting Engine Alignment
+ */
 export async function queryFinCollectAI(
   rawQuery: string,
   pageContext: string = 'dashboard'
@@ -29,8 +35,8 @@ export async function queryFinCollectAI(
   if (!rawQuery || !rawQuery.trim()) {
     return {
       success: true,
-      message: 'Please ask a question about your business (e.g. *"How many customers are there?"*, *"What is today\'s collection?"*).',
-      suggestedFollowUps: ['How many customers are there?', 'What is today\'s collection?', 'How many active loans?'],
+      message: 'Please ask a question about your business (e.g. *"How many customers are there?"*, *"Today collection entha?"*, *"Ramesh balance entha?"*).',
+      suggestedFollowUps: ['How many customers are there?', "What is today's collection?", 'How many active loans?'],
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
     };
@@ -40,7 +46,21 @@ export async function queryFinCollectAI(
   const bounds = getAIDateBounds();
 
   // ----------------------------------------------------
-  // STEP 1: DETERMINISTIC GREETINGS & SIMPLE MESSAGES (0-2ms)
+  // SECURITY GUARD: STRICTLY READ-ONLY
+  // ----------------------------------------------------
+  const mutationKeywords = ['create ', 'insert ', 'delete ', 'drop ', 'update ', 'remove ', 'truncate ', 'alter '];
+  if (mutationKeywords.some(k => query.includes(k))) {
+    return {
+      success: true,
+      message: '🔒 **Security Guard**: FinCollect AI operates in **READ-ONLY mode**. It cannot create, modify, or delete database records. Please use the application modules to record transactions.',
+      category: 'general',
+      timestamp,
+      performanceMs: Math.round(performance.now() - startTime),
+    };
+  }
+
+  // ----------------------------------------------------
+  // STEP 1: DETERMINISTIC GREETINGS & SIMPLE MESSAGES
   // ----------------------------------------------------
   const greetingSet = new Set(['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'good afternoon', 'hi there', 'hello ai']);
   const thanksSet = new Set(['thanks', 'thank you', 'thanks!', 'thank you!', 'dhanyavadagalu', 'thanks bro', 'thx']);
@@ -48,21 +68,9 @@ export async function queryFinCollectAI(
   const byeSet = new Set(['bye', 'goodbye', 'ok', 'okay', 'cya']);
 
   if (greetingSet.has(query)) {
-    logAIDebug({
-      rawQuery,
-      detectedIntent: 'GREETING',
-      bounds,
-      tablesQueried: [],
-      queryResultCount: 0,
-      rawAggregateSum: 'N/A',
-      finalFormattedValue: 'Greeting Response',
-      dbDurationMs: 0,
-      totalDurationMs: performance.now() - startTime,
-    });
-
     return {
       success: true,
-      message: `Hello, Administrator 👋 How can I assist you with your FinCollect financial analytics today?\n\n→ How many customers are there?\n→ What is today's collection?\n→ How many active loans?`,
+      message: `Hello! 👋 How can I assist you with your FinCollect financial data today?\n\n→ Total customers entha mandi?\n→ Today collection entha?\n→ Cash in hand entha undi?\n→ Ramesh balance entha?`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
@@ -72,7 +80,7 @@ export async function queryFinCollectAI(
   if (thanksSet.has(query)) {
     return {
       success: true,
-      message: `You're very welcome! Let me know whenever you need more financial insights or reports.\n\n→ What is today's collection?\n→ How many customers are there?`,
+      message: `You're very welcome! Ask me anytime you need financial insights or customer balance updates.`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
@@ -82,7 +90,7 @@ export async function queryFinCollectAI(
   if (helpSet.has(query)) {
     return {
       success: true,
-      message: `I am **FinCollect AI**, your intelligent financial copilot. You can ask me:\n- **Customers**: *How many customers are there in total?*\n- **Collections**: *What is today's collection?*, *Show weekly collection*\n- **Loans**: *How many active loans?*, *Which loan has highest pending balance?*\n- **Expenses**: *What are today's expenses?*\n- **Investment**: *What is my investment balance?*\n\n→ How many customers are there?\n→ What is today's collection?`,
+      message: `I am **FinCollect AI**, your real-time financial assistant. I understand English & Telugu transliteration:\n\n- 👥 **Customers**: *"How many customers are there?"*, *"Ramesh balance entha?"*\n- 💰 **Collections**: *"Today collection entha?"*, *"Show today's transactions"*\n- 📖 **Day Book**: *"What is today's opening balance?"*, *"Today closing balance"* \n- 🏦 **Loans**: *"How many active loans?"*, *"Which loans are fully settled?"*\n- ⚖️ **Accounting**: *"Total assets entha?"*, *"Cash in hand entha undi?"*, *"Today profit/loss?"*\n- 💸 **Expenses**: *"Today expenses entha?"*`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
@@ -92,750 +100,433 @@ export async function queryFinCollectAI(
   if (byeSet.has(query)) {
     return {
       success: true,
-      message: `Goodbye, Administrator! I am here whenever you need real-time business insights.`,
+      message: `Goodbye! Have a great day.`,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
 
-  // ----------------------------------------------------
-  // STEP 2: IN-MEMORY CACHE CHECK (15s TTL)
-  // ----------------------------------------------------
+  // Check 5-second query cache for identical fast repeat prompts
   const cacheKey = `${query}_${pageContext}`;
   const cached = responseCache[cacheKey];
   if (cached && cached.expiry > Date.now()) {
-    console.log(`[AI Debug Log] Served from Server Cache! Key: "${cacheKey}" | Total: ${Math.round(performance.now() - startTime)}ms`);
-    return {
-      ...cached.data,
-      timestamp,
-      performanceMs: Math.round(performance.now() - startTime),
-    };
+    return { ...cached.data, timestamp, performanceMs: Math.round(performance.now() - startTime) };
   }
-
-  // Language Detection (Telugu Transliteration)
-  const isTelugu =
-    query.includes('entha') ||
-    query.includes('ivala') ||
-    query.includes('ee month') ||
-    query.includes('ee roju') ||
-    query.includes('enti') ||
-    query.includes('kharchu') ||
-    query.includes('vasool') ||
-    query.includes('paatalu') ||
-    query.includes('naa');
 
   const supabase = await createClient();
 
   try {
     // ----------------------------------------------------
-    // INTENT 1: CUSTOMERS (COUNT & LIST)
+    // INTENT 1: TOTAL CUSTOMERS COUNT
     // ----------------------------------------------------
     if (
-      query.includes('customer') ||
-      query.includes('customers') ||
-      query.includes('borrower') ||
-      query.includes('borrowers') ||
-      query.includes('client') ||
-      query.includes('clients') ||
-      (query.includes('how many') && (query.includes('people') || query.includes('person') || query.includes('user')))
+      (query.includes('customer') || query.includes('customers') || query.includes('borrower') || query.includes('client')) &&
+      (query.includes('how many') || query.includes('count') || query.includes('total') || query.includes('entha mandi') || query.includes('anni')) &&
+      !query.includes('balance') && !query.includes('pending') && !query.includes('history')
     ) {
-      const dbStart = performance.now();
       const { count, error: dbErr } = await supabase
         .from('customers')
         .select('id', { count: 'exact', head: true });
 
-      const dbDurationMs = performance.now() - dbStart;
-
       if (dbErr) {
-        console.error('[FinCollect AI DB Error - Customers Count]:', dbErr);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch customer count from Supabase. Error: ${dbErr.message}`,
-          error: dbErr.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
+        console.error('[FinCollect AI DB Error - Customer Count]:', dbErr);
+        return { success: false, message: 'Failed to query customer count.', error: dbErr.message, timestamp };
       }
 
       const totalCust = count || 0;
+      const message = `**Total Customers**: **${totalCust}**`;
 
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'GET_TOTAL_CUSTOMERS',
-        bounds,
-        tablesQueried: ['customers'],
-        queryResultCount: totalCust,
-        rawAggregateSum: `Count: ${totalCust}`,
-        finalFormattedValue: `${totalCust} customers`,
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
-
-      const intro = isTelugu
-        ? `Mee business lo total registered customers count ikkada undi:`
-        : `Here is the total registered customer count in your business:`;
-
-      const markdown = `
-### 👥 Customer Directory Summary
-
-${intro}
-
-- **Total Registered Customers**: **${totalCust} customers**
-
-→ How many active loans?
-→ What is today's collection?
-→ Show highest pending loan
-      `.trim();
-
-      const result: AIResponse = { success: true, message: markdown, category: 'general', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+      const result: AIResponse = {
+        success: true,
+        message,
+        category: 'general',
+        suggestedFollowUps: ['How many active loans?', "Today's collection?", 'Cash in hand?'],
+        timestamp,
+        performanceMs: Math.round(performance.now() - startTime),
+      };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 2: TODAY'S COLLECTION
+    // INTENT 2: CUSTOMER SPECIFIC LOOKUP (e.g. "Ramesh balance entha?", "Ramesh collection history")
+    // ----------------------------------------------------
+    const isCustomerQuery =
+      query.includes('balance') ||
+      query.includes('pending') ||
+      query.includes('history') ||
+      query.includes('collected') ||
+      query.includes('amount') ||
+      query.includes('entha');
+
+    // Extract potential customer search query
+    let nameSearchTerm = '';
+    if (isCustomerQuery) {
+      // Remove keywords to isolate name
+      const cleaned = query
+        .replace(/balance|pending|history|collection|collected|amount|entha|mandi|vachindi|ki|aaj|ivala|today|show|what|is|the|from|for|of/g, ' ')
+        .trim();
+      if (cleaned.length >= 2) {
+        nameSearchTerm = cleaned;
+      }
+    }
+
+    if (nameSearchTerm && !['today', 'weekly', 'monthly', 'active', 'settled', 'expenses', 'profit', 'loss', 'assets', 'liabilities', 'investment', 'opening', 'closing', 'cash'].includes(nameSearchTerm)) {
+      const { data: matchedCustomers } = await supabase
+        .from('customers')
+        .select('*')
+        .or(`customer_name.ilike."%${nameSearchTerm}%",customer_id.ilike."%${nameSearchTerm}%"`);
+
+      if (matchedCustomers && matchedCustomers.length > 1) {
+        let msg = `Multiple customers matched **"${nameSearchTerm}"**. Please specify:\n\n`;
+        matchedCustomers.slice(0, 5).forEach(c => {
+          msg += `- **${c.customer_name}** (ID: \`${c.customer_id}\`)\n`;
+        });
+        return { success: true, message: msg.trim(), category: 'general', timestamp };
+      }
+
+      if (matchedCustomers && matchedCustomers.length === 1) {
+        const cust = matchedCustomers[0];
+
+        // Fetch customer's loans
+        const { data: custLoans } = await supabase
+          .from('loans')
+          .select('*, collections(id, amount_paid, payment_date)')
+          .eq('customer_id', cust.id);
+
+        let totalGiven = 0;
+        let totalTarget = 0;
+        let totalCollected = 0;
+        let totalOutstanding = 0;
+        let totalAccruedInterest = 0;
+        let activeLoansCount = 0;
+        let closedLoansCount = 0;
+
+        for (const l of custLoans || []) {
+          const given = Number(l.amount_given || 0);
+          const target = Number(l.total_collection || 0);
+          const colls = l.collections || [];
+          const collected = colls.reduce((sum: number, c: any) => sum + Number(c.amount_paid || 0), 0);
+          const balance = Math.max(0, target - collected);
+
+          totalGiven += given;
+          totalTarget += target;
+          totalCollected += collected;
+          totalOutstanding += balance;
+
+          const lType = decodeLoanType(l.working_days, l.loan_type);
+          if (lType === 'adjustment') {
+            const adjBal = await getAdjustmentLoanBalances(l.id, supabase);
+            totalAccruedInterest += adjBal.accruedInterest;
+          }
+
+          if (l.is_closed || balance <= 0) closedLoansCount++;
+          else activeLoansCount++;
+        }
+
+        let msg = `### 👤 ${cust.customer_name} (ID: \`${cust.customer_id}\`)\n\n`;
+        msg += `- **Active Loans**: ${activeLoansCount} (Closed: ${closedLoansCount})\n`;
+        msg += `- **Total Principal Given**: ${formatCurrency(totalGiven)}\n`;
+        msg += `- **Total Collected**: ${formatCurrency(totalCollected)}\n`;
+        msg += `- **Outstanding Principal**: **${formatCurrency(totalOutstanding)}**\n`;
+        if (totalAccruedInterest > 0) {
+          msg += `- **Accrued Interest (Adjustment)**: **${formatCurrency(totalAccruedInterest)}**\n`;
+          msg += `- **Total Payable**: **${formatCurrency(totalOutstanding + totalAccruedInterest)}**\n`;
+        }
+
+        // Fetch recent collections
+        const { data: custColls } = await supabase
+          .from('collections')
+          .select('amount_paid, payment_date, remarks, loans(customer_id)')
+          .eq('loans.customer_id', cust.id)
+          .order('payment_date', { ascending: false })
+          .limit(3);
+
+        if (custColls && custColls.length > 0) {
+          msg += `\n#### 📜 Recent Collections:\n`;
+          custColls.forEach((c: any) => {
+            msg += `- **${formatCurrency(c.amount_paid)}** on ${formatDate(c.payment_date)}${c.remarks ? ` (${c.remarks})` : ''}\n`;
+          });
+        }
+
+        const result: AIResponse = { success: true, message: msg.trim(), category: 'loans', timestamp };
+        responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
+        return result;
+      }
+    }
+
+    // ----------------------------------------------------
+    // INTENT 3: TODAY'S COLLECTION & TODAY'S TRANSACTIONS
     // ----------------------------------------------------
     if (
       (query.includes('today') || query.includes('ivala') || query.includes('ee roju') || query.includes('aaj')) &&
-      (query.includes('collection') || query.includes('collected') || query.includes('vasool') || query.includes('paatalu'))
+      (query.includes('collection') || query.includes('collected') || query.includes('transaction') || query.includes('vachindi'))
     ) {
-      const dbStart = performance.now();
       const { data: rawColls, error: dbErr } = await supabase
         .from('collections')
-        .select('id, amount_paid, payment_date, loans(loan_type, working_days, balance_amount, customers(customer_name, customer_id))')
+        .select('id, amount_paid, payment_date, remarks, loans(loan_type, working_days, balance_amount, customers(customer_name, customer_id))')
         .eq('payment_date', bounds.todayISO);
 
-      const dbDurationMs = performance.now() - dbStart;
-
       if (dbErr) {
-        console.error('[FinCollect AI DB Error - Today Collections]:', dbErr);
-        return {
-          success: false,
-          message: `Unable to retrieve today's collection right now. Please try again.`,
-          error: dbErr.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
+        console.error('[FinCollect AI DB Error - Today Collection]:', dbErr);
+        return { success: false, message: "Unable to query today's collections.", error: dbErr.message, timestamp };
       }
 
-      const uniqueCollsMap = new Map();
-      (rawColls || []).forEach((c: any) => uniqueCollsMap.set(c.id, c));
-      const todaysColls = Array.from(uniqueCollsMap.values());
-
+      const todaysColls = rawColls || [];
       const total = todaysColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
-      const count = todaysColls.length;
 
-      // Group collections by explicit collection type
-      const dailyColls = todaysColls.filter((c: any) => {
-        const type = c.loans?.loan_type;
-        const days = c.loans?.working_days;
-        return (!type && days === 100) || type === 'daily' || (days && days !== 0 && days !== 10 && days !== 6);
-      });
-      const weeklyColls = todaysColls.filter((c: any) => c.loans?.loan_type === 'weekly' || c.loans?.working_days === 10);
-      const monthlyColls = todaysColls.filter((c: any) => c.loans?.loan_type === 'monthly' || c.loans?.working_days === 6);
-      const adjustmentColls = todaysColls.filter((c: any) => c.loans?.loan_type === 'adjustment' || c.loans?.working_days === 0);
+      if (query.includes('transaction') || query.includes('show') || query.includes('list')) {
+        let msg = `### 📜 Today's Transactions (${formatDate(bounds.todayISO)})\n\n`;
+        msg += `- **Total Collected Today**: **${formatCurrency(total)}** (${todaysColls.length} payments)\n\n`;
 
-      const dailySum = dailyColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
-      const weeklySum = weeklyColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
-      const monthlySum = monthlyColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
-      const adjustmentSum = adjustmentColls.reduce((s: number, c: any) => s + Number(c.amount_paid || 0), 0);
+        if (todaysColls.length > 0) {
+          msg += `| Customer Name | Code | Type | Amount Paid |\n`;
+          msg += `| :--- | :--- | :--- | :--- |\n`;
+          todaysColls.forEach((c: any) => {
+            const name = c.loans?.customers?.customer_name || 'Customer';
+            const code = c.loans?.customers?.customer_id || 'N/A';
+            const type = decodeLoanType(c.loans?.working_days, c.loans?.loan_type);
+            msg += `| **${name}** | \`${code}\` | \`[${type.toUpperCase()}]\` | **${formatCurrency(c.amount_paid)}** |\n`;
+          });
+        } else {
+          msg += `*No transactions recorded today (${formatDate(bounds.todayISO)}).*`;
+        }
 
-      const intro = isTelugu
-        ? `Ivala (**${formatDate(bounds.todayISO)}**) jarigina total collection snapshot:`
-        : `Today's (**${formatDate(bounds.todayISO)}**) collection performance snapshot:`;
-
-      let markdown = `### 💰 Today's Collection Report\n\n${intro}\n\n`;
-      markdown += `- **Business Date**: **${formatDate(bounds.todayISO)}**\n`;
-      markdown += `- **Total Amount Collected Today**: **${formatCurrency(total)}** (${count} payments)\n\n`;
-
-      markdown += `#### 📊 Breakdown by Collection Type:\n`;
-      markdown += `| Collection Type | Total Collected Today | Payments |\n`;
-      markdown += `| :--- | :--- | :--- |\n`;
-      markdown += `| 📅 **Daily Collections** | **${formatCurrency(dailySum)}** | ${dailyColls.length} |\n`;
-      markdown += `| 🗓️ **Weekly Collections** | **${formatCurrency(weeklySum)}** | ${weeklyColls.length} |\n`;
-      markdown += `| 📆 **Monthly Collections** | **${formatCurrency(monthlySum)}** | ${monthlyColls.length} |\n`;
-      markdown += `| ⚙️ **Adjustment Collections** | **${formatCurrency(adjustmentSum)}** | ${adjustmentColls.length} |\n\n`;
-
-      if (todaysColls.length > 0) {
-        markdown += `#### 📜 Recent Today Transactions:\n`;
-        markdown += `| Customer Name | Code | Type | Amount Paid |\n`;
-        markdown += `| :--- | :--- | :--- | :--- |\n`;
-        todaysColls.slice(0, 5).forEach((c: any) => {
-          const custName = c.loans?.customers?.customer_name || 'Customer';
-          const code = c.loans?.customers?.customer_id || 'N/A';
-          const lType = c.loans?.loan_type || 'daily';
-          markdown += `| **${custName}** | \`${code}\` | \`[${lType.toUpperCase()}]\` | **${formatCurrency(c.amount_paid)}** |\n`;
-        });
-      } else {
-        markdown += `*No collection payments recorded yet for today (${formatDate(bounds.todayISO)}).*\n`;
+        return { success: true, message: msg.trim(), category: 'collections', timestamp };
       }
 
-      markdown += `\n→ Compare with weekly collection\n→ Show today's expenses\n→ Which loan has highest pending?`;
-
-      const result: AIResponse = { success: true, message: markdown.trim(), category: 'collections', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
-      return result;
-    }
-
-    // ----------------------------------------------------
-    // INTENT 3: WEEKLY COLLECTION
-    // ----------------------------------------------------
-    if (query.includes('week') || query.includes('weekly')) {
-      const dbStart = performance.now();
-      const { data: rawColls, error: dbErr } = await supabase
-        .from('collections')
-        .select('id, amount_paid, payment_date')
-        .gte('payment_date', bounds.weekStartISO)
-        .lte('payment_date', bounds.todayISO);
-
-      const dbDurationMs = performance.now() - dbStart;
-
-      if (dbErr) {
-        console.error('[FinCollect AI DB Error - Weekly Collections]:', dbErr);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch weekly collection data from Supabase. Error: ${dbErr.message}`,
-          error: dbErr.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
-      }
-
-      const uniqueCollsMap = new Map();
-      (rawColls || []).forEach((c: any) => uniqueCollsMap.set(c.id, c));
-      const weeklyColls = Array.from(uniqueCollsMap.values());
-
-      const total = weeklyColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
-      const count = weeklyColls.length;
-
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'WEEKLY_COLLECTION',
-        bounds,
-        selectedDateRange: `${bounds.weekStartISO} to ${bounds.todayISO}`,
-        tablesQueried: ['collections'],
-        queryResultCount: count,
-        rawAggregateSum: `₹${total}`,
-        finalFormattedValue: formatCurrency(total),
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
-
-      const markdown = `
-### 📅 Current Week Collection Summary
-
-- **Current Week**: **${formatDate(bounds.weekStartISO)} – ${formatDate(bounds.weekEndISO)}**
-- **Data Available Through**: **${formatDate(bounds.todayISO)}**
-- **Total Weekly Collection**: **${formatCurrency(total)}**
-- **Transaction Count**: **${count} collections**
-
-> ℹ️ *Note: Weekly collections include valid transactions recorded during the current calendar week up to today.*
-
-→ Compare with monthly collection
-→ Show today's collection
-→ Show pending loans
-      `.trim();
-
-      const result: AIResponse = { success: true, message: markdown, category: 'collections', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+      const message = `**Today's Collection**: **${formatCurrency(total)}** (${todaysColls.length} payments on ${formatDate(bounds.todayISO)})`;
+      const result: AIResponse = { success: true, message, category: 'collections', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
     // INTENT 4: MONTHLY COLLECTION
     // ----------------------------------------------------
-    if (query.includes('month') || query.includes('monthly')) {
-      if (query.includes('expense') || query.includes('kharchu')) {
-        // Skip to expense handler below
-      } else {
-        const dbStart = performance.now();
-        const { data: rawColls, error: dbErr } = await supabase
-          .from('collections')
-          .select('id, amount_paid, payment_date')
-          .gte('payment_date', bounds.monthStartISO)
-          .lte('payment_date', bounds.todayISO);
-
-        const dbDurationMs = performance.now() - dbStart;
-
-        if (dbErr) {
-          console.error('[FinCollect AI DB Error - Monthly Collections]:', dbErr);
-          return {
-            success: false,
-            message: `⚠️ **Database Query Failure**: Failed to fetch monthly collection data from Supabase. Error: ${dbErr.message}`,
-            error: dbErr.message,
-            timestamp,
-            performanceMs: Math.round(performance.now() - startTime),
-          };
-        }
-
-        const uniqueCollsMap = new Map();
-        (rawColls || []).forEach((c: any) => uniqueCollsMap.set(c.id, c));
-        const monthlyColls = Array.from(uniqueCollsMap.values());
-
-        const total = monthlyColls.reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
-        const count = monthlyColls.length;
-
-        logAIDebug({
-          rawQuery,
-          detectedIntent: 'MONTHLY_COLLECTION',
-          bounds,
-          selectedDateRange: `${bounds.monthStartISO} to ${bounds.todayISO}`,
-          tablesQueried: ['collections'],
-          queryResultCount: count,
-          rawAggregateSum: `₹${total}`,
-          finalFormattedValue: formatCurrency(total),
-          dbDurationMs,
-          totalDurationMs: performance.now() - startTime,
-        });
-
-        const markdown = `
-### 🗓️ Current Month Collection Summary
-
-- **Calendar Month**: **${formatDate(bounds.monthStartISO)} – ${formatDate(bounds.monthEndISO)}**
-- **Data Available Through**: **${formatDate(bounds.todayISO)}**
-- **Total Monthly Collection**: **${formatCurrency(total)}**
-- **Transaction Count**: **${count} collections**
-
-> ℹ️ *Note: Monthly collections include valid transactions recorded during the selected calendar month up to today.*
-
-→ Show today's collection
-→ Show weekly collection
-→ Show expense analysis
-        `.trim();
-
-        const result: AIResponse = { success: true, message: markdown, category: 'collections', timestamp };
-        responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
-        return result;
-      }
-    }
-
-    // ----------------------------------------------------
-    // INTENT 5: ACTIVE LOANS COUNT
-    // ----------------------------------------------------
     if (
-      (query.includes('how many') && query.includes('loan')) ||
-      query.includes('active loan count') ||
-      query.includes('active loans')
+      (query.includes('month') || query.includes('ee month') || query.includes('this month')) &&
+      (query.includes('collection') || query.includes('collected') || query.includes('vachindi'))
     ) {
-      const dbStart = performance.now();
-      const { data: activeLoans, count, error: dbErr } = await supabase
-        .from('loans')
-        .select('id, amount_given, balance_amount', { count: 'exact' })
-        .eq('is_closed', false);
+      const { data: rawColls } = await supabase
+        .from('collections')
+        .select('amount_paid')
+        .gte('payment_date', bounds.monthStartISO)
+        .lte('payment_date', bounds.todayISO);
 
-      const dbDurationMs = performance.now() - dbStart;
+      const total = (rawColls || []).reduce((sum, c) => sum + Number(c.amount_paid || 0), 0);
+      const message = `**This Month's Collection**: **${formatCurrency(total)}** (${formatDate(bounds.monthStartISO)} – ${formatDate(bounds.todayISO)})`;
 
-      if (dbErr) {
-        console.error('[FinCollect AI DB Error - Active Loans Count]:', dbErr);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch active loans count from Supabase. Error: ${dbErr.message}`,
-          error: dbErr.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
-      }
-
-      const activeCount = count || 0;
-      const totalBalance = (activeLoans || []).reduce((s, l) => s + Number(l.balance_amount || 0), 0);
-      const totalDeployed = (activeLoans || []).reduce((s, l) => s + Number(l.amount_given || 0), 0);
-
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'ACTIVE_LOANS_COUNT',
-        bounds,
-        tablesQueried: ['loans'],
-        queryResultCount: activeCount,
-        rawAggregateSum: `Count: ${activeCount} | Balance: ₹${totalBalance}`,
-        finalFormattedValue: `${activeCount} active loans`,
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
-
-      const markdown = `
-### 🏦 Active Loans Portfolio Summary
-
-- **Total Active Loans**: **${activeCount} active loans**
-- **Active Investment Deployed**: **${formatCurrency(totalDeployed)}**
-- **Total Outstanding Customer Balance**: **${formatCurrency(totalBalance)}**
-
-→ Which loan has highest pending balance?
-→ Show today's collection
-→ Show how many customers
-      `.trim();
-
-      const result: AIResponse = { success: true, message: markdown, category: 'loans', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+      const result: AIResponse = { success: true, message, category: 'collections', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 6: HIGHEST PENDING LOANS
+    // INTENT 5: DAY BOOK OPENING / CLOSING BALANCE
     // ----------------------------------------------------
     if (
-      query.includes('pending') ||
-      query.includes('highest') ||
-      query.includes('overdue') ||
-      (query.includes('loan') && (query.includes('balance') || query.includes('top')))
+      query.includes('opening balance') ||
+      query.includes('closing balance') ||
+      query.includes('day book')
     ) {
-      const dbStart = performance.now();
-      const { data: topLoans, error: dbErr } = await supabase
-        .from('loans')
-        .select('id, balance_amount, total_collection, working_days, loan_type, customers(customer_name, customer_id)')
-        .eq('is_closed', false)
-        .order('balance_amount', { ascending: false })
-        .limit(5);
+      const dayBookRes = await getDayBookData(bounds.todayISO);
 
-      const dbDurationMs = performance.now() - dbStart;
-
-      if (dbErr) {
-        console.error('[FinCollect AI DB Error - Top Loans]:', dbErr);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch active loans data from Supabase. Error: ${dbErr.message}`,
-          error: dbErr.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
+      if (!dayBookRes.success || !dayBookRes.data) {
+        return { success: false, message: 'Failed to fetch Day Book data.', timestamp };
       }
 
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'HIGHEST_PENDING_LOANS',
-        bounds,
-        tablesQueried: ['loans', 'customers'],
-        queryResultCount: topLoans?.length || 0,
-        rawAggregateSum: topLoans && topLoans[0] ? `Top Balance: ₹${topLoans[0].balance_amount}` : 'N/A',
-        finalFormattedValue: topLoans && topLoans[0] ? formatCurrency(topLoans[0].balance_amount) : '₹0',
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
+      const d = dayBookRes.data;
+      let msg = `### 📖 Day Book (${formatDate(bounds.todayISO)})\n\n`;
+      msg += `- **Opening Balance**: **${formatCurrency(d.openingBalance)}**\n`;
+      msg += `- **Total Cash In Today**: **${formatCurrency(d.totalCashIn)}**\n`;
+      msg += `- **Total Cash Out Today**: **${formatCurrency(d.totalCashOut)}**\n`;
+      msg += `- **Closing Balance**: **${formatCurrency(d.closingBalance)}**`;
 
-      const intro = isTelugu
-        ? `Mee loans lo highest pending balance unna top customers list:`
-        : `Active loans sorted by highest outstanding customer balance:`;
-
-      let markdown = `### ⚠️ Loans with Highest Pending Balances\n\n${intro}\n\n`;
-
-      if (topLoans && topLoans.length > 0) {
-        markdown += `| Customer Name | Code | Type | Target | Outstanding |\n`;
-        markdown += `| :--- | :--- | :--- | :--- | :--- |\n`;
-        topLoans.forEach((l: any) => {
-          const name = l.customers?.customer_name || 'Customer';
-          const code = l.customers?.customer_id || 'N/A';
-          const type = (l.working_days ? 'daily' : l.loan_type || 'loan').toUpperCase();
-          markdown += `| **${name}** | \`${code}\` | \`${type}\` | ${formatCurrency(l.total_collection)} | **${formatCurrency(l.balance_amount)}** |\n`;
-        });
-      } else {
-        markdown += `*No active loans found with pending balances.*\n`;
-      }
-
-      markdown += `\n→ Show active loan count\n→ Show today's collection\n→ How many customers are there?`;
-
-      const result: AIResponse = { success: true, message: markdown.trim(), category: 'loans', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+      const result: AIResponse = { success: true, message: msg.trim(), category: 'general', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 7: OPERATING EXPENSES ANALYSIS
+    // INTENT 6: CASH IN HAND & WORKING CAPITAL
     // ----------------------------------------------------
     if (
-      query.includes('expense') ||
-      query.includes('expenses') ||
-      query.includes('kharchu') ||
-      query.includes('kharcha') ||
-      pageContext === 'expenses'
+      query.includes('cash in hand') ||
+      query.includes('cash balance') ||
+      query.includes('hand cash') ||
+      (query.includes('cash') && query.includes('entha'))
     ) {
-      const dbStart = performance.now();
-      const [todaysExpRes, monthlyExpRes] = await Promise.all([
-        supabase.from('expenses').select('id, amount, category, remarks').eq('expense_date', bounds.todayISO),
-        supabase.from('expenses').select('id, amount').gte('expense_date', bounds.monthStartISO).lte('expense_date', bounds.todayISO),
-      ]);
-
-      const dbDurationMs = performance.now() - dbStart;
-
-      if (todaysExpRes.error || monthlyExpRes.error) {
-        const errObj = todaysExpRes.error || monthlyExpRes.error;
-        console.error('[FinCollect AI DB Error - Operating Expenses]:', errObj);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to fetch operating expenses data from Supabase. Error: ${errObj?.message}`,
-          error: errObj?.message,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
-      }
-
-      const todaysExp = todaysExpRes.data || [];
-      const monthlyExp = monthlyExpRes.data || [];
-
-      const todayTotal = todaysExp.reduce((s, e) => s + Number(e.amount || 0), 0);
-      const monthTotal = monthlyExp.reduce((s, e) => s + Number(e.amount || 0), 0);
-
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'OPERATING_EXPENSES',
-        bounds,
-        selectedDateRange: `${bounds.monthStartISO} to ${bounds.todayISO}`,
-        tablesQueried: ['expenses'],
-        queryResultCount: todaysExp.length + monthlyExp.length,
-        rawAggregateSum: `Today: ₹${todayTotal} | Month: ₹${monthTotal}`,
-        finalFormattedValue: formatCurrency(monthTotal),
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
-
-      const intro = isTelugu
-        ? `Ivala ebhi eemonth business operating expenses detailed view:`
-        : `Operating expenses detailed breakdown:`;
-
-      let markdown = `### 💸 Operating Expenses Analysis\n\n${intro}\n\n`;
-      markdown += `- **Today's Total Expenses**: **${formatCurrency(todayTotal)}**\n`;
-      markdown += `- **This Month's Total Expenses**: **${formatCurrency(monthTotal)}** (${formatDate(bounds.monthStartISO)} – ${formatDate(bounds.monthEndISO)})\n\n`;
-
-      if (todaysExp.length > 0) {
-        markdown += `#### Today's Expense Items:\n`;
-        todaysExp.forEach((e) => {
-          markdown += `- **${e.category || 'General'}**: **${formatCurrency(e.amount)}** (${e.remarks || 'No remarks'})\n`;
-        });
-      } else {
-        markdown += `*No operating expenses logged yet for today (${formatDate(bounds.todayISO)}).*\n`;
-      }
-
-      markdown += `\n→ Show today's collection\n→ Show net profit\n→ Show investment summary`;
-
-      const result: AIResponse = { success: true, message: markdown.trim(), category: 'expenses', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
-      return result;
-    }
-
-    // ----------------------------------------------------
-    // INTENT 8: INVESTMENT KHATA METRICS
-    // ----------------------------------------------------
-    if (
-      query.includes('investment') ||
-      query.includes('capital') ||
-      query.includes('khata') ||
-      query.includes('working') ||
-      pageContext === 'investment-khata'
-    ) {
-      const dbStart = performance.now();
       const invMetrics = await getInvestmentMetrics();
-      const dbDurationMs = performance.now() - dbStart;
+      const currentCash = invMetrics.data?.currentBalance ?? 0;
+      const message = `**Cash in Hand**: **${formatCurrency(currentCash)}**`;
 
-      if (!invMetrics.success || !invMetrics.data) {
-        console.error('[FinCollect AI DB Error - Investment Metrics]:', invMetrics.error);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to calculate Investment Khata metrics. Error: ${invMetrics.error || 'Unknown calculation error'}`,
-          error: invMetrics.error,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
-      }
-
-      const d = invMetrics.data;
-
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'INVESTMENT_KHATA',
-        bounds,
-        tablesQueried: ['investment_transactions', 'loans', 'expenses', 'investment_settings'],
-        queryResultCount: 1,
-        rawAggregateSum: `Capital: ₹${d.totalCapitalAdded} | Working: ₹${d.currentBalance}`,
-        finalFormattedValue: formatCurrency(d.currentBalance ?? 0),
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
-
-      const intro = isTelugu
-        ? `Mee Investment Khata ebhi central cash flow details ikkada unnai:`
-        : `Investment Khata central cash flow & capital summary:`;
-
-      const markdown = `
-### 📈 Investment Khata & Cash Flow Analysis
-
-${intro}
-
-- **Total Capital Added**: **${formatCurrency(d.totalCapitalAdded ?? 0)}**
-- **Total Disbursements / Capital Withdrawn**: **${formatCurrency(d.totalCapitalWithdrawn ?? 0)}**
-- **Current Active Capital**: **${formatCurrency(d.currentCapital ?? 0)}**
-- **Current Working Cash Balance**: **${formatCurrency(d.currentBalance ?? 0)}**
-- **Accrued Interest**: **${formatCurrency(d.accruedInterest ?? 0)}**
-- **Total Investment Value**: **${formatCurrency(d.totalInvestmentValue ?? 0)}**
-
-> 💡 *Investment Khata tracks central cash flow, owner capital deployment, and accrued interest across disbursements and collections.*
-
-→ Show active loan investment
-→ Show today's collection
-→ Show business net profit
-      `.trim();
-
-      const result: AIResponse = { success: true, message: markdown, category: 'investments', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
+      const result: AIResponse = { success: true, message, category: 'investments', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
       return result;
     }
 
     // ----------------------------------------------------
-    // INTENT 9: DASHBOARD & P&L OVERVIEW
+    // INTENT 7: ACTIVE LOANS, SETTLED LOANS, & TOTAL OUTSTANDING
     // ----------------------------------------------------
     if (
-      query.includes('dashboard') ||
+      query.includes('active loan') ||
+      query.includes('loan count') ||
+      query.includes('settled') ||
+      query.includes('outstanding') ||
+      (query.includes('total') && query.includes('pending'))
+    ) {
+      const { data: allLoans } = await supabase
+        .from('loans')
+        .select('id, amount_given, total_collection, balance_amount, is_closed');
+
+      const loansList = allLoans || [];
+      const activeLoans = loansList.filter(l => !l.is_closed && Number(l.balance_amount || 0) > 0);
+      const settledLoans = loansList.filter(l => l.is_closed || Number(l.balance_amount || 0) <= 0);
+
+      const totalOutstanding = activeLoans.reduce((sum, l) => sum + Number(l.balance_amount || 0), 0);
+      const totalTarget = loansList.reduce((sum, l) => sum + Number(l.total_collection || 0), 0);
+
+      if (query.includes('settled')) {
+        const message = `**Fully Settled / Closed Loans**: **${settledLoans.length} loans**`;
+        return { success: true, message, category: 'loans', timestamp };
+      }
+
+      if (query.includes('outstanding')) {
+        const message = `**Total Customer Outstanding Balance**: **${formatCurrency(totalOutstanding)}** (${activeLoans.length} active loans)`;
+        return { success: true, message, category: 'loans', timestamp };
+      }
+
+      let msg = `### 🏦 Loans Portfolio Overview\n\n`;
+      msg += `- **Active Loans**: **${activeLoans.length}**\n`;
+      msg += `- **Closed / Settled Loans**: **${settledLoans.length}**\n`;
+      msg += `- **Total Outstanding Balance**: **${formatCurrency(totalOutstanding)}**`;
+
+      const result: AIResponse = { success: true, message: msg.trim(), category: 'loans', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
+      return result;
+    }
+
+    // ----------------------------------------------------
+    // INTENT 8: INTEREST COLLECTED & ACCRUED
+    // ----------------------------------------------------
+    if (query.includes('interest')) {
+      const { data: intTx } = await supabase.from('interest_transactions').select('interest_amount');
+      const totalInterestCollected = (intTx || []).reduce((sum, r) => sum + Number(r.interest_amount || 0), 0);
+
+      const message = `**Total Interest Collected**: **${formatCurrency(totalInterestCollected)}**`;
+      const result: AIResponse = { success: true, message, category: 'loans', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
+      return result;
+    }
+
+    // ----------------------------------------------------
+    // INTENT 9: OPERATING EXPENSES
+    // ----------------------------------------------------
+    if (query.includes('expense') || query.includes('kharchu') || query.includes('kharcha')) {
+      const { data: todayExp } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('expense_date', bounds.todayISO);
+
+      const totalTodayExp = (todayExp || []).reduce((sum, e) => sum + Number(e.amount || 0), 0);
+      const message = `**Today's Expenses**: **${formatCurrency(totalTodayExp)}** (${formatDate(bounds.todayISO)})`;
+
+      const result: AIResponse = { success: true, message, category: 'expenses', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
+      return result;
+    }
+
+    // ----------------------------------------------------
+    // INTENT 10: INVESTMENT BALANCE
+    // ----------------------------------------------------
+    if (query.includes('investment')) {
+      const invMetrics = await getInvestmentMetrics();
+      const cap = invMetrics.data?.totalCapitalAdded ?? 0;
+      const bal = invMetrics.data?.currentBalance ?? 0;
+
+      let msg = `### 📈 Investment Summary\n\n`;
+      msg += `- **Total Owner Capital Added**: **${formatCurrency(cap)}**\n`;
+      msg += `- **Current Working Balance**: **${formatCurrency(bal)}**`;
+
+      const result: AIResponse = { success: true, message: msg.trim(), category: 'investments', timestamp };
+      responseCache[cacheKey] = { data: result, expiry: Date.now() + 5000 };
+      return result;
+    }
+
+    // ----------------------------------------------------
+    // INTENT 11: FINANCIAL STATEMENTS (ASSETS, LIABILITIES, PROFIT/LOSS, TRIAL BALANCE)
+    // ----------------------------------------------------
+    if (
+      query.includes('asset') ||
+      query.includes('liability') ||
+      query.includes('liabilities') ||
       query.includes('profit') ||
       query.includes('loss') ||
-      query.includes('overview') ||
-      (pageContext === 'dashboard' && query.includes('analyze'))
+      query.includes('trial balance')
     ) {
-      const dbStart = performance.now();
-      const dash = await getDashboardData();
-      const dbDurationMs = performance.now() - dbStart;
+      const bundle = await getFinancialStatements(bounds.todayISO);
+      const bs = bundle.balanceSheet;
+      const pnl = bundle.profitAndLoss;
 
-      if (!dash.success || !dash.data) {
-        console.error('[FinCollect AI DB Error - Dashboard Data]:', dash.error);
-        return {
-          success: false,
-          message: `⚠️ **Database Query Failure**: Failed to load Dashboard metrics. Error: ${dash.error || 'Unknown dashboard error'}`,
-          error: dash.error,
-          timestamp,
-          performanceMs: Math.round(performance.now() - startTime),
-        };
+      if (query.includes('asset')) {
+        const message = `**Total Assets**: **${formatCurrency(bs.summary.totalAssets)}**`;
+        return { success: true, message, category: 'accounting', timestamp };
       }
 
-      const pl = dash.data.profitLoss;
-      const ov = dash.data.overallSummary;
-      const netProfit = pl.netProfit ?? 0;
+      if (query.includes('liability') || query.includes('liabilities')) {
+        const message = `**Total Liabilities & Capital**: **${formatCurrency(bs.summary.totalLiabilitiesAndCapital)}**`;
+        return { success: true, message, category: 'accounting', timestamp };
+      }
 
-      logAIDebug({
-        rawQuery,
-        detectedIntent: 'DASHBOARD_PNL',
-        bounds,
-        tablesQueried: ['customers', 'loans', 'collections', 'expenses', 'investment_transactions'],
-        queryResultCount: ov.activeLoansCount,
-        rawAggregateSum: `Net Profit: ₹${netProfit}`,
-        finalFormattedValue: formatCurrency(netProfit),
-        dbDurationMs,
-        totalDurationMs: performance.now() - startTime,
-      });
+      if (query.includes('profit') || query.includes('loss')) {
+        const message = `**${pnl.isNetProfit ? "Today's / Accumulated Net Profit" : 'Net Loss'}**: **${formatCurrency(Math.abs(pnl.netProfitOrLoss))}**`;
+        return { success: true, message, category: 'accounting', timestamp };
+      }
 
-      const greeting = isTelugu
-        ? `Namaste Administrator 👋\n\nIvala mee business dashboard snapshot ikkada undi:`
-        : `Hello Administrator 👋\n\nHere is your overall business financial performance snapshot:`;
+      let msg = `### ⚖️ Financial Statements Summary (${formatDate(bounds.todayISO)})\n\n`;
+      msg += `- **Total Assets**: **${formatCurrency(bs.summary.totalAssets)}**\n`;
+      msg += `- **Total Liabilities & Capital**: **${formatCurrency(bs.summary.totalLiabilitiesAndCapital)}**\n`;
+      msg += `- **Net Profit**: **${formatCurrency(pnl.netProfitOrLoss)}**\n`;
+      msg += `- **Books Balanced**: **${bs.summary.isBalanced ? '✓ Yes' : '⚠️ No'}**`;
 
-      const markdown = `
-### 📊 Business Overview & P&L Statement
-
-${greeting}
-
-- **Total Investment (Khata Balance)**: **${formatCurrency(pl.totalInvestment)}**
-- **Total Loan Interest Earned**: **${formatCurrency(pl.loanInterest)}**
-- **Investment Interest Cost**: **${formatCurrency(pl.investmentInterest)}**
-- **Operating Expenses**: **${formatCurrency(pl.totalExpenses)}**
-- **Current Business Status**: **${netProfit >= 0 ? '🟢 NET PROFIT' : '🔴 NET LOSS'}** (**${formatCurrency(Math.abs(netProfit))}**)
-
-#### 💼 Portfolio Command Highlights:
-- **Active Customers**: **${ov.totalCustomers}**
-- **Active Loans**: **${ov.activeLoansCount}**
-- **Active Investment**: **${formatCurrency(ov.activeInvestment)}**
-- **Remaining Customer Outstanding**: **${formatCurrency(ov.remainingBalance)}**
-- **Today's Collection**: **${formatCurrency(ov.todaysCollections)}**
-
-> 💡 **Smart AI Insight**: Business is currently operating at a **${netProfit >= 0 ? 'positive net profit' : 'net capital deployment'}** position.
-
-→ Show today's collection breakdown
-→ Show highest pending balance loans
-→ Show expense analysis
-      `.trim();
-
-      const result: AIResponse = { success: true, message: markdown, category: 'dashboard', timestamp };
-      responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
-      return result;
+      return { success: true, message: msg.trim(), category: 'accounting', timestamp };
     }
 
     // ----------------------------------------------------
-    // FALLBACK CLARIFICATION BEHAVIOR (NO RANDOM DASHBOARD SUMMARY)
+    // FALLBACK CLARIFICATION
     // ----------------------------------------------------
-    logAIDebug({
-      rawQuery,
-      detectedIntent: 'CLARIFICATION_FALLBACK',
-      bounds,
-      tablesQueried: [],
-      queryResultCount: 0,
-      rawAggregateSum: 'N/A',
-      finalFormattedValue: 'Clarification Prompt',
-      dbDurationMs: 0,
-      totalDurationMs: performance.now() - startTime,
-    });
-
     const fallbackMarkdown = `
 ### 🤖 FinCollect AI Assistant
 
-I am here to help analyze your business data. Could you please specify which information you would like?
+I am your real-time financial data assistant. You can ask me:
 
-- 👥 **Total Customers**: Ask *"How many customers are there?"*
-- 💰 **Today's Collections**: Ask *"What is today's collection?"*
-- 📅 **Weekly Collections**: Ask *"What is this week's collection?"*
-- 🗓️ **Monthly Collections**: Ask *"What is this month's collection?"*
-- 🏦 **Active Loans**: Ask *"How many active loans?"* or *"Which loan has highest pending?"*
-- 💸 **Expenses**: Ask *"Show this month's expenses"*
-- 📈 **Investment Khata**: Ask *"What is my investment balance?"*
-
-→ How many customers are there?
-→ What is today's collection?
-→ How many active loans?
+- 👥 *"How many customers are there?"*
+- 💰 *"Today collection entha?"*
+- 📜 *"Show today's transactions"*
+- 👤 *"Ramesh balance entha?"*
+- 📖 *"What is today's opening balance?"*
+- 💵 *"Cash in hand entha undi?"*
+- 🏦 *"How many active loans?"*
+- ⚖️ *"Total assets entha?"* or *"Today profit/loss entha?"*
     `.trim();
 
-    const result: AIResponse = {
+    return {
       success: true,
       message: fallbackMarkdown,
       category: 'general',
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
     };
-    responseCache[cacheKey] = { data: result, expiry: Date.now() + 15000 };
-    return result;
   } catch (err: any) {
     console.error('Error in queryFinCollectAI server action:', err);
     return {
       success: false,
-      message: `⚠️ **System Execution Error**: ${err.message || 'An unexpected error occurred while executing AI request.'}`,
-      error: err.message,
+      message: 'An unexpected database error occurred while querying FinCollect AI. Please try again.',
+      error: err?.message,
       timestamp,
       performanceMs: Math.round(performance.now() - startTime),
     };
   }
-}
-
-/**
- * End-to-End Server-Side Debug Logger
- */
-function logAIDebug(params: {
-  rawQuery: string;
-  detectedIntent: string;
-  bounds: any;
-  selectedDateRange?: string;
-  tablesQueried: string[];
-  queryResultCount: number;
-  rawAggregateSum: string;
-  finalFormattedValue: string;
-  dbDurationMs: number;
-  totalDurationMs: number;
-}) {
-  console.log('====================================================');
-  console.log(`[FinCollect AI End-to-End Debug Log] ${new Date().toISOString()}`);
-  console.log(`- User Query           : "${params.rawQuery}"`);
-  console.log(`- Detected Intent      : ${params.detectedIntent}`);
-  console.log(`- Business Timezone    : ${params.bounds.businessTimezone}`);
-  console.log(`- Date Bounds          : Today (${params.bounds.todayISO}) | Week (${params.bounds.weekStartISO}..${params.bounds.weekEndISO}) | Month (${params.bounds.monthStartISO}..${params.bounds.monthEndISO})`);
-  if (params.selectedDateRange) {
-    console.log(`- Selected Query Range : ${params.selectedDateRange}`);
-  }
-  console.log(`- Tables Queried       : [${params.tablesQueried.join(', ')}]`);
-  console.log(`- Query Result Count   : ${params.queryResultCount} rows`);
-  console.log(`- Raw Aggregate Sum    : ${params.rawAggregateSum}`);
-  console.log(`- Final Formatted Value: ${params.finalFormattedValue}`);
-  console.log(`- DB Query Duration    : ${Math.round(params.dbDurationMs)}ms`);
-  console.log(`- Total Response Time  : ${Math.round(params.totalDurationMs)}ms`);
-  console.log('====================================================\n');
 }
