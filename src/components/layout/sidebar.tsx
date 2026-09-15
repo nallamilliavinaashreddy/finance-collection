@@ -120,23 +120,23 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-2.5 px-3 py-2 rounded-xl font-mono text-xs transition-all duration-150 group relative border-l-2',
+                'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-all duration-150 group relative border-l-2',
                 isActive
-                  ? 'bg-sky-500/15 border-sky-400 text-sky-300 font-bold shadow-[0_0_12px_rgba(56,189,248,0.15)]'
-                  : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  ? 'bg-sky-500/10 border-sky-400 text-sky-300 font-bold shadow-xs'
+                  : 'border-transparent text-slate-400 hover:text-slate-100 hover:bg-slate-800/40'
               )}
             >
-              <span className={cn('text-[10px] font-mono shrink-0', isActive ? 'text-sky-400 font-bold' : 'text-slate-600')}>
+              <span className={cn('text-[10px] font-mono shrink-0', isActive ? 'text-sky-400 font-bold' : 'text-slate-500')}>
                 [{indexNum}]
               </span>
               <Icon
                 className={cn(
                   'w-4 h-4 shrink-0 transition-colors',
-                  isActive ? 'text-sky-400' : 'text-slate-400 group-hover:text-sky-300'
+                  isActive ? 'text-sky-400' : 'text-slate-400 group-hover:text-slate-200'
                 )}
               />
               {!isCollapsed && (
-                <span className="truncate tracking-tight font-sans text-xs">{translatedTitle}</span>
+                <span className="truncate tracking-tight font-sans text-xs font-medium">{translatedTitle}</span>
               )}
 
               {/* Tooltip for collapsed sidebar */}

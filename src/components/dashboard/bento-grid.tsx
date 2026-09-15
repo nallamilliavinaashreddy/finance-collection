@@ -64,7 +64,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Bento Box 1: Total Customers */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-soul-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-soul-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-orange-400 transition-colors">
               [01] TOTAL CUSTOMERS
@@ -74,17 +74,17 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-white font-mono">
+            <span className="text-2xl font-black text-white font-sans tabular-nums">
               {isLoading ? '...' : overall?.totalCustomers ?? 0}
             </span>
-            <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+            <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20 font-semibold">
               VERIFIED
             </span>
           </div>
         </Card>
 
         {/* Bento Box 2: Active Loans */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-power-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-power-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-purple-400 transition-colors">
               [02] ACTIVE LOANS
@@ -94,17 +94,17 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl font-black text-white font-mono">
+            <span className="text-2xl font-black text-white font-sans tabular-nums">
               {isLoading ? '...' : overall?.activeLoansCount ?? 0}
             </span>
-            <span className="text-[10px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+            <span className="text-[10px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 font-semibold">
               ACTIVE YIELD
             </span>
           </div>
         </Card>
 
         {/* Bento Box 3: Active Investment */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-space-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-space-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
               [03] DEPLOYED CAPITAL
@@ -114,7 +114,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-white font-mono truncate block">
+            <span className="text-xl font-black text-white font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.activeInvestment ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
@@ -124,7 +124,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 4: Portfolio Interest */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-mind-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-mind-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
               [04] TARGET INTEREST
@@ -134,7 +134,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-amber-400 font-mono truncate block">
+            <span className="text-xl font-black text-amber-400 font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.totalInterest ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
@@ -144,7 +144,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 5: Remaining Balance */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-power-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-power-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-purple-400 transition-colors">
               [05] OUTSTANDING BAL
@@ -154,7 +154,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-white font-mono truncate block">
+            <span className="text-xl font-black text-white font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.remainingBalance ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
@@ -164,7 +164,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 6: Today's Collections */}
-        <Card className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-space-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-space-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
               [06] TODAY COLLECTIONS
@@ -174,7 +174,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-emerald-400 font-mono truncate block">
+            <span className="text-xl font-black text-emerald-400 font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.todaysCollections ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-emerald-400/80 font-mono mt-0.5 block">
@@ -184,7 +184,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 7: Today's Expenses */}
-        <Card className="p-4 rounded-2xl border border-rose-500/30 bg-rose-950/20 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-reality-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-rose-500/30 bg-rose-950/20 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-reality-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-rose-400 uppercase tracking-wider group-hover:text-rose-300 transition-colors">
               [07] TODAY EXPENSES
@@ -194,7 +194,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-rose-400 font-mono truncate block">
+            <span className="text-xl font-black text-rose-400 font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.todaysExpenses ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-rose-400/80 font-mono mt-0.5 block">
@@ -204,7 +204,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 8: Today's Stamp Cost */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-mind-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-mind-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
               [08] STAMP COST
@@ -214,7 +214,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-white font-mono truncate block">
+            <span className="text-xl font-black text-white font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.todaysStampCost ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
@@ -224,7 +224,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 9: Today's Chit Pay */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-time-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-time-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
               [09] DAILY CHIT
@@ -234,7 +234,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-white font-mono truncate block">
+            <span className="text-xl font-black text-white font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.todaysChitPayments ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
@@ -244,7 +244,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
         </Card>
 
         {/* Bento Box 10: This Month Chit Pay */}
-        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-lg flex flex-col justify-between relative group hover-time-stone cursor-pointer">
+        <Card className="p-4 rounded-2xl border border-sky-500/20 bg-slate-900/80 backdrop-blur-xl shadow-md flex flex-col justify-between relative group hover-time-stone cursor-pointer">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
               [10] MONTH CHIT PAY
@@ -254,7 +254,7 @@ export function BentoGrid({ overall, isLoading }: BentoGridProps) {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl font-bold text-white font-mono truncate block">
+            <span className="text-xl font-black text-white font-sans tabular-nums truncate block">
               {isLoading ? '...' : <AnimatedNumber value={overall?.thisMonthsChitPayments ?? 0} formatAsCurrency />}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">

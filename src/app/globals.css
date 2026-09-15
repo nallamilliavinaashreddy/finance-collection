@@ -199,76 +199,76 @@ body {
 }
 
 /* ==========================================================
-   AVENGERS INFINITY STONES HOVER EFFECTS & HUD GLOWS
+   AVENGERS INFINITY STONES RESTRAINED HOVER EFFECTS & HUD GLOWS
    ========================================================== */
 
-/* 1. SPACE STONE (Cosmic Cyan / Blue) */
+/* 1. SPACE STONE (Cosmic Cyan / Blue - Inflow Collections) */
 .hover-space-stone {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .hover-space-stone:hover {
-  transform: translateY(-2px);
-  border-color: rgba(56, 189, 248, 0.6) !important;
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.15) !important;
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(56, 189, 248, 0.2) !important;
 }
 
-/* 2. MIND STONE (Solar Gold / Yellow) */
+/* 2. MIND STONE (Solar Gold / Yellow - Capital / Interest) */
 .hover-mind-stone {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .hover-mind-stone:hover {
-  transform: translateY(-2px);
-  border-color: rgba(250, 204, 21, 0.6) !important;
-  box-shadow: 0 0 25px rgba(250, 204, 21, 0.4), inset 0 0 10px rgba(250, 204, 21, 0.15) !important;
+  transform: translateY(-1px);
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(245, 158, 11, 0.2) !important;
 }
 
-/* 3. REALITY STONE (Aether Crimson / Red) */
+/* 3. REALITY STONE (Aether Crimson / Red - Expenses / Outflow) */
 .hover-reality-stone {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .hover-reality-stone:hover {
-  transform: translateY(-2px);
-  border-color: rgba(244, 63, 94, 0.6) !important;
-  box-shadow: 0 0 25px rgba(244, 63, 94, 0.4), inset 0 0 10px rgba(244, 63, 94, 0.15) !important;
+  transform: translateY(-1px);
+  border-color: rgba(244, 63, 94, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(244, 63, 94, 0.2) !important;
 }
 
-/* 4. TIME STONE (Agamotto Emerald / Green) */
+/* 4. TIME STONE (Agamotto Emerald / Green - Net Surplus / Chits) */
 .hover-time-stone {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .hover-time-stone:hover {
-  transform: translateY(-2px);
-  border-color: rgba(52, 211, 153, 0.6) !important;
-  box-shadow: 0 0 25px rgba(52, 211, 153, 0.4), inset 0 0 10px rgba(52, 211, 153, 0.15) !important;
+  transform: translateY(-1px);
+  border-color: rgba(52, 211, 153, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(52, 211, 153, 0.2) !important;
 }
 
-/* 5. POWER STONE (Orb Violet / Purple) */
+/* 5. POWER STONE (Orb Violet / Purple - Loans / Yield) */
 .hover-power-stone {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .hover-power-stone:hover {
-  transform: translateY(-2px);
-  border-color: rgba(192, 132, 252, 0.6) !important;
-  box-shadow: 0 0 25px rgba(192, 132, 252, 0.4), inset 0 0 10px rgba(192, 132, 252, 0.15) !important;
+  transform: translateY(-1px);
+  border-color: rgba(192, 132, 252, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(192, 132, 252, 0.2) !important;
 }
 
-/* 6. SOUL STONE (Vormir Sunset / Orange) */
+/* 6. SOUL STONE (Vormir Sunset / Orange - Customers) */
 .hover-soul-stone {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .hover-soul-stone:hover {
-  transform: translateY(-2px);
-  border-color: rgba(251, 146, 60, 0.6) !important;
-  box-shadow: 0 0 25px rgba(251, 146, 60, 0.4), inset 0 0 10px rgba(251, 146, 60, 0.15) !important;
+  transform: translateY(-1px);
+  border-color: rgba(251, 146, 60, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 146, 60, 0.2) !important;
 }
 
 /* Infinity Stone Pulse Badges */
-.stone-badge-space { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
-.stone-badge-mind { background: rgba(250, 204, 21, 0.12); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.4); }
-.stone-badge-reality { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); }
-.stone-badge-time { background: rgba(52, 211, 153, 0.12); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); }
-.stone-badge-power { background: rgba(192, 132, 252, 0.12); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.4); }
-.stone-badge-soul { background: rgba(251, 146, 60, 0.12); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.4); }
+.stone-badge-space { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.stone-badge-mind { background: rgba(250, 204, 21, 0.1); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.3); }
+.stone-badge-reality { background: rgba(244, 63, 94, 0.1); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+.stone-badge-time { background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+.stone-badge-power { background: rgba(192, 132, 252, 0.1); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+.stone-badge-soul { background: rgba(251, 146, 60, 0.1); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3); }
 
 /* Reduced Motion Compliance */
 @media (prefers-reduced-motion: reduce) {
