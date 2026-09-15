@@ -18,6 +18,8 @@ import {
   Languages,
   RefreshCw,
   Compass,
+  Cpu,
+  Radio,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -36,7 +38,7 @@ export function FinCollectAIDrawer() {
     {
       id: 'welcome',
       sender: 'ai',
-      text: `Hello, Administrator 👋\n\nI am **FinCollect AI**, your Pan-India financial assistant. I support **22 Scheduled Indian Languages** (తెలుగు, हिन्दी, தமிழ், ಕನ್ನಡ, മലയാളം, मराठी, বাংলা, ગુજરાતી, ਪੰਜਾਬੀ, ଓଡ଼ିଆ, অসমীয়া, اردو, etc.) + English & transliterated queries.`,
+      text: `Hello, Commander 👋\n\nI am **FINCOLLECT AI**, your JARVIS financial intelligence assistant. Ask me anything about your active loans, daily collections, operating expenses, Day Book, or Profit & Loss statements in **22 Indian languages** or transliteration.`,
       category: 'general',
       timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     },
@@ -104,8 +106,8 @@ export function FinCollectAIDrawer() {
 
       const errorText =
         err.message === 'REQUEST_TIMEOUT'
-          ? `⚠️ Request timed out. Please click to retry.\n\n→ ${text}`
-          : `⚠️ An error occurred while fetching data. Please retry.\n\n→ ${text}`;
+          ? `⚠️ Request timed out. Click to retry.\n\n→ ${text}`
+          : `⚠️ An error occurred while retrieving data. Please retry.\n\n→ ${text}`;
 
       setMessages((prev) => [
         ...prev,
@@ -143,53 +145,53 @@ export function FinCollectAIDrawer() {
 
   return (
     <>
-      {/* FLOATING ACTION BUTTON (FAB) */}
+      {/* JARVIS ARC-REACTOR FLOATING ACTION BUTTON (FAB) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group ring-4 ring-indigo-500/20 backdrop-blur-xl border border-white/20"
-        title="Open FinCollect AI Copilot"
+        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-[#070A12]/90 border border-sky-400/40 text-white shadow-[0_0_25px_rgba(56,189,248,0.25)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group backdrop-blur-xl"
+        title="Open JARVIS FinCollect AI"
       >
         <div className="relative flex items-center justify-center">
-          <Bot className="w-5 h-5 text-white group-hover:rotate-12 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full animate-ping" />
+          <Cpu className="w-5 h-5 text-sky-400 group-hover:rotate-45 transition-transform duration-500" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-black rounded-full animate-ping" />
         </div>
-        <span className="text-xs font-black tracking-wide uppercase font-sans">
-          FinCollect AI
+        <span className="text-xs font-mono font-bold tracking-wider uppercase">
+          [JARVIS.AI]
         </span>
-        <Sparkles className="w-3.5 h-3.5 text-indigo-200 animate-pulse" />
+        <Radio className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
       </button>
 
-      {/* RIGHT-SIDE SLIDE-OVER AI PANEL */}
+      {/* RIGHT-SIDE JARVIS SLIDE-OVER PANEL */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 dark:bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-lg h-full bg-white/95 dark:bg-[#070B14]/95 text-slate-900 dark:text-[#F8FAFC] backdrop-blur-2xl border-l border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
-            {/* Header Bar */}
-            <div className="p-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-slate-50/90 dark:bg-[#0F172A]/90 shrink-0">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-black/70 backdrop-blur-md flex justify-end animate-in fade-in duration-200">
+          <div className="w-full max-w-lg h-full bg-[#070A12]/95 text-white backdrop-blur-2xl border-l border-sky-500/25 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
+            {/* JARVIS Header Bar */}
+            <div className="p-4 border-b border-sky-500/20 flex items-center justify-between bg-slate-900/80 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] flex items-center justify-center text-white shadow-md">
-                  <Bot className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 shadow-inner">
+                  <Cpu className="w-5 h-5 text-sky-400" />
                 </div>
                 <div className="flex flex-col leading-tight">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black tracking-tight text-[#F8FAFC]">FinCollect AI</h3>
-                    <Badge variant="success" className="text-[9px] py-0 px-1.5 font-mono">
-                      ● PAN-INDIA
-                    </Badge>
+                    <h3 className="text-base font-black font-mono tracking-wider text-white">FINCOLLECT AI</h3>
+                    <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded uppercase">
+                      [JARVIS.ONLINE]
+                    </span>
                   </div>
-                  <span className="text-[10px] text-[#94A3B8] font-medium">
-                    22 Languages + Transliteration
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Multilingual Financial Telemetry OS
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 {/* AI Language Selector */}
-                <div className="relative flex items-center bg-[#182237] border border-[#2A3652] rounded-xl px-2 py-1">
-                  <Languages className="w-3.5 h-3.5 text-[#C084FC] mr-1" />
+                <div className="relative flex items-center bg-slate-900 border border-sky-500/30 rounded-xl px-2 py-1">
+                  <Languages className="w-3.5 h-3.5 text-sky-400 mr-1" />
                   <select
                     value={preferredLang}
                     onChange={(e) => setPreferredLang(e.target.value as SupportedLanguageCode)}
-                    className="bg-transparent text-[11px] font-bold text-[#F8FAFC] focus:outline-none cursor-pointer"
+                    className="bg-transparent text-[11px] font-mono font-bold text-white focus:outline-none cursor-pointer"
                   >
                     {ALL_SUPPORTED_LANGUAGES.map(l => (
                       <option key={l.code} value={l.code} className="bg-[#0F172A] text-white">
@@ -201,29 +203,29 @@ export function FinCollectAIDrawer() {
 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-xl text-[#94A3B8] hover:text-white hover:bg-[#2A3652]/50 transition-colors"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-sky-500/15 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Page Context Banner */}
-            <div className="px-4 py-2 border-b border-[#2A3652] bg-[#182237]/60 flex items-center justify-between text-[11px] text-[#94A3B8] font-medium shrink-0">
+            {/* Context Banner */}
+            <div className="px-4 py-2 border-b border-sky-500/15 bg-slate-900/60 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
               <div className="flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-[#C084FC]" />
-                <span>Context: <strong className="text-[#F8FAFC] font-bold">{pageContextTitle}</strong></span>
+                <Compass className="w-3.5 h-3.5 text-sky-400" />
+                <span>[CONTEXT]: <strong className="text-white font-bold">{pageContextTitle}</strong></span>
               </div>
-              <span className="font-mono text-[9px] text-[#22C55E]">Target: {currentLangObj.name}</span>
+              <span className="text-[9px] text-emerald-400">[READ-ONLY SAFEGUARD ACTIVE]</span>
             </div>
 
             {/* Quick Prompts Bar */}
-            <div className="p-3 border-b border-[#2A3652] bg-[#182237]/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
+            <div className="p-3 border-b border-sky-500/15 bg-slate-900/40 shrink-0 overflow-x-auto flex items-center gap-2 no-scrollbar">
               {quickPrompts.map((qp) => (
                 <button
                   key={qp.label}
                   onClick={() => handleSendQuery(qp.query)}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#182237] hover:bg-[#8B5CF6]/20 border border-[#2A3652] hover:border-[#8B5CF6]/40 text-[10px] font-bold text-[#94A3B8] hover:text-[#C084FC] whitespace-nowrap transition-all shrink-0"
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/40 text-[10px] font-mono text-slate-300 hover:text-sky-300 whitespace-nowrap transition-all shrink-0"
                 >
                   {qp.label}
                 </button>
@@ -240,10 +242,10 @@ export function FinCollectAIDrawer() {
                   }`}
                 >
                   <div
-                    className={`p-4 rounded-3xl text-xs leading-relaxed shadow-md ${
+                    className={`p-4 rounded-2xl text-xs leading-relaxed shadow-md ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-semibold rounded-tr-none'
-                        : 'bg-[#182237] border border-[#2A3652] text-[#F8FAFC] rounded-tl-none'
+                        ? 'bg-blue-600/90 text-white font-semibold rounded-tr-none border border-blue-400/30'
+                        : 'bg-slate-900/90 border border-sky-500/20 text-slate-100 rounded-tl-none'
                     }`}
                   >
                     {msg.sender === 'user' ? (
@@ -256,16 +258,16 @@ export function FinCollectAIDrawer() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 px-2 text-[9px] text-[#64748B] font-mono">
+                  <div className="flex items-center gap-2 px-2 text-[9px] text-slate-400 font-mono">
                     <span>{msg.timestamp}</span>
                     {msg.sender === 'ai' && (
                       <button
                         onClick={() => handleCopyText(msg.id, msg.text)}
-                        className="hover:text-white transition-colors flex items-center gap-0.5"
+                        className="hover:text-sky-400 transition-colors flex items-center gap-0.5"
                         title="Copy Response"
                       >
                         {copiedId === msg.id ? (
-                          <Check className="w-3 h-3 text-[#22C55E]" />
+                          <Check className="w-3 h-3 text-emerald-400" />
                         ) : (
                           <Copy className="w-3 h-3" />
                         )}
@@ -276,9 +278,9 @@ export function FinCollectAIDrawer() {
               ))}
 
               {isLoading && (
-                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-[#182237] border border-[#2A3652] text-xs text-[#94A3B8] shadow-md">
-                  <RefreshCw className="w-4 h-4 animate-spin text-[#8B5CF6]" />
-                  <span className="font-semibold text-[#F8FAFC]">🤖 FinCollect AI processing multilingual query...</span>
+                <div className="self-start flex items-center gap-2.5 p-3.5 rounded-2xl bg-slate-900 border border-sky-500/30 text-xs text-slate-300 shadow-md">
+                  <RefreshCw className="w-4 h-4 animate-spin text-sky-400" />
+                  <span className="font-mono text-sky-300">[JARVIS PROCESSING TELEMETRY QUERY...]</span>
                 </div>
               )}
 
@@ -286,7 +288,7 @@ export function FinCollectAIDrawer() {
             </div>
 
             {/* Input Bar */}
-            <div className="p-3.5 border-t border-[#2A3652] bg-[#182237] shrink-0 flex flex-col gap-2">
+            <div className="p-3.5 border-t border-sky-500/20 bg-slate-900/90 shrink-0 flex flex-col gap-2">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -296,7 +298,7 @@ export function FinCollectAIDrawer() {
               >
                 <textarea
                   rows={2}
-                  placeholder="Ask in English, తెలుగు, हिन्दी, தமிழ், ಕನ್ನಡ, or transliteration... (Press Enter to send)"
+                  placeholder="Ask JARVIS in English, తెలుగు, हिन्दी, தமிழ், or transliteration... (Press Enter to send)"
                   value={inputQuery}
                   onChange={(e) => setInputQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -305,19 +307,19 @@ export function FinCollectAIDrawer() {
                       handleSendQuery();
                     }
                   }}
-                  className="flex-1 p-3 text-xs rounded-2xl bg-[#121A2B] border border-[#2A3652] text-[#F8FAFC] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40 focus:border-[#8B5CF6] resize-none"
+                  className="flex-1 p-3 text-xs rounded-2xl bg-[#070A12] border border-sky-500/30 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 resize-none font-sans"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isLoading || !inputQuery.trim()}
-                  className="h-12 px-4 rounded-2xl bg-gradient-to-r from-[#C052B8] via-[#8B5CF6] to-[#5B8DEF] text-white font-bold shrink-0"
+                  className="h-12 px-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
-              <span className="text-[9px] text-[#94A3B8] block text-center font-mono">
-                Supports 22 Scheduled Indian Languages in Read-Only Safety Mode.
+              <span className="text-[9px] text-slate-500 block text-center font-mono">
+                JARVIS TELEMETRY OS • READ-ONLY SAFEGUARD ACTIVE
               </span>
             </div>
           </div>

@@ -149,18 +149,20 @@ export function AccountingBookFrame({
       </div>
 
       {/* Accounting Book Document Container */}
-      <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+      <div className="hud-micro-corner relative border border-slate-200 dark:border-cyan-500/20 rounded-xl bg-white dark:bg-slate-900/90 backdrop-blur-md shadow-xs overflow-hidden">
         {/* Book Title Banner */}
-        <div className="bg-slate-900 text-white p-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="bg-slate-900 text-white p-4 border-b border-slate-800 dark:border-cyan-500/30 flex items-center justify-between relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-32 h-[1px] bg-gradient-to-r from-cyan-500/50 to-transparent"></div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
-              Official Accounting Book Statement
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+              [OFFICIAL STATEMENT // AUDITED]
             </span>
-            <h1 className="text-lg font-bold tracking-tight mt-0.5">{title}</h1>
+            <h1 className="text-lg font-bold tracking-tight mt-0.5 text-white">{title}</h1>
           </div>
           <div className="text-right">
-            <span className="text-[10px] text-slate-400 block font-mono">FINANCIAL PERIOD</span>
-            <span className="text-xs font-semibold text-slate-200">As of {formatDate(asOfDate)}</span>
+            <span className="text-[10px] text-slate-400 block font-mono">PERIOD AS OF</span>
+            <span className="text-xs font-mono font-semibold text-cyan-300">{formatDate(asOfDate)}</span>
           </div>
         </div>
 

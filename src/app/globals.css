@@ -18,17 +18,17 @@
   }
 
   .dark {
-    --background: 222 47% 7%; /* #0B0F17 - Deep Minimal Navy */
+    --background: 228 40% 4.5%; /* #070A12 - Deep JARVIS Command Navy */
     --foreground: 210 40% 98%; /* #F8FAFC */
-    --card: 222 40% 11%; /* #111827 - Slate Card */
+    --card: 222 47% 9%; /* #0F172A - Dark Translucent HUD Surface */
     --card-foreground: 210 40% 98%;
-    --primary: 217 91% 60%; /* #2563EB - Refined Fintech Blue */
+    --primary: 217 91% 60%; /* #2563EB - Electric Blue */
     --primary-foreground: 0 0% 100%;
     --secondary: 217 33% 15%; /* #1E293B */
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 15%;
     --muted-foreground: 215 20.2% 65.1%; /* #94A3B8 */
-    --border: 217 33% 18%; /* #1E293B - Subtle Border */
+    --border: 217 33% 18%; /* #1E293B */
   }
 }
 
@@ -41,12 +41,55 @@ body {
 }
 
 /* ==========================================================
-   MINIMAL FINTECH GLASS & PANEL UTILITIES
+   JARVIS / IRON-MAN HUD ANIMATION KEYFRAMES & UTILITIES
    ========================================================== */
 
-/* Base Clean Panel */
+@keyframes arc-reactor-pulse {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.85;
+  }
+}
+
+@keyframes arc-counter-rotate {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes hud-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.15), inset 0 0 10px rgba(56, 189, 248, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.3), inset 0 0 15px rgba(56, 189, 248, 0.1);
+  }
+}
+
+@keyframes scanline-sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+/* Base HUD Panel */
 .glass-panel,
-.glass-liquid-panel {
+.glass-liquid-panel,
+.hud-panel {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -55,48 +98,64 @@ body {
 }
 
 .dark .glass-panel,
-.dark .glass-liquid-panel {
-  background: rgba(17, 24, 39, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(30, 41, 59, 0.9);
-  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+.dark .glass-liquid-panel,
+.dark .hud-panel {
+  background: rgba(11, 15, 25, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
-/* Minimal Fintech Card */
+/* JARVIS Futuristic HUD Card */
 .glass-card,
 .glass-card-glossy,
-.glass-liquid-card {
+.glass-liquid-card,
+.hud-card {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem; /* 16px radius */
+  border-radius: 1rem;
   background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.85);
   box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .dark .glass-card,
 .dark .glass-card-glossy,
-.dark .glass-liquid-card {
-  background: #111827;
-  border: 1px solid rgba(30, 41, 59, 0.85);
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+.dark .glass-liquid-card,
+.dark .hud-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 @media (hover: hover) {
   .glass-card:hover,
   .glass-card-glossy:hover,
-  .glass-liquid-card:hover {
-    border-color: rgba(37, 99, 235, 0.3);
-    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+  .glass-liquid-card:hover,
+  .hud-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow: 0 6px 20px -2px rgba(15, 23, 42, 0.08);
   }
   .dark .glass-card:hover,
   .dark .glass-card-glossy:hover,
-  .dark .glass-liquid-card:hover {
-    border-color: rgba(37, 99, 235, 0.4);
-    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.5);
+  .dark .glass-liquid-card:hover,
+  .dark .hud-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.45);
+    box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.7), 0 0 20px 0 rgba(56, 189, 248, 0.15);
   }
+}
+
+/* JARVIS Arc-Reactor Ring Utilities */
+.arc-reactor-ring {
+  animation: arc-reactor-pulse 12s linear infinite;
+}
+
+.arc-reactor-reverse {
+  animation: arc-counter-rotate 18s linear infinite;
 }
 
 /* Custom Scrollbars */
@@ -115,26 +174,34 @@ body {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.6);
+  background: rgba(56, 189, 248, 0.3);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(37, 99, 235, 0.6);
+  background: rgba(56, 189, 248, 0.6);
 }
 
 /* Category Accent Lighting Utilities */
 .accent-light-gold {
-  border-top: 2px solid rgba(217, 119, 6, 0.8) !important;
+  border-top: 2px solid rgba(245, 158, 11, 0.8) !important;
 }
 
 .accent-light-emerald {
-  border-top: 2px solid rgba(22, 163, 74, 0.8) !important;
+  border-top: 2px solid rgba(16, 185, 129, 0.8) !important;
 }
 
 .accent-light-red {
-  border-top: 2px solid rgba(220, 38, 38, 0.8) !important;
+  border-top: 2px solid rgba(239, 68, 68, 0.8) !important;
 }
 
 .accent-light-indigo {
-  border-top: 2px solid rgba(37, 99, 235, 0.8) !important;
+  border-top: 2px solid rgba(56, 189, 248, 0.8) !important;
+}
+
+/* Reduced Motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  .arc-reactor-ring,
+  .arc-reactor-reverse {
+    animation: none !important;
+  }
 }

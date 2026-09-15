@@ -43,6 +43,7 @@ import { MonthlyInsightsChart } from '@/components/dashboard/monthly-insights-ch
 import { QuickActionsBar } from '@/components/dashboard/quick-actions-bar';
 import { SmartInsightsCard } from '@/components/dashboard/smart-insights-card';
 import { RecentActivityTimeline } from '@/components/dashboard/recent-activity-timeline';
+import { FinCollectCoreHero } from '@/components/dashboard/fincollect-core-hero';
 import { BentoGrid } from '@/components/dashboard/bento-grid';
 import { CollectionPerformanceChart } from '@/components/dashboard/collection-performance-chart';
 
@@ -251,60 +252,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8 pb-12">
-      {/* PREMIUM HERO PANEL */}
-      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-amber-500/10 via-white/95 to-indigo-500/10 dark:from-[#F97316]/20 dark:via-[#0F172A]/95 dark:to-[#0B0F17] backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800/80 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-        {/* Subtle Background Glow Orbs */}
-        <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#F97316]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col gap-2 relative z-10">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Welcome back, Administrator! 👋
-            </h2>
-            <Badge variant="success" className="gap-1.5 text-xs py-1 px-3 shadow-md font-mono">
-              <Database className="w-4 h-4 text-emerald-400" />
-              Live PostgreSQL Engine
-            </Badge>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium max-w-2xl">
-            {t('dashboard.description', "Here is your complete financial operating overview for today.")}
-          </p>
-
-          <div className="flex items-center gap-3 mt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchMetrics}
-              isLoading={isLoading}
-              leftIcon={<RefreshCw className={cn("w-4 h-4 transition-transform duration-500", isLoading && "animate-spin")} />}
-              className="h-10 px-5 rounded-2xl border-slate-300 dark:border-slate-800 bg-white/70 dark:bg-[#0F172A]/70 backdrop-blur-md shadow-sm hover:border-[#F97316]/50 text-slate-900 dark:text-white font-bold"
-            >
-              {t('nav.refreshFeed', 'Refresh Live Stream')}
-            </Button>
-            <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              Real-Time Sync Active
-            </span>
-          </div>
-        </div>
-
-        {/* Right Side Floating Portfolio Analytics Graphic Card */}
-        <div className="relative z-10 shrink-0">
-          <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0F172A]/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#F97316] to-amber-400 flex items-center justify-center text-white shadow-lg shadow-[#F97316]/30">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Net Profit Status</span>
-              <span className="text-lg font-black font-mono text-emerald-500">
-                {isLoading ? '...' : formatCurrency(data?.profitLoss?.netProfit ?? 0)}
-              </span>
-              <span className="text-[10px] font-semibold text-slate-500">Capital Efficiency High</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* FINCOLLECT CORE CENTRAL HERO HUD */}
+      <FinCollectCoreHero
+        overall={overall}
+        netProfit={data?.profitLoss?.netProfit}
+        isLoading={isLoading}
+        onRefresh={fetchMetrics}
+      />
 
       {/* ================================================================ */}
       {/* PROFIT & LOSS STATEMENT SECTION (5 MANDATORY CARDS) */}
