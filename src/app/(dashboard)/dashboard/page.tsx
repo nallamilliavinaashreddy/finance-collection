@@ -46,6 +46,7 @@ import { RecentActivityTimeline } from '@/components/dashboard/recent-activity-t
 import { FinCollectCoreHero } from '@/components/dashboard/fincollect-core-hero';
 import { BentoGrid } from '@/components/dashboard/bento-grid';
 import { CollectionPerformanceChart } from '@/components/dashboard/collection-performance-chart';
+import { ThreeDPerspectiveViewport } from '@/components/ui/threed-perspective-viewport';
 
 export default function DashboardPage() {
   const { t } = useLanguage();
@@ -251,7 +252,7 @@ export default function DashboardPage() {
   const adj = data?.adjustmentSection;
 
   return (
-    <div className="flex flex-col gap-8 pb-12">
+    <ThreeDPerspectiveViewport className="flex flex-col gap-8 pb-12">
       {/* FINCOLLECT CORE CENTRAL HERO HUD */}
       <FinCollectCoreHero
         overall={overall}
@@ -745,7 +746,7 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </ThreeDPerspectiveViewport>
   );
 }
 
