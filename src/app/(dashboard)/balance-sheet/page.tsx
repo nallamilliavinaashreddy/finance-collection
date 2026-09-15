@@ -1,50 +1,30 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DataTable } from '@/components/ui/data-table';
-import { ColumnDef } from '@tanstack/react-table';
+import { getFinancialStatements, BalanceSheetStatementData } from '@/lib/actions/accounting';
+import { AccountingBookFrame } from '@/components/accounting/accounting-book-frame';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useToast } from '@/components/providers/toast-provider';
-import { AnimatedNumber } from '@/components/ui/animated-number';
-import {
-  getBalanceSheetData,
-  BalanceSheetData,
-  BalanceSheetItem,
-} from '@/lib/actions/balance-sheet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DataTable } from '@/components/ui/data-table';
+import { ColumnDef } from '@tanstack/react-table';
 import { ManualBalanceSheetEntry } from '@/types';
 import { ManualEntryModal } from '@/components/balance-sheet/manual-entry-modal';
 import { DeleteManualEntryModal } from '@/components/balance-sheet/delete-manual-entry-modal';
 import {
-  Scale,
-  Calendar,
-  RefreshCw,
-  Wallet,
-  Landmark,
-  PiggyBank,
-  CheckCircle2,
-  AlertTriangle,
-  FileText,
-  Search,
-  Database,
-  PieChart,
   Plus,
   Pencil,
   Trash2,
+  Scale,
   Layers,
+  Info,
 } from 'lucide-react';
 
 export default function BalanceSheetPage() {
-  const [asOfDate, setAsOfDate] = useState<string>(
-    () => new Date().toISOString().split('T')[0]
-  );
-  const [data, setData] = useState<BalanceSheetData | null>(null);
+  const [asOfDate, setAsOfDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [bsData, setBsData] = useState<BalanceSheetStatementData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'All' | 'Assets' | 'Liabilities' | "Owner's Capital">('All');
 
   // Manual Entry Modal states
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
@@ -55,105 +35,58 @@ export default function BalanceSheetPage() {
 
   const { showToast } = useToast();
 
-  const fetchBalanceSheet = useCallback(async () => {
+  const loadData = useCallback(async (targetDate: string) => {
     setIsLoading(true);
     try {
-      const res = await getBalanceSheetData(asOfDate);
-      setData(res);
-    } catch (err) {
-      console.error('Failed to load balance sheet:', err);
-      showToast('Failed to calculate Balance Sheet. Please try again.', 'error');
+      const bundle = await getFinancialStatements(targetDate);
+      setBsData(bundle.balanceSheet);
+    } catch (err: any) {
+      showToast('Failed to compute Balance Sheet from Supabase', 'error');
     } finally {
       setIsLoading(false);
     }
-  }, [asOfDate, showToast]);
+  }, [showToast]);
 
   useEffect(() => {
-    fetchBalanceSheet();
-  }, [fetchBalanceSheet]);
+    loadData(asOfDate);
+  }, [asOfDate, loadData]);
 
-  // Filtered breakdown table data
-  const filteredItems = useMemo(() => {
-    if (!data?.items) return [];
-    return data.items.filter((item) => {
-      const matchesCategory = categoryFilter === 'All' || item.category === categoryFilter;
-      const matchesSearch =
-        item.particulars.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.note || '').toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [data?.items, categoryFilter, searchQuery]);
+  const liabilitiesAndCapital = bsData?.liabilitiesAndCapital;
+  const assets = bsData?.assets;
+  const summary = bsData?.summary;
+  const manualEntries = bsData?.manualEntries || [];
 
-  // Columns for Main Balance Sheet Items Table
-  const itemsColumns: ColumnDef<BalanceSheetItem>[] = [
+  const capitalAccounts = liabilitiesAndCapital?.capitalAccounts || [];
+  const liabilityAccounts = liabilitiesAndCapital?.liabilityAccounts || [];
+  const assetAccounts = assets?.assetAccounts || [];
+
+  const retainedNetProfit = liabilitiesAndCapital?.retainedNetProfit || 0;
+  const totalLiabilitiesAndCapital = summary?.totalLiabilitiesAndCapital || 0;
+  const totalAssets = summary?.totalAssets || 0;
+  const isBalanced = summary?.isBalanced ?? true;
+  const difference = summary?.difference || 0;
+
+  // Flatten Left Side: Capital Accounts + Retained Profit + Liabilities
+  const leftSideItems = [
+    ...capitalAccounts,
     {
-      accessorKey: 'category',
-      header: 'Category',
-      cell: ({ row }) => (
-        <Badge
-          variant={
-            row.original.category === 'Assets'
-              ? 'success'
-              : row.original.category === 'Liabilities'
-              ? 'error'
-              : 'warning'
-          }
-          className="font-mono text-[10px]"
-        >
-          {row.original.category}
-        </Badge>
-      ),
+      id: 'ret-profit-1',
+      accountName: 'Retained Earnings / Accumulated Net Profit (లాభము)',
+      category: 'Capital' as const,
+      systemAmount: retainedNetProfit,
+      manualAmount: 0,
+      totalAmount: retainedNetProfit,
+      note: 'Accumulated net profit generated from Profit & Loss statement',
     },
-    {
-      accessorKey: 'particulars',
-      header: 'Particulars',
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-semibold text-slate-900 dark:text-white">
-            {row.original.particulars}
-          </span>
-          {row.original.note && (
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              {row.original.note}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'amount',
-      header: 'Total Amount (₹)',
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span
-            className={`font-black text-sm font-mono ${
-              row.original.category === 'Assets'
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : row.original.category === 'Liabilities'
-                ? 'text-rose-600 dark:text-rose-400'
-                : 'text-[#FF7A00]'
-            }`}
-          >
-            {formatCurrency(row.original.amount)}
-          </span>
-          {(row.original.manualAmount ?? 0) !== 0 && (
-            <span className="text-[10px] text-amber-600 font-mono">
-              (Includes {row.original.manualAmount! > 0 ? '+' : ''}{formatCurrency(row.original.manualAmount!)} manual)
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'lastUpdated',
-      header: 'As of Date',
-      cell: ({ row }) => (
-        <span className="text-xs text-slate-500 font-mono">
-          {formatDate(row.original.lastUpdated)}
-        </span>
-      ),
-    },
+    ...liabilityAccounts,
   ];
+
+  // Right Side: Assets
+  const rightSideItems = [...assetAccounts];
+
+  // Align rows by max length so both sides match line-by-line like Image 3
+  const maxRows = Math.max(leftSideItems.length, rightSideItems.length);
+  const rowsArray = Array.from({ length: maxRows });
 
   // Columns for Manual Entries List Table
   const manualEntriesColumns: ColumnDef<ManualBalanceSheetEntry>[] = [
@@ -253,561 +186,214 @@ export default function BalanceSheetPage() {
     },
   ];
 
-  const summary = data?.summary;
-  const assets = data?.assets;
-  const liabilities = data?.liabilities;
-  const capital = data?.ownersCapital;
-  const manualEntries = data?.manualEntries || [];
-
   return (
-    <div className="flex flex-col gap-8 pb-12">
-      {/* Top Header Hero Banner */}
-      <div className="rounded-2xl p-6 glass-panel shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="w-9 h-9 rounded-xl bg-[#FF7A00]/10 border border-[#FF7A00]/20 flex items-center justify-center text-[#FF7A00]">
-              <Scale className="w-5 h-5" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Balance Sheet
-            </h2>
-            <Badge variant="success" className="gap-1 text-[10px] shadow-xs">
-              <Database className="w-3 h-3 text-emerald-500" />
-              System + Manual Engine
-            </Badge>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
-            Automated database figures merged seamlessly with manual financial adjustments.
-          </p>
+    <AccountingBookFrame
+      title="Balance Sheet (ఆస్తి అప్పుల పట్టిక)"
+      subtitle="Traditional two-sided General Balance Sheet statement. Total Liabilities & Capital must equal Total Assets."
+      asOfDate={asOfDate}
+      onDateChange={(d) => setAsOfDate(d)}
+      onRefresh={() => loadData(asOfDate)}
+      isBalanced={isBalanced}
+      difference={difference}
+      isLoading={isLoading}
+      actions={
+        <Button
+          onClick={() => {
+            setEntryToEdit(null);
+            setIsManualModalOpen(true);
+          }}
+          size="md"
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-md shadow-amber-500/20 shrink-0"
+        >
+          Add Manual Entry
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-8">
+        {/* TRADITIONAL TWO-COLUMN BALANCE SHEET SHEET TABLE (MATCHING REFERENCE IMAGE 3) */}
+        <div className="overflow-x-auto rounded-xl border border-amber-900/20 dark:border-slate-800 bg-white dark:bg-[#131D31]">
+          <table className="w-full text-left border-collapse">
+            {/* Header Bands */}
+            <thead>
+              <tr className="bg-amber-100/80 dark:bg-slate-800/90 text-slate-900 dark:text-[#F8FAFC] border-b-2 border-amber-900/30 dark:border-slate-700">
+                <th colSpan={2} className="py-3.5 px-4 font-serif font-bold text-sm tracking-wider text-rose-900 dark:text-rose-400 border-r border-amber-900/20 dark:border-slate-700 uppercase">
+                  LIABILITIES & CAPITAL / అప్పులు & పెట్టుబడి (LEFT SIDE)
+                </th>
+                <th colSpan={2} className="py-3.5 px-4 font-serif font-bold text-sm tracking-wider text-emerald-900 dark:text-emerald-400 uppercase">
+                  ASSETS / ఆస్తులు (RIGHT SIDE)
+                </th>
+              </tr>
+              <tr className="bg-amber-50 dark:bg-slate-900/80 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider border-b border-amber-900/20 dark:border-slate-700">
+                <th className="py-2.5 px-4 border-r border-amber-900/10 dark:border-slate-800">Particulars (ఖాతా వివరములు)</th>
+                <th className="py-2.5 px-4 text-right border-r border-amber-900/30 dark:border-slate-700 w-36">Amount (రూ.)</th>
+                <th className="py-2.5 px-4 border-r border-amber-900/10 dark:border-slate-800">Particulars (ఖాతా వివరములు)</th>
+                <th className="py-2.5 px-4 text-right w-36">Amount (రూ.)</th>
+              </tr>
+            </thead>
+
+            {/* Account Rows */}
+            <tbody className="divide-y divide-amber-900/10 dark:divide-slate-800 text-xs font-serif">
+              {rowsArray.map((_, idx) => {
+                const leftItem = leftSideItems[idx];
+                const rightItem = rightSideItems[idx];
+
+                return (
+                  <tr key={`bs-row-${idx}`} className="hover:bg-amber-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    {/* Left Side Particulars */}
+                    <td className="py-3.5 px-4 border-r border-amber-900/10 dark:border-slate-800">
+                      {leftItem ? (
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">
+                            {leftItem.accountName}
+                          </span>
+                          {leftItem.note && (
+                            <span className="text-[10px] font-sans text-slate-500 dark:text-slate-400 truncate max-w-[280px]">
+                              {leftItem.note}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-700 font-sans">-</span>
+                      )}
+                    </td>
+
+                    {/* Left Side Amount */}
+                    <td className="py-3.5 px-4 text-right font-bold text-rose-700 dark:text-rose-400 border-r border-amber-900/30 dark:border-slate-700">
+                      {leftItem ? (
+                        <div className="flex flex-col items-end">
+                          <span>{formatCurrency(leftItem.totalAmount)}</span>
+                          {leftItem.manualAmount !== 0 && (
+                            <span className="text-[9px] font-sans text-amber-600 font-semibold">
+                              (Inc {leftItem.manualAmount > 0 ? '+' : ''}{formatCurrency(leftItem.manualAmount)} manual)
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+
+                    {/* Right Side Particulars */}
+                    <td className="py-3.5 px-4 border-r border-amber-900/10 dark:border-slate-800">
+                      {rightItem ? (
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">
+                            {rightItem.accountName}
+                          </span>
+                          {rightItem.note && (
+                            <span className="text-[10px] font-sans text-slate-500 dark:text-slate-400 truncate max-w-[280px]">
+                              {rightItem.note}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-700 font-sans">-</span>
+                      )}
+                    </td>
+
+                    {/* Right Side Amount */}
+                    <td className="py-3.5 px-4 text-right font-bold text-emerald-700 dark:text-emerald-400">
+                      {rightItem ? (
+                        <div className="flex flex-col items-end">
+                          <span>{formatCurrency(rightItem.totalAmount)}</span>
+                          {rightItem.manualAmount !== 0 && (
+                            <span className="text-[9px] font-sans text-amber-600 font-semibold">
+                              (Inc {rightItem.manualAmount > 0 ? '+' : ''}{formatCurrency(rightItem.manualAmount)} manual)
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+
+            {/* Bottom Ledger Totals with Accounting Double-Underline */}
+            <tfoot>
+              <tr className="bg-amber-100/90 dark:bg-slate-800 text-slate-900 dark:text-[#F8FAFC] font-bold text-sm border-t-2 border-b-4 border-double border-amber-900/40 dark:border-amber-400/40">
+                <td className="py-3.5 px-4 font-serif border-r border-amber-900/10 dark:border-slate-800">
+                  TOTAL LIABILITIES & CAPITAL (మొత్తం అప్పులు)
+                </td>
+                <td className="py-3.5 px-4 text-right font-serif text-amber-900 dark:text-amber-300 border-r-2 border-amber-900/40 dark:border-slate-700">
+                  {formatCurrency(totalLiabilitiesAndCapital)}
+                </td>
+                <td className="py-3.5 px-4 font-serif border-r border-amber-900/10 dark:border-slate-800">
+                  TOTAL ASSETS (మొత్తం ఆస్తులు)
+                </td>
+                <td className="py-3.5 px-4 text-right font-serif text-amber-900 dark:text-amber-300">
+                  {formatCurrency(totalAssets)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
 
-        {/* Date Selector & Action Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-white/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 px-3 py-1.5 rounded-xl shadow-xs backdrop-blur-md">
-            <Calendar className="w-4 h-4 text-[#FF7A00]" />
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">As of Date:</span>
-            <input
-              type="date"
-              value={asOfDate}
-              onChange={(e) => setAsOfDate(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none font-mono"
+        {/* Informational Accounting Rule Banner */}
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+          <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="leading-relaxed">
+            <span className="font-bold">Accounting Rule Verification:</span> Total Liabilities & Capital ({formatCurrency(totalLiabilitiesAndCapital)}) must equal Total Assets ({formatCurrency(totalAssets)}). This statement automatically incorporates system-calculated balances alongside any manual adjustments saved below.
+          </div>
+        </div>
+
+        {/* MANUAL ENTRIES & ADJUSTMENTS TABLE */}
+        <div className="flex flex-col gap-4 pt-4 border-t border-amber-900/10 dark:border-slate-800">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Layers className="w-4 h-4 text-amber-500" />
+              Saved Manual Accounting Entries & Adjustments
+              <Badge variant="warning" className="font-mono text-xs">
+                {manualEntries.length} Saved Entries
+              </Badge>
+            </h3>
+            <Button
+              onClick={() => {
+                setEntryToEdit(null);
+                setIsManualModalOpen(true);
+              }}
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold"
+            >
+              Add Entry
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-amber-900/20 dark:border-slate-800 overflow-hidden bg-white dark:bg-[#131D31]">
+            <DataTable
+              columns={manualEntriesColumns}
+              data={manualEntries}
+              emptyText={isLoading ? 'Loading manual entries...' : 'No manual balance sheet adjustments recorded yet.'}
+              pageSize={5}
             />
           </div>
-
-          <Button
-            onClick={() => {
-              setEntryToEdit(null);
-              setIsManualModalOpen(true);
-            }}
-            size="sm"
-            leftIcon={<Plus className="w-4 h-4" />}
-            className="rounded-xl bg-[#FF7A00] hover:bg-[#e06b00] text-white shadow-md shadow-amber-500/20"
-          >
-            Add Manual Entry
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchBalanceSheet}
-            isLoading={isLoading}
-            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
-            className="rounded-xl border-slate-300 dark:border-[#262626] bg-white/50 dark:bg-[#141414]/50 backdrop-blur-md shadow-xs hover:border-[#FF7A00]/50"
-          >
-            Refresh
-          </Button>
         </div>
+
+        {/* Modals */}
+        <ManualEntryModal
+          isOpen={isManualModalOpen}
+          onClose={() => {
+            setIsManualModalOpen(false);
+            setEntryToEdit(null);
+          }}
+          onSuccess={() => loadData(asOfDate)}
+          entryToEdit={entryToEdit}
+        />
+
+        <DeleteManualEntryModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setEntryToDelete(null);
+          }}
+          onSuccess={() => loadData(asOfDate)}
+          entry={entryToDelete}
+        />
       </div>
-
-      {/* ================================================================ */}
-      {/* 4 TOP SUMMARY METRIC CARDS */}
-      {/* ================================================================ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* 1. Total Assets */}
-        <Card className="p-5 flex flex-col justify-between border-emerald-500/30 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Total Assets
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Wallet className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-3 truncate font-mono">
-            {isLoading ? '...' : <AnimatedNumber value={assets?.totalAssets?.totalAmount ?? 0} formatAsCurrency />}
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
-            <span>Sys: {formatCurrency(assets?.totalAssets?.systemAmount ?? 0)}</span>
-            <span className="text-amber-600 font-semibold">Man: +{formatCurrency(assets?.totalAssets?.manualAmount ?? 0)}</span>
-          </div>
-        </Card>
-
-        {/* 2. Total Liabilities */}
-        <Card className="p-5 flex flex-col justify-between border-rose-500/30 dark:border-rose-500/30 bg-gradient-to-br from-rose-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
-              Total Liabilities
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center text-rose-600 dark:text-rose-400">
-              <Landmark className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-3 truncate font-mono">
-            {isLoading ? '...' : <AnimatedNumber value={liabilities?.totalLiabilities?.totalAmount ?? 0} formatAsCurrency />}
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
-            <span>Sys: {formatCurrency(liabilities?.totalLiabilities?.systemAmount ?? 0)}</span>
-            <span className="text-amber-600 font-semibold">Man: +{formatCurrency(liabilities?.totalLiabilities?.manualAmount ?? 0)}</span>
-          </div>
-        </Card>
-
-        {/* 3. Owner's Capital */}
-        <Card className="p-5 flex flex-col justify-between border-[#FF7A00]/30 dark:border-[#FF7A00]/30 bg-gradient-to-br from-amber-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#FF7A00] uppercase tracking-wider">
-              Owner&apos;s Capital
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-[#FF7A00]/15 flex items-center justify-center text-[#FF7A00]">
-              <PiggyBank className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-[#FF7A00] mt-3 truncate font-mono">
-            {isLoading ? '...' : <AnimatedNumber value={capital?.totalCapitalAndRetained?.totalAmount ?? 0} formatAsCurrency />}
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
-            <span>Sys: {formatCurrency(capital?.totalCapitalAndRetained?.systemAmount ?? 0)}</span>
-            <span className="text-amber-600 font-semibold">Man: +{formatCurrency(capital?.totalCapitalAndRetained?.manualAmount ?? 0)}</span>
-          </div>
-        </Card>
-
-        {/* 4. Net Position */}
-        <Card className="p-5 flex flex-col justify-between border-violet-500/30 dark:border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-white/80 to-white dark:via-[#111111]/90 dark:to-[#111111]/95 glass-card shadow-lg hover:-translate-y-1 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
-              Net Position
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-300">
-              <PieChart className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-violet-600 dark:text-violet-300 mt-3 truncate font-mono">
-            {isLoading ? '...' : <AnimatedNumber value={summary?.netPosition?.totalAmount ?? 0} formatAsCurrency />}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Total Assets - Total Liabilities</p>
-        </Card>
-      </div>
-
-      {/* ================================================================ */}
-      {/* MAIN BALANCE SHEET: 2-COLUMN ASSETS VS LIABILITIES & CAPITAL */}
-      {/* ================================================================ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* LEFT COLUMN: ASSETS */}
-        <div className="flex flex-col gap-4">
-          <Card className="p-6 glass-panel shadow-xl flex flex-col gap-5 border-emerald-500/20">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#262626]/80 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
-                  <Wallet className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                  Assets (What We Own)
-                </h3>
-              </div>
-              <Badge variant="success" className="font-mono text-[10px]">
-                ASSETS
-              </Badge>
-            </div>
-
-            {/* Asset Items List */}
-            <div className="flex flex-col gap-3">
-              {/* 1. Cash in Hand */}
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Cash in Hand</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(assets?.cashInHand?.systemAmount ?? 0)}
-                    {(assets?.cashInHand?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.cashInHand?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.cashInHand?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              {/* 2. Cash in Bank */}
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Cash in Bank</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(assets?.cashInBank?.systemAmount ?? 0)}
-                    {(assets?.cashInBank?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.cashInBank?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.cashInBank?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              {/* 3. Loans Receivable */}
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">3. Loans Receivable</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(assets?.loansReceivable?.systemAmount ?? 0)}
-                    {(assets?.loansReceivable?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.loansReceivable?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.loansReceivable?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              {/* 4. Active Investment */}
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">4. Active Investment</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(assets?.activeInvestment?.systemAmount ?? 0)}
-                    {(assets?.activeInvestment?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.activeInvestment?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.activeInvestment?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              {/* 5. Other Assets */}
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">5. Other Assets (Stamps)</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(assets?.otherAssets?.systemAmount ?? 0)}
-                    {(assets?.otherAssets?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(assets?.otherAssets?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(assets?.otherAssets?.totalAmount ?? 0)}
-                </span>
-              </div>
-            </div>
-
-            {/* Total Assets Summary Footer */}
-            <div className="p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between mt-2">
-              <span className="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                TOTAL ASSETS
-              </span>
-              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                {isLoading ? '...' : formatCurrency(assets?.totalAssets?.totalAmount ?? 0)}
-              </span>
-            </div>
-          </Card>
-        </div>
-
-        {/* RIGHT COLUMN: LIABILITIES & OWNER'S CAPITAL */}
-        <div className="flex flex-col gap-6">
-          {/* 1. LIABILITIES CARD */}
-          <Card className="p-6 glass-panel shadow-xl flex flex-col gap-5 border-rose-500/20">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#262626]/80 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
-                  <Landmark className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                  Liabilities (What We Owe)
-                </h3>
-              </div>
-              <Badge variant="error" className="font-mono text-[10px]">
-                LIABILITIES
-              </Badge>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Deposits / Amount Payable</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(liabilities?.depositsPayable?.systemAmount ?? 0)}
-                    {(liabilities?.depositsPayable?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(liabilities?.depositsPayable?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-rose-600 dark:text-rose-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(liabilities?.depositsPayable?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Other Payables</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(liabilities?.otherPayables?.systemAmount ?? 0)}
-                    {(liabilities?.otherPayables?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(liabilities?.otherPayables?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-rose-600 dark:text-rose-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(liabilities?.otherPayables?.totalAmount ?? 0)}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-between">
-              <span className="text-sm font-black text-rose-700 dark:text-rose-400 uppercase tracking-wider">
-                TOTAL LIABILITIES
-              </span>
-              <span className="text-xl font-black text-rose-600 dark:text-rose-400 font-mono">
-                {isLoading ? '...' : formatCurrency(liabilities?.totalLiabilities?.totalAmount ?? 0)}
-              </span>
-            </div>
-          </Card>
-
-          {/* 2. OWNER'S CAPITAL CARD */}
-          <Card className="p-6 glass-panel shadow-xl flex flex-col gap-5 border-[#FF7A00]/20">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#262626]/80 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#FF7A00]/10 border border-[#FF7A00]/20 flex items-center justify-center text-[#FF7A00]">
-                  <PiggyBank className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                  Owner&apos;s Capital & Earnings
-                </h3>
-              </div>
-              <Badge variant="warning" className="font-mono text-[10px]">
-                CAPITAL
-              </Badge>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Total Capital Added</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(capital?.totalCapitalAdded?.systemAmount ?? 0)}
-                    {(capital?.totalCapitalAdded?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(capital?.totalCapitalAdded?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-bold text-sm text-[#FF7A00] font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.totalCapitalAdded?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#141414]/80 border border-slate-200/80 dark:border-[#262626]/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Capital Withdrawn (-)</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(capital?.capitalWithdrawn?.systemAmount ?? 0)}
-                    {(capital?.capitalWithdrawn?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual: +{formatCurrency(capital?.capitalWithdrawn?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-bold text-sm text-rose-500 font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.capitalWithdrawn?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-[#FF7A00]">Current Owner&apos;s Capital</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Capital Added - Capital Withdrawn</p>
-                </div>
-                <span className="font-black text-sm text-[#FF7A00] font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.currentOwnerCapital?.totalAmount ?? 0)}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Retained Earnings / Accumulated Profit</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    System: {formatCurrency(capital?.retainedEarnings?.systemAmount ?? 0)}
-                    {(capital?.retainedEarnings?.manualAmount ?? 0) !== 0 && (
-                      <span className="text-amber-600 font-semibold"> | Manual Adj: +{formatCurrency(capital?.retainedEarnings?.manualAmount ?? 0)}</span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
-                  {isLoading ? '...' : formatCurrency(capital?.retainedEarnings?.totalAmount ?? 0)}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#FF7A00]/15 border border-[#FF7A00]/30 flex items-center justify-between">
-              <span className="text-sm font-black text-[#FF7A00] uppercase tracking-wider">
-                TOTAL OWNER&apos;S CAPITAL & PROFIT
-              </span>
-              <span className="text-xl font-black text-[#FF7A00] font-mono">
-                {isLoading ? '...' : formatCurrency(capital?.totalCapitalAndRetained?.totalAmount ?? 0)}
-              </span>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* ================================================================ */}
-      {/* BALANCE CHECK BANNER */}
-      {/* ================================================================ */}
-      <Card className="p-6 glass-panel shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border-[#FF7A00]/30 bg-gradient-to-r from-white/90 via-slate-50/80 to-amber-500/10 dark:from-[#111111]/90 dark:via-[#141414]/85 dark:to-[#FF7A00]/10">
-        <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${
-            summary?.isBalanced
-              ? 'bg-emerald-500 text-white shadow-emerald-500/20'
-              : 'bg-amber-500 text-white shadow-amber-500/20'
-          }`}>
-            {summary?.isBalanced ? <CheckCircle2 className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
-          </div>
-
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                Accounting Balance Verification
-              </h3>
-              <Badge
-                variant={summary?.isBalanced ? 'success' : 'warning'}
-                className="font-mono text-xs py-0.5 px-2"
-              >
-                {summary?.isBalanced ? '✓ Balanced' : '⚠ Needs Review'}
-              </Badge>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 font-mono mt-1">
-              TOTAL ASSETS ({formatCurrency(summary?.totalAssets?.totalAmount ?? 0)}) = TOTAL LIABILITIES ({formatCurrency(summary?.totalLiabilities?.totalAmount ?? 0)}) + OWNER&apos;S CAPITAL ({formatCurrency(summary?.ownersCapitalTotal?.totalAmount ?? 0)})
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col text-right shrink-0">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Balance Difference
-          </span>
-          <span className={`text-xl font-black font-mono ${summary?.isBalanced ? 'text-emerald-500' : 'text-amber-500'}`}>
-            {formatCurrency(summary?.difference ?? 0)}
-          </span>
-        </div>
-      </Card>
-
-      {/* ================================================================ */}
-      {/* MANUAL ENTRIES & ADJUSTMENTS TABLE */}
-      {/* ================================================================ */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-amber-500" />
-            Manual Entries & Financial Adjustments
-            <Badge variant="warning" className="font-mono text-xs">
-              {manualEntries.length} Saved Entries
-            </Badge>
-          </h3>
-          <Button
-            onClick={() => {
-              setEntryToEdit(null);
-              setIsManualModalOpen(true);
-            }}
-            size="sm"
-            leftIcon={<Plus className="w-3.5 h-3.5" />}
-            className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
-          >
-            Add Entry
-          </Button>
-        </div>
-
-        <Card className="glass-panel overflow-hidden">
-          <DataTable
-            columns={manualEntriesColumns}
-            data={manualEntries}
-            emptyText={isLoading ? 'Loading manual entries...' : 'No manual balance sheet adjustments recorded yet.'}
-            pageSize={5}
-          />
-        </Card>
-      </div>
-
-      {/* ================================================================ */}
-      {/* DETAILED SYSTEM BREAKDOWN TABLE */}
-      {/* ================================================================ */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#FF7A00]" />
-            System Detailed Balance Sheet Item Breakdown
-            <Badge variant="outline" className="font-mono text-xs">
-              {filteredItems.length} Records
-            </Badge>
-          </h3>
-
-          {/* Search & Category Filter */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search particulars..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-48 sm:w-64 h-9 pl-9 text-xs"
-              />
-            </div>
-
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#141414] p-1 rounded-xl border border-slate-200 dark:border-[#262626]">
-              {(['All', 'Assets', 'Liabilities', "Owner's Capital"] as const).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                    categoryFilter === cat
-                      ? 'bg-[#FF7A00] text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <Card className="glass-panel overflow-hidden">
-          <DataTable
-            columns={itemsColumns}
-            data={filteredItems}
-            emptyText={isLoading ? 'Loading Balance Sheet breakdown...' : 'No balance sheet records found.'}
-            pageSize={10}
-          />
-        </Card>
-      </div>
-
-      {/* Modals */}
-      <ManualEntryModal
-        isOpen={isManualModalOpen}
-        onClose={() => {
-          setIsManualModalOpen(false);
-          setEntryToEdit(null);
-        }}
-        onSuccess={fetchBalanceSheet}
-        entryToEdit={entryToEdit}
-      />
-
-      <DeleteManualEntryModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setEntryToDelete(null);
-        }}
-        onSuccess={fetchBalanceSheet}
-        entry={entryToDelete}
-      />
-    </div>
+    </AccountingBookFrame>
   );
 }
