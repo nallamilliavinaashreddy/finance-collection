@@ -277,34 +277,3 @@ body {
     animation: none !important;
   }
 }
-
-/* ==========================================================
-   CSS 3D PERSPECTIVE & DEPTH UTILITIES
-   ========================================================== */
-.perspective-viewport {
-  perspective: 1200px;
-  perspective-origin: center center;
-}
-
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.threed-card-container {
-  transform-style: preserve-3d;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-  will-change: transform;
-}
-
-.threed-layer-depth-1 {
-  transform: translateZ(10px);
-}
-
-.threed-layer-depth-2 {
-  transform: translateZ(20px);
-}
-
-.threed-layer-depth-3 {
-  transform: translateZ(32px);
-}
-
