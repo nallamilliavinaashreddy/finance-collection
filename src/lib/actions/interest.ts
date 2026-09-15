@@ -32,6 +32,20 @@ export async function recordInterestTransaction(payload: {
       return { success: true };
     }
 
+    if (payload.interestType === 'adjustment') {
+      const { data: existing } = await supabase
+        .from('interest_transactions')
+        .select('id')
+        .eq('loan_id', payload.loanId)
+        .eq('transaction_date', payload.transactionDate)
+        .eq('interest_type', 'adjustment')
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        return { success: true };
+      }
+    }
+
     const { error } = await supabase.from('interest_transactions').insert([
       {
         collection_id: payload.collectionId || null,
@@ -94,6 +108,13 @@ export async function getInterestTransactions(
   const supabase = createClient();
 
   try {
+    try {
+      const { autoAccrueAdjustmentInterest } = await import('@/lib/actions/adjustment-ledger');
+      await autoAccrueAdjustmentInterest();
+    } catch (e) {
+      // Safe fallback
+    }
+
     let query = supabase
       .from('interest_transactions')
       .select('*, customers(id, customer_id, customer_name)')
@@ -178,6 +199,13 @@ export async function getInterestMetrics(
   const supabase = createClient();
 
   try {
+    try {
+      const { autoAccrueAdjustmentInterest } = await import('@/lib/actions/adjustment-ledger');
+      await autoAccrueAdjustmentInterest();
+    } catch (e) {
+      // Safe fallback
+    }
+
     let query = supabase.from('interest_transactions').select('interest_type, interest_amount, transaction_date');
 
     const todayISO = new Date().toISOString().split('T')[0];

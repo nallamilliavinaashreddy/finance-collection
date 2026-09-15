@@ -119,12 +119,23 @@ export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promi
         .eq('loan_id', loan.id)
         .order('transaction_date', { ascending: true });
 
+      // Sync existing interest dates and sync into interest_transactions
       const existingInterestDates = new Set<string>();
-      (ledgerRows || []).forEach((row: any) => {
+      for (const row of ledgerRows || []) {
         if (row.transaction_type === 'interest') {
           existingInterestDates.add(row.transaction_date);
+          if (Number(row.interest_added) > 0) {
+            await recordInterestTransaction({
+              loanId: loan.id,
+              customerId: loan.customer_id,
+              transactionDate: row.transaction_date,
+              interestType: 'adjustment',
+              interestAmount: Number(row.interest_added),
+              remarks: row.remarks || `Adjustment Interest @ ₹${row.interest_added}/day`,
+            });
+          }
         }
-      });
+      }
 
       const balances = await getAdjustmentLoanBalances(loan.id, supabase);
 
@@ -164,6 +175,15 @@ export async function autoAccrueAdjustmentInterest(targetLoanId?: string): Promi
             if (!insErr) {
               existingInterestDates.add(currDateStr);
               accruedCount++;
+
+              await recordInterestTransaction({
+                loanId: loan.id,
+                customerId: loan.customer_id,
+                transactionDate: currDateStr,
+                interestType: 'adjustment',
+                interestAmount: dailyInterestAmt,
+                remarks: `Adjustment Interest @ ₹${dailyInterestAmt}/day (₹${balances.originalPrincipal} × ${monthlyRate}% / 30)`,
+              });
             } else {
               console.error('Failed to insert adjustment_ledger row:', insErr);
             }
