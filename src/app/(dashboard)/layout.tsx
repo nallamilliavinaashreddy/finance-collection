@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Navbar } from '@/components/layout/navbar';
 import { MobileNav } from '@/components/layout/mobile-nav';
+import { BottomNav } from '@/components/layout/bottom-nav';
 import { MoneyRainBackground } from '@/components/ui/money-rain-background';
 import { FinCollectAIDrawer } from '@/components/ai/fincollect-ai-drawer';
 import { cn } from '@/lib/utils';
@@ -44,10 +45,13 @@ export default function DashboardLayout({
         <Navbar onOpenMobileNav={() => setIsMobileNavOpen(true)} />
 
         {/* Page Content Workspace */}
-        <main className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
+        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <BottomNav onOpenMore={() => setIsMobileNavOpen(true)} />
 
       {/* Global FinCollect AI Floating Copilot Drawer */}
       <FinCollectAIDrawer />

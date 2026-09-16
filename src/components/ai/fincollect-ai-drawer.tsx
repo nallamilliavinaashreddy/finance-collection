@@ -148,7 +148,7 @@ export function FinCollectAIDrawer() {
       {/* JARVIS ARC-REACTOR FLOATING ACTION BUTTON (FAB) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-[#070A12]/90 border border-sky-400/40 text-white shadow-[0_0_25px_rgba(56,189,248,0.25)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group backdrop-blur-xl"
+        className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 px-4 py-3 rounded-full bg-[#070A12]/95 border border-sky-400/40 text-white shadow-[0_0_25px_rgba(56,189,248,0.25)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group backdrop-blur-xl"
         title="Open JARVIS FinCollect AI"
       >
         <div className="relative flex items-center justify-center">

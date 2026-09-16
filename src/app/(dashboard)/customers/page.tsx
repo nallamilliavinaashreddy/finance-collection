@@ -336,18 +336,88 @@ export default function CustomersPage() {
         </CardHeader>
 
         <CardContent className="pt-4">
-          <DataTable
-            columns={columns}
-            data={customers}
-            emptyText={
-              isLoading
-                ? 'Querying Supabase database...'
-                : searchQuery
-                ? `No customers found in Supabase matching customer_id "${searchQuery}".`
-                : 'No customer records in Supabase customers table. Click "Add Customer" to insert a record.'
-            }
-            pageSize={10}
-          />
+          {/* Mobile Card List View (Visible on small screens) */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {isLoading ? (
+              <div className="p-6 text-center text-xs text-slate-400">Querying Supabase database...</div>
+            ) : customers.length === 0 ? (
+              <div className="p-6 text-center text-xs text-slate-400">
+                {searchQuery ? `No customers matching "${searchQuery}".` : 'No customer records found.'}
+              </div>
+            ) : (
+              customers.map((c) => (
+                <div
+                  key={c.id}
+                  className="p-4 rounded-2xl bg-white dark:bg-[#121A2B] border border-slate-200 dark:border-[#26344D] flex flex-col gap-2 shadow-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#FF7A00]/10 text-[#FF7A00] font-bold text-xs flex items-center justify-center shrink-0">
+                        {c.customerName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{c.customerName}</span>
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-slate-400" />
+                          {c.mobileNumber}
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant="info" className="font-mono text-xs font-semibold">
+                      {c.customerId}
+                    </Badge>
+                  </div>
+
+                  {c.address && (
+                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{c.address}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] text-slate-400">
+                      Reg: {formatDate(c.createdAt || new Date())}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenEdit(c)}
+                        className="h-8 text-xs font-semibold"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDelete(c)}
+                        className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View (Hidden on mobile screens) */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={columns}
+              data={customers}
+              emptyText={
+                isLoading
+                  ? 'Querying Supabase database...'
+                  : searchQuery
+                  ? `No customers found in Supabase matching customer_id "${searchQuery}".`
+                  : 'No customer records in Supabase customers table. Click "Add Customer" to insert a record.'
+              }
+              pageSize={10}
+            />
+          </div>
         </CardContent>
       </Card>
 

@@ -101,8 +101,66 @@ export function FinCollectCoreHero({
         </div>
       </div>
 
-      {/* Main ARC-REACTOR Financial Center Display */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10 py-2">
+      {/* Mobile-First Clean Summary Grid (Visible on small screens) */}
+      <div className="grid grid-cols-2 gap-3 sm:hidden relative z-10 py-1">
+        {/* Today's Collections */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-sky-500/20 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+            Today Collection
+          </span>
+          <span className="text-lg font-black font-sans text-sky-400 tracking-tight tabular-nums mt-1">
+            {isLoading ? '...' : <AnimatedNumber value={overall?.todaysCollections ?? 0} formatAsCurrency />}
+          </span>
+        </div>
+
+        {/* Today's Expenses */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-rose-500/20 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+            Today Expenses
+          </span>
+          <span className="text-lg font-black font-sans text-rose-400 tracking-tight tabular-nums mt-1">
+            {isLoading ? '...' : <AnimatedNumber value={overall?.todaysExpenses ?? 0} formatAsCurrency />}
+          </span>
+        </div>
+
+        {/* Outstanding Principal */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-amber-500/20 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+            Outstanding
+          </span>
+          <span className="text-lg font-black font-sans text-amber-400 tracking-tight tabular-nums mt-1">
+            {isLoading ? '...' : <AnimatedNumber value={overall?.remainingBalance ?? 0} formatAsCurrency />}
+          </span>
+        </div>
+
+        {/* Active Loans */}
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-purple-500/20 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+            Active Loans
+          </span>
+          <span className="text-lg font-black font-sans text-white tracking-tight tabular-nums mt-1">
+            {isLoading ? '...' : overall?.activeLoansCount ?? 0} <span className="text-xs font-normal text-slate-400">Active</span>
+          </span>
+        </div>
+
+        {/* Cash in Hand / Net Surplus (Span 2) */}
+        <div className="col-span-2 p-4 rounded-2xl bg-gradient-to-r from-sky-950/80 to-slate-900/90 border border-emerald-500/30 flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-widest">
+              System Net Surplus
+            </span>
+            <span className="text-xl font-black font-sans text-white tracking-tight tabular-nums mt-0.5">
+              {isLoading ? '...' : <AnimatedNumber value={netProfit} formatAsCurrency />}
+            </span>
+          </div>
+          <span className="text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+            OPTIMAL
+          </span>
+        </div>
+      </div>
+
+      {/* Desktop Main ARC-REACTOR Financial Center Display (Hidden on small mobile screens) */}
+      <div className="hidden sm:grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10 py-2">
         {/* Left Telemetry Cluster */}
         <div className="lg:col-span-4 flex flex-col gap-3">
           <div className="p-4 rounded-2xl bg-slate-900/70 border border-sky-500/20 backdrop-blur-md flex items-center justify-between hover-space-stone cursor-pointer group">

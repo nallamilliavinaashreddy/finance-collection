@@ -96,29 +96,68 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         </div>
 
         {/* Links */}
-        <div className="flex-1 py-4 px-3 flex flex-col gap-1 overflow-y-auto">
-          {visibleNavItems.map((item) => {
-            const Icon = iconMap[item.icon] || LayoutDashboard;
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            const translatedTitle = t(item.translationKey, item.title);
+        <div className="flex-1 py-4 px-3 flex flex-col gap-4 overflow-y-auto">
+          {/* Primary Modules */}
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 px-3 mb-1">
+              Core Modules
+            </span>
+            {visibleNavItems
+              .filter((i) => ['/dashboard', '/customers', '/loans', '/collections'].includes(i.href))
+              .map((item) => {
+                const Icon = iconMap[item.icon] || LayoutDashboard;
+                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`));
+                const translatedTitle = t(item.translationKey, item.title);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs transition-colors border-l-2',
-                  isActive
-                    ? 'bg-blue-600/10 border-blue-500 text-blue-400 font-semibold'
-                    : 'border-transparent text-slate-400 hover:bg-slate-800 hover:text-white'
-                )}
-              >
-                <Icon className={cn('w-4 h-4', isActive ? 'text-blue-400' : 'text-slate-400')} />
-                <span className="flex-1">{translatedTitle}</span>
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClose}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs transition-colors border-l-2',
+                      isActive
+                        ? 'bg-blue-600/10 border-blue-500 text-blue-400 font-semibold'
+                        : 'border-transparent text-slate-400 hover:bg-slate-800 hover:text-white'
+                    )}
+                  >
+                    <Icon className={cn('w-4 h-4', isActive ? 'text-blue-400' : 'text-slate-400')} />
+                    <span className="flex-1">{translatedTitle}</span>
+                  </Link>
+                );
+              })}
+          </div>
+
+          {/* More Financial & Management Modules */}
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 px-3 mb-1">
+              More Financial Modules
+            </span>
+            {visibleNavItems
+              .filter((i) => !['/dashboard', '/customers', '/loans', '/collections'].includes(i.href))
+              .map((item) => {
+                const Icon = iconMap[item.icon] || LayoutDashboard;
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const translatedTitle = t(item.translationKey, item.title);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClose}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs transition-colors border-l-2',
+                      isActive
+                        ? 'bg-blue-600/10 border-blue-500 text-blue-400 font-semibold'
+                        : 'border-transparent text-slate-400 hover:bg-slate-800 hover:text-white'
+                    )}
+                  >
+                    <Icon className={cn('w-4 h-4', isActive ? 'text-blue-400' : 'text-slate-400')} />
+                    <span className="flex-1">{translatedTitle}</span>
+                  </Link>
+                );
+              })}
+          </div>
         </div>
 
         {/* Footer */}

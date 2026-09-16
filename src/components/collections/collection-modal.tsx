@@ -182,7 +182,7 @@ export function CollectionModal({
           <select
             value={control._formValues.customerId || ''}
             onChange={(e) => setValue('customerId', e.target.value, { shouldValidate: true })}
-            className="w-full h-10 px-3.5 text-sm rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20 focus:border-[#FF7A00]"
+            className="w-full h-12 px-3.5 text-base sm:text-sm rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20 focus:border-[#FF7A00]"
           >
             <option value="">-- Select Customer --</option>
             {customers.map((c) => (
@@ -203,14 +203,14 @@ export function CollectionModal({
               Select Active Loan *
             </label>
             {customerActiveLoans.length === 0 ? (
-              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-200 text-xs">
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-200 text-xs">
                 No active loans found for this customer. Collections can only be recorded for Active loans.
               </div>
             ) : (
               <select
                 value={control._formValues.loanId || ''}
                 onChange={(e) => setValue('loanId', e.target.value, { shouldValidate: true })}
-                className="w-full h-10 px-3.5 text-sm rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20 focus:border-[#FF7A00]"
+                className="w-full h-12 px-3.5 text-base sm:text-sm rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/20 focus:border-[#FF7A00]"
               >
                 <option value="">-- Choose Active Loan --</option>
                 {customerActiveLoans.map((l) => {
