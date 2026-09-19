@@ -33,6 +33,20 @@ interface CashFlowChartProps {
   expenses?: ExpenseItem[];
 }
 
+/**
+ * Safely normalizes date strings to 'YYYY-MM-DD' in local calendar time
+ */
+const normalizeDateStr = (dateVal?: string | null): string => {
+  if (!dateVal) return '';
+  const str = String(dateVal).trim();
+  // Strip time component if present (e.g. "2026-09-14T09:12:10.194Z" -> "2026-09-14")
+  const ymd = str.split('T')[0].split(' ')[0].trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+    return ymd;
+  }
+  return '';
+};
+
 export function CashFlowChart({
   collections = [],
   expenses = [],
@@ -42,6 +56,10 @@ export function CashFlowChart({
   // Build time-series dataset with per-day collections AND expenses
   const chartData = useMemo(() => {
     const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = now.getMonth();
+    const todayDate = now.getDate();
+
     let daysToInclude = 30;
     if (timeRange === '7D') daysToInclude = 7;
     if (timeRange === '3M') daysToInclude = 90;
@@ -50,36 +68,61 @@ export function CashFlowChart({
 
     const dataMap: Record<
       string,
-      { date: string; displayDate: string; collections: number; expenses: number; netCashFlow: number }
+      { date: string; displayDate: string; fullDateLabel: string; collections: number; expenses: number; netCashFlow: number }
     > = {};
 
-    // 1. Initialize timeline backwards from today with ₹0 defaults for continuity
+    // 1. Initialize timeline sequentially in local time zone from (today - daysToInclude + 1) to today
     for (let i = daysToInclude - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const iso = d.toISOString().split('T')[0];
+      const d = new Date(todayYear, todayMonth, todayDate - i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const isoDate = `${year}-${month}-${day}`;
+
       const displayDate = d.toLocaleDateString('en-IN', {
         month: 'short',
         day: 'numeric',
       });
-      dataMap[iso] = { date: iso, displayDate, collections: 0, expenses: 0, netCashFlow: 0 };
+
+      const fullDateLabel = d.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+
+      dataMap[isoDate] = {
+        date: isoDate,
+        displayDate,
+        fullDateLabel,
+        collections: 0,
+        expenses: 0,
+        netCashFlow: 0,
+      };
     }
 
-    // 2. Aggregate live actual collections by payment_date
+    // 2. Aggregate live actual collections by paymentDate (exact date sum)
     collections.forEach((c) => {
-      if (c.paymentDate && dataMap[c.paymentDate]) {
-        dataMap[c.paymentDate].collections += Number(c.amountPaid || 0);
+      const dateKey = normalizeDateStr(c.paymentDate);
+      if (dateKey && dataMap[dateKey]) {
+        const amt = Number(c.amountPaid || 0);
+        if (!isNaN(amt) && amt > 0) {
+          dataMap[dateKey].collections += amt;
+        }
       }
     });
 
-    // 3. Aggregate live actual expenses by expense_date
+    // 3. Aggregate live actual expenses by expenseDate (exact date sum)
     expenses.forEach((e) => {
-      if (e.expenseDate && dataMap[e.expenseDate]) {
-        dataMap[e.expenseDate].expenses += Number(e.amount || 0);
+      const dateKey = normalizeDateStr(e.expenseDate);
+      if (dateKey && dataMap[dateKey]) {
+        const amt = Number(e.amount || 0);
+        if (!isNaN(amt) && amt > 0) {
+          dataMap[dateKey].expenses += amt;
+        }
       }
     });
 
-    // 4. Calculate Net Surplus per day
+    // 4. Calculate Net Cash Flow per day
     return Object.values(dataMap).map((d) => ({
       ...d,
       netCashFlow: d.collections - d.expenses,
@@ -109,10 +152,10 @@ export function CashFlowChart({
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
-              Cash Flow Trend
+              Cash Flow Intelligence
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-              Live Inflow Collections vs Outflow Expenses
+              True Daily Time Series: Collections vs Expenses
             </p>
           </div>
         </div>
@@ -140,7 +183,7 @@ export function CashFlowChart({
         <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-              Inflow Collections
+              Inflow Collections ({timeRange})
             </span>
             <span className="text-lg font-bold text-blue-600 dark:text-blue-400 font-mono">
               {formatCurrency(totalInflowCollections)}
@@ -152,7 +195,7 @@ export function CashFlowChart({
         <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-              Outflow Expenses
+              Operating Expenses ({timeRange})
             </span>
             <span className="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono">
               {formatCurrency(totalOutflowExpenses)}
@@ -164,7 +207,7 @@ export function CashFlowChart({
         <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-              Net Surplus
+              Net Cash Flow ({timeRange})
             </span>
             <span
               className={`text-lg font-bold font-mono ${
@@ -208,14 +251,16 @@ export function CashFlowChart({
               tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
             />
             <Tooltip
-              content={({ active, payload, label }) => {
+              content={({ active, payload }) => {
                 if (active && payload && payload.length) {
+                  const dataPoint = payload[0]?.payload;
+                  const label = dataPoint?.fullDateLabel || dataPoint?.displayDate || '';
                   const colls = Number(payload.find((p) => p.dataKey === 'collections')?.value || 0);
                   const exps = Number(payload.find((p) => p.dataKey === 'expenses')?.value || 0);
                   const net = colls - exps;
 
                   return (
-                    <div className="p-3 rounded-lg bg-slate-900 text-white text-xs shadow-md border border-slate-800 min-w-[170px] space-y-1">
+                    <div className="p-3 rounded-lg bg-slate-900 text-white text-xs shadow-md border border-slate-800 min-w-[180px] space-y-1">
                       <p className="font-semibold text-slate-300 border-b border-slate-800 pb-1">{label}</p>
                       <div className="flex justify-between items-center text-blue-400 pt-0.5">
                         <span>Collections:</span>
@@ -226,7 +271,7 @@ export function CashFlowChart({
                         <span className="font-mono font-bold">{formatCurrency(exps)}</span>
                       </div>
                       <div className="flex justify-between items-center text-slate-300 border-t border-slate-800 pt-1">
-                        <span>Net Surplus:</span>
+                        <span>Net Cash Flow:</span>
                         <span
                           className={`font-mono font-bold ${
                             net >= 0 ? 'text-emerald-400' : 'text-rose-400'
