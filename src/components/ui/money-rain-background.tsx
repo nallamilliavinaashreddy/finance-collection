@@ -51,22 +51,22 @@ export function MoneyRainBackground() {
       'rgba(52, 211, 153, ',  // Emerald Green
     ];
 
-    const particleCount = Math.min(Math.floor(width / 35), 35);
+    const particleCount = Math.min(Math.floor(width / 32), 40);
     const particles: Particle[] = [];
 
     const createParticle = (initialYRandom = false): Particle => {
       const colorBase = noteColors[Math.floor(Math.random() * noteColors.length)];
-      const opacity = 0.15 + Math.random() * 0.25;
+      const opacity = 0.2 + Math.random() * 0.3;
       return {
         x: Math.random() * width,
-        y: initialYRandom ? Math.random() * height : -40,
-        size: 24 + Math.random() * 24,
-        speedY: 0.5 + Math.random() * 1.0,
+        y: initialYRandom ? Math.random() * height : -50,
+        size: 28 + Math.random() * 28,
+        speedY: 0.6 + Math.random() * 1.2,
         speedX: Math.sin(Math.random() * Math.PI) * 0.4 - 0.2,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.015,
         opacity,
-        text: noteSymbols[Math.floor(Math.random() * noteSymbols.length)],
+        text: '₹500',
         color: `${colorBase}${opacity})`,
       };
     };
@@ -83,7 +83,7 @@ export function MoneyRainBackground() {
         p.x += Math.sin(p.y / 40) * 0.3 + p.speedX;
         p.rotation += p.rotationSpeed;
 
-        if (p.y > height + 50) {
+        if (p.y > height + 60) {
           particles[idx] = createParticle(false);
         }
 
@@ -91,18 +91,15 @@ export function MoneyRainBackground() {
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
 
-        // If ₹500 note image is loaded, draw mini note image
-        if (img.complete && img.naturalWidth > 0 && idx % 2 === 0) {
+        // Draw real ₹500 banknote image particle
+        if (img.complete && img.naturalWidth > 0) {
           ctx.globalAlpha = p.opacity;
-          const imgW = p.size * 2.4;
-          const imgH = p.size * 1.1;
+          const imgW = p.size * 2.25;
+          const imgH = p.size * 1.05;
           ctx.drawImage(img, -imgW / 2, -imgH / 2, imgW, imgH);
         } else {
-          // Draw soft glowing banknote rect
+          // Soft fallback while image loads
           ctx.fillStyle = p.color;
-          ctx.shadowColor = 'rgba(56, 189, 248, 0.2)';
-          ctx.shadowBlur = 8;
-
           const rectW = p.size * 2.2;
           const rectH = p.size * 1.1;
           ctx.beginPath();
@@ -112,13 +109,6 @@ export function MoneyRainBackground() {
             ctx.rect(-rectW / 2, -rectH / 2, rectW, rectH);
           }
           ctx.fill();
-
-          // Draw note symbol
-          ctx.fillStyle = p.color.replace(/[\d\.]+\)$/, `${p.opacity * 1.8})`);
-          ctx.font = `bold ${Math.floor(p.size * 0.7)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(p.text, 0, 1);
         }
 
         ctx.restore();
