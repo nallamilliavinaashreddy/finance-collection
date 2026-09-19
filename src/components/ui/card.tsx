@@ -5,7 +5,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        'rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#0D1322]/85 text-slate-900 dark:text-[#F8FAFC] shadow-lg glass-liquid-card transition-all duration-400 ease-out transform-gpu',
+        'rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#0D1322]/85 text-slate-900 dark:text-[#F8FAFC] shadow-lg glass-liquid-card transition-all duration-300 ease-out transform-gpu hover:border-sky-400/50 hover:shadow-[0_0_25px_rgba(56,189,248,0.25)] dark:hover:border-sky-400/60 dark:hover:shadow-[0_0_30px_rgba(56,189,248,0.3)] hover:-translate-y-0.5 cursor-pointer',
         className
       )}
       {...props}
