@@ -56,7 +56,7 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
         <div className="flex items-center gap-2.5">
           <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
-            <span className="text-cyan-400 font-mono">FINCOLLECT</span>
+            <span className="text-cyan-400 font-mono">JAI RAM FINANCE</span>
             <span>//</span>
           </div>
           <h1 className="text-sm font-black text-slate-900 dark:text-white font-mono tracking-wider uppercase">
@@ -121,7 +121,7 @@ export function Navbar({ onOpenMobileNav }: NavbarProps) {
                   {user?.fullName || 'Administrator'}
                 </p>
                 <p className="text-[10px] font-mono text-slate-400 truncate">
-                  {user?.email || 'admin@fincollect.app'}
+                  {user?.email || 'admin@jairamfinance.app'}
                 </p>
               </div>
               <button

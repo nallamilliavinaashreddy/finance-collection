@@ -82,7 +82,7 @@ function LoginForm() {
             <TrendingUp className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            FinCollect Platform
+            Jai Ram Finance Platform
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Single Admin Authentication Portal
@@ -167,7 +167,7 @@ function LoginForm() {
 
         {/* Footer info */}
         <p className="text-center text-xs text-slate-500 mt-6">
-          &copy; {new Date().getFullYear()} FinCollect Management System. Protected by Supabase Auth.
+          &copy; {new Date().getFullYear()} Jai Ram Finance Management System. Protected by Supabase Auth.
         </p>
       </div>
     </div>

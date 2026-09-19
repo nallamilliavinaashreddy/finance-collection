@@ -17,7 +17,7 @@ export const en = {
     navigationMenu: 'Navigation Menu',
     singleAdmin: 'Single Admin',
     proAdmin: 'Pro Admin',
-    fincollectPlatform: 'FinCollect Platform',
+    fincollectPlatform: 'Jai Ram Finance Platform',
     financialManagementSystem: 'Financial Management System',
     signOut: 'Sign Out',
     adminPrivilege: 'Admin Privilege',
@@ -31,7 +31,7 @@ export const en = {
 
   // Loading / Splash Screen
   loading: {
-    title: 'FINCOLLECT',
+    title: 'JAI RAM FINANCE',
     subtitle: 'PRO ADMIN',
     description: 'Financial Management System',
     initializing: 'Initializing Secure Application...',

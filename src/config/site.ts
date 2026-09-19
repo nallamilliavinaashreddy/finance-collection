@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: 'FinCollect Admin',
+  name: 'Jai Ram Finance',
   description: 'Production-ready Finance Collection & Loan Management Platform',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   admin: {

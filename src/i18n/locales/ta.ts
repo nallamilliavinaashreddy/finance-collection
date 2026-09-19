@@ -18,7 +18,7 @@ export const ta: typeof en = {
     navigationMenu: 'வழிசெலுத்தல் மெனு',
     singleAdmin: 'சிங்கிள் அட்மின்',
     proAdmin: 'ப்ரோ அட்மின்',
-    fincollectPlatform: 'பின்கலெக்ட் தளம்',
+    fincollectPlatform: 'ஜெய் ராம் ஃபைனான்ஸ் தளம்',
     financialManagementSystem: 'நிதி மேலாண்மை அமைப்பு',
     signOut: 'வெளியேறு',
     adminPrivilege: 'அட்மின் உரிமை',
@@ -31,7 +31,7 @@ export const ta: typeof en = {
   },
 
   loading: {
-    title: 'பின்கலெக்ட்',
+    title: 'ஜெய் ராம் ஃபைனான்ஸ்',
     subtitle: 'ப்ரோ அட்மின்',
     description: 'நிதி மேலாண்மை அமைப்பு',
     initializing: 'செயலி தொடங்குகிறது...',

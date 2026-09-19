@@ -80,7 +80,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-bold text-base text-white tracking-tight">
-                FinCollect
+                Jai Ram Finance
               </span>
               <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mt-0.5">
                 Pro Admin

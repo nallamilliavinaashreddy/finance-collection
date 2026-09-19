@@ -157,7 +157,7 @@ export default function TrialBalancePage() {
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
           <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="leading-relaxed">
-            <span className="font-bold">Double-Entry Verification Rule:</span> In FinCollect, Total Debit represents all deployed financial assets & operational expenses, while Total Credit represents owner capital, liabilities, and accrued revenues. When both totals match, the double-entry accounting ledger is 100% verified.
+            <span className="font-bold">Double-Entry Verification Rule:</span> In Jai Ram Finance, Total Debit represents all deployed financial assets & operational expenses, while Total Credit represents owner capital, liabilities, and accrued revenues. When both totals match, the double-entry accounting ledger is 100% verified.
           </div>
         </div>
       </div>

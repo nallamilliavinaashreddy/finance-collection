@@ -85,7 +85,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <div className="flex flex-col leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-base text-white tracking-wider font-mono">
-                  FINCOLLECT
+                  JAI RAM FINANCE
                 </span>
               </div>
               <span className="text-[9px] font-mono text-sky-400 font-bold tracking-widest flex items-center gap-1">

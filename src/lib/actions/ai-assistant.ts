@@ -61,7 +61,7 @@ export async function queryFinCollectAI(
   if (mutationKeywords.some(k => query.includes(k))) {
     return {
       success: true,
-      message: '🔒 **Security Guard**: FinCollect AI operates in **READ-ONLY mode**. It cannot create, modify, or delete database records. Please use the application modules to record transactions.',
+      message: '🔒 **Security Guard**: Jai Ram Finance AI operates in **READ-ONLY mode**. It cannot create, modify, or delete database records. Please use the application modules to record transactions.',
       category: 'general',
       timestamp,
       detectedLanguage: targetLang,
@@ -79,7 +79,7 @@ export async function queryFinCollectAI(
   if (greetingSet.has(query)) {
     return {
       success: true,
-      message: `Hello! 👋 How can I assist you with your FinCollect financial data today?\n\n→ Total customers entha mandi?\n→ Today collection entha?\n→ आज कितना कलेक्शन हुआ?\n→ இன்று எவ்வளவு collection வந்தது?`,
+      message: `Hello! 👋 How can I assist you with your Jai Ram Finance financial data today?\n\n→ Total customers entha mandi?\n→ Today collection entha?\n→ आज कितना कलेक्शन हुआ?\n→ இன்று எவ்வளவு collection வந்தது?`,
       category: 'general',
       timestamp,
       detectedLanguage: targetLang,
@@ -101,7 +101,7 @@ export async function queryFinCollectAI(
   if (helpSet.has(query)) {
     return {
       success: true,
-      message: `I am **FinCollect AI**, your Pan-India financial assistant supporting 22 Indian languages & transliterations:\n\n- 👥 **Customers**: *"How many customers are there?"*, *"Ramesh balance entha?"*, *"आज Ramesh का balance कितना है?"*\n- 💰 **Collections**: *"Today collection entha?"*, *"आज कितना कलेक्शन हुआ?"*, *"இன்று எவ்வளவு collection வந்தது?"*\n- 📖 **Day Book**: *"What is today's opening balance?"*, *"Today closing balance"*\n- 🏦 **Loans**: *"How many active loans?"*, *"Which loans are fully settled?"*\n- ⚖️ **Accounting**: *"Total assets entha?"*, *"Cash in hand entha undi?"*, *"Today profit/loss?"*`,
+      message: `I am **Jai Ram Finance AI**, your Pan-India financial assistant supporting 22 Indian languages & transliterations:\n\n- 👥 **Customers**: *"How many customers are there?"*, *"Ramesh balance entha?"*, *"आज Ramesh का balance कितना है?"*\n- 💰 **Collections**: *"Today collection entha?"*, *"आज कितना कलेक्शन हुआ?"*, *"இன்று எவ்வளவு collection வந்தது?"*\n- 📖 **Day Book**: *"What is today's opening balance?"*, *"Today closing balance"*\n- 🏦 **Loans**: *"How many active loans?"*, *"Which loans are fully settled?"*\n- ⚖️ **Accounting**: *"Total assets entha?"*, *"Cash in hand entha undi?"*, *"Today profit/loss?"*`,
       category: 'general',
       timestamp,
       detectedLanguage: targetLang,
@@ -368,7 +368,7 @@ export async function queryFinCollectAI(
     // FALLBACK CLARIFICATION
     // ----------------------------------------------------
     const fallbackMarkdown = `
-### 🤖 FinCollect AI Assistant (Pan-India Multilingual)
+### 🤖 Jai Ram Finance AI Assistant (Pan-India Multilingual)
 
 I answer financial questions across 22 Indian languages & transliterations:
 
@@ -391,7 +391,7 @@ I answer financial questions across 22 Indian languages & transliterations:
     console.error('Error in queryFinCollectAI server action:', err);
     return {
       success: false,
-      message: 'An unexpected database error occurred while querying FinCollect AI. Please try again.',
+      message: 'An unexpected database error occurred while querying Jai Ram Finance AI. Please try again.',
       error: err?.message,
       timestamp,
       detectedLanguage: targetLang,

@@ -38,7 +38,7 @@ export function FinCollectAIDrawer() {
     {
       id: 'welcome',
       sender: 'ai',
-      text: `Hello, Commander 👋\n\nI am **FINCOLLECT AI**, your JARVIS financial intelligence assistant. Ask me anything about your active loans, daily collections, operating expenses, Day Book, or Profit & Loss statements in **22 Indian languages** or transliteration.`,
+      text: `Hello, Commander 👋\n\nI am **JAI RAM FINANCE AI**, your financial intelligence assistant. Ask me anything about your active loans, daily collections, operating expenses, Day Book, or Profit & Loss statements in **22 Indian languages** or transliteration.`,
       category: 'general',
       timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     },
@@ -149,7 +149,7 @@ export function FinCollectAIDrawer() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 px-4 py-3 rounded-full bg-[#070A12]/95 border border-sky-400/40 text-white shadow-[0_0_25px_rgba(56,189,248,0.25)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2.5 group backdrop-blur-xl"
-        title="Open JARVIS FinCollect AI"
+        title="Open JARVIS Jai Ram Finance AI"
       >
         <div className="relative flex items-center justify-center">
           <Cpu className="w-5 h-5 text-sky-400 group-hover:rotate-45 transition-transform duration-500" />
@@ -178,9 +178,9 @@ export function FinCollectAIDrawer() {
                 </div>
                 <div className="flex flex-col leading-tight min-w-0">
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <h3 className="text-sm sm:text-base font-black font-mono tracking-wider text-white truncate">FINCOLLECT AI</h3>
+                    <h3 className="text-sm sm:text-base font-black font-mono tracking-wider text-white truncate">JAI RAM FINANCE AI</h3>
                     <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded uppercase shrink-0">
-                      [JARVIS.ONLINE]
+                      [SYS.ONLINE]
                     </span>
                   </div>
                   <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono truncate">
@@ -210,8 +210,8 @@ export function FinCollectAIDrawer() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  title="Close FINCOLLECT AI Panel"
-                  aria-label="Close FINCOLLECT AI Panel"
+                  title="Close JAI RAM FINANCE AI Panel"
+                  aria-label="Close JAI RAM FINANCE AI Panel"
                   className="w-8 h-8 rounded-full bg-slate-900/90 border border-sky-500/30 text-sky-400 hover:text-cyan-300 hover:border-cyan-400 hover:bg-sky-500/20 hover:shadow-[0_0_12px_rgba(56,189,248,0.35)] active:scale-95 transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer"
                 >
                   <X className="w-4 h-4 stroke-[2.5]" />

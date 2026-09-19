@@ -18,7 +18,7 @@ export const te: typeof en = {
     navigationMenu: 'నేవిగేషన్ మెనూ',
     singleAdmin: 'సింగిల్ అడ్మిన్',
     proAdmin: 'ప్రో అడ్మిన్',
-    fincollectPlatform: 'ఫిన్‌కలెక్ట్ ప్లాట్‌ఫారమ్',
+    fincollectPlatform: 'జై రామ్ ఫైనాన్స్ ప్లాట్‌ఫారమ్',
     financialManagementSystem: 'ఫైనాన్షియల్ మేనేజ్‌మెంట్ సిస్టమ్',
     signOut: 'లాగ్ అవుట్',
     adminPrivilege: 'అడ్మిన్ హక్కులు',
@@ -31,7 +31,7 @@ export const te: typeof en = {
   },
 
   loading: {
-    title: 'ఫిన్‌కలెక్ట్',
+    title: 'జై రామ్ ఫైనాన్స్',
     subtitle: 'ప్రో అడ్మిన్',
     description: 'ఫైనాన్షియల్ మేనేజ్‌మెంట్ సిస్టమ్',
     initializing: 'యాప్‌ ప్రారంభమవుతోంది...',

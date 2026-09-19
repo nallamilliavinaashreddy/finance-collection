@@ -17,7 +17,7 @@ export function SplashScreen() {
         <div className="relative w-40 h-40 mb-6 flex items-center justify-center p-3 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
           <Image
             src="/hanuman.png"
-            alt="FinCollect Logo"
+            alt="Jai Ram Finance Logo"
             width={140}
             height={140}
             priority
@@ -25,9 +25,9 @@ export function SplashScreen() {
           />
         </div>
 
-        {/* FINCOLLECT */}
+        {/* JAI RAM FINANCE */}
         <h1 className="text-2xl font-bold tracking-wider text-white uppercase mb-1">
-          {t('loading.title', 'FINCOLLECT')}
+          {t('loading.title', 'JAI RAM FINANCE')}
         </h1>
 
         {/* PRO ADMIN */}

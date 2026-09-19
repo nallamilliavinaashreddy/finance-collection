@@ -67,14 +67,14 @@ export function FinCollectCoreHero({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-wider font-mono">
-                FINCOLLECT CORE
+                JAI RAM FINANCE CORE
               </h2>
               <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded uppercase tracking-widest">
                 [SYS.ONLINE]
               </span>
             </div>
             <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
-              <span>JARVIS Financial Telemetry OS</span>
+              <span>Jai Ram Finance Telemetry OS</span>
               <span className="text-sky-500/40">•</span>
               <span className="text-sky-400 font-mono text-[11px]">{formattedToday}</span>
             </p>

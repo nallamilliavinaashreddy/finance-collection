@@ -18,7 +18,7 @@ export const kn: typeof en = {
     navigationMenu: 'ನೆವಿಗೇಷನ್ ಮೆನು',
     singleAdmin: 'ಸಿಂಗಲ್ ಅಡ್ಮಿನ್',
     proAdmin: 'ಪ್ರೋ ಅಡ್ಮಿನ್',
-    fincollectPlatform: 'ಫಿನ್‌ಕಲೆಕ್ಟ್ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್',
+    fincollectPlatform: 'ಜೈ ರಾಮ್ ಫೈನಾನ್ಸ್ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್',
     financialManagementSystem: 'ಹಣಕಾಸು ನಿರ್ವಹಣಾ ವ್ಯವಸ್ಥೆ',
     signOut: 'ಸೈನ್ ಔಟ್',
     adminPrivilege: 'ಅಡ್ಮಿನ್ ಹಕ್ಕುಗಳು',
@@ -31,7 +31,7 @@ export const kn: typeof en = {
   },
 
   loading: {
-    title: 'ಫಿನ್‌ಕಲೆಕ್ಟ್',
+    title: 'ಜೈ ರಾಮ್ ಫೈನಾನ್ಸ್',
     subtitle: 'ಪ್ರೋ ಅಡ್ಮಿನ್',
     description: 'ಹಣಕಾಸು ನಿರ್ವಹಣಾ ವ್ಯವಸ್ಥೆ',
     initializing: 'ಅಪ್ಲಿಕೇಶನ್ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ...',

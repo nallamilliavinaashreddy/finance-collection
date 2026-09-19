@@ -18,7 +18,7 @@ export const hi: typeof en = {
     navigationMenu: 'नेविगेशन मेनू',
     singleAdmin: 'सिंगल एडमिन',
     proAdmin: 'प्रो एडमिन',
-    fincollectPlatform: 'फिनकलेक्ट प्लेटफॉर्म',
+    fincollectPlatform: 'जय राम फाइनेंस प्लेटफॉर्म',
     financialManagementSystem: 'वित्तीय प्रबंधन प्रणाली',
     signOut: 'साइन आउट',
     adminPrivilege: 'एडमिन अधिकार',
@@ -31,7 +31,7 @@ export const hi: typeof en = {
   },
 
   loading: {
-    title: 'फिनकलेक्ट',
+    title: 'जय राम फाइनेंस',
     subtitle: 'प्रो एडमिन',
     description: 'वित्तीय प्रबंधन प्रणाली',
     initializing: 'एप्लिकेशन शुरू हो रहा है...',
